@@ -11688,7 +11688,11 @@ function demoStart(exp){
   var bar=h('div',{class:'dm-bar',role:'status'},h('b',{text:'Akun demo'}),h('span',{text:' · berisi data contoh · berlaku sampai '+t+' · perubahan tidak disimpan setelah halaman dimuat ulang'}));
   document.body.append(bar);document.documentElement.classList.add('dm-on');
   setTimeout(function(){location.reload()},Math.min(left+500,2147000000));
-  Promise.resolve(init()).then(function(){return typeof smpRun==='function'?smpRun('add',SMP_MENU):0}).then(function(){schedule()},function(e){if(window.console)console.error(e)});
+  var real={};COLS.forEach(function(c){(SEED[c]||[]).forEach(function(r){if(!r.demo)real[c+':'+r.id]=1})});
+  var SAN=[['Andy Fadjrun Assiddiqi','Contoh KTT'],['PT Inti Resources Mandiri','Kontraktor Contoh A'],['PT Maleo Berkah Perkasa','Kontraktor Contoh B'],['Tim reklamasi SSU','Tim reklamasi perusahaan'],['Personel SSU','Personel perusahaan'],['Persemaian SSU','Persemaian perusahaan']];
+  function strip(){COLS.forEach(function(c){var j=JSON.stringify(S[c].filter(function(r){return !real[c+':'+r.id]}));SAN.forEach(function(x){j=j.split(x[0]).join(x[1])});S[c]=JSON.parse(j)})}
+  try{if(typeof tenantBlank==='function')tenantBlank()}catch(e){}
+  Promise.resolve(init()).then(function(){strip();return typeof smpRun==='function'?smpRun('add',SMP_MENU):0}).then(function(){strip();schedule()},function(e){if(window.console)console.error(e)});
 }
 function hostStart(){
   var dx=demoExp();if(dx){demoStart(dx);return}
