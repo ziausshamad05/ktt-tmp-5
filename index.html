@@ -7072,7 +7072,7 @@ function subPricing(K,J,A){
       h('h2',{class:'pc-h',text:'Pilih paket sesuai peran tim Anda.'}),
       h('p',{class:'pc-sub',text:'Dasar untuk peran KTT. Profesional membuka semua menu untuk KTT dan HSE, serta akun PJO untuk surat menyurat dan izin kerja, dengan akses yang menyesuaikan peran masing-masing anggota. Bayar bulanan atau sekali beli untuk akses seumur hidup.'}),
       pr?h('p',{class:'pc-promo'},h('i',{'aria-hidden':'true'}),h('span',{text:'Harga promo bulanan sampai '+fmt(pr.sampai)+' · '+subSisaTxt(pr.sisa)})):null),
-    h('div',{class:'pc-ctl'},seg,IS_ADM&&!subHosted()?h('button',{type:'button',class:'btn',onclick:function(){subManage()}},'Kelola paket dan rekening'):null)));
+    h('div',{class:'pc-ctl'},seg,IS_ADM&&!subHosted()&&!window.__KTT_DEMO?h('button',{type:'button',class:'btn',onclick:function(){subManage()}},'Kelola paket dan rekening'):null)));
   var grid=h('div',{class:'pc-grid'}),cards=[];
   K.plans.forEach(function(p,idx){
     var isNow=A&&A.aktif&&A.paket===p.id,r={};
@@ -7095,6 +7095,7 @@ function subPricing(K,J,A){
     r.cta.addEventListener('click',function(){
       if(r.cta.disabled)return;
       if(r.sw){apply('sekali');return}
+      if(window.__KTT_DEMO){subDemoGo(p);return}
       subCheckout(p,SUB_CYC)});
     card.addEventListener('pointermove',function(e){var b=card.getBoundingClientRect();card.style.setProperty('--mx',(e.clientX-b.left)+'px');card.style.setProperty('--my',(e.clientY-b.top)+'px')});
     card.addEventListener('pointerleave',function(){card.style.removeProperty('--mx');card.style.removeProperty('--my')});
@@ -7133,6 +7134,14 @@ function subPricing(K,J,A){
   sec.append(grid);
   return sec;
 }
+function subDemoGo(p){
+  var box=h('div',{style:'display:flex;flex-direction:column;gap:12px;padding:4px 0'},
+    h('p',{class:'sub',style:'margin:0',text:'Anda sedang memakai akun demo berisi data contoh, jadi pesanan tidak bisa dibuat di sini. Untuk memulai berlangganan paket '+p.nama+', masuk atau daftar dulu dengan akun Anda sendiri. Setelah itu Anda bisa memilih paket dan membayar.'}),
+    h('div',{style:'display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end'},
+      h('button',{type:'button',class:'btn',onclick:closeModal},'Tetap di demo'),
+      h('button',{type:'button',class:'btn primary',onclick:function(){location.href=location.origin+location.pathname}},'Lanjut ke halaman masuk')));
+  openModal('Mulai berlangganan '+p.nama,box);
+}
 function subFaq(J){
   var q=[
     ['Apa beda paket Dasar dan Profesional?','Dasar untuk peran KTT: dasbor, Statistik KPI HSE, RKAB dan produksi, laporan, dan perizinan. Menu K3, reklamasi, surat menyurat, izin kerja (PTW), kontraktor dan CSMS, serta personel terkunci. Profesional membuka semua menu dan menambah peran HSE dan PJO, sehingga tiap anggota hanya melihat menu yang sesuai perannya. PJO hanya melihat menu Surat Menyurat dan Izin Kerja (PTW).'],
@@ -7166,7 +7175,7 @@ function subView(){
   root.append(st);
   /* paket: kartu harga */
   root.append(subPricing(K,J,A));
-  if(!K.custom&&!subHosted())root.append(h('p',{class:'sub',style:'margin:0'},'Harga dan isi paket di atas adalah pengaturan awal. Admin dapat mengubah harga, tanggal promo dan daftar fitur lewat Kelola paket dan rekening.'));
+  if(!K.custom&&!subHosted()&&!window.__KTT_DEMO)root.append(h('p',{class:'sub',style:'margin:0'},'Harga dan isi paket di atas adalah pengaturan awal. Admin dapat mengubah harga, tanggal promo dan daftar fitur lewat Kelola paket dan rekening.'));
   root.append(subFaq(J));
   /* riwayat */
   var rp=h('section',{class:'panel'},h('h2',{text:'Riwayat pesanan'}));
