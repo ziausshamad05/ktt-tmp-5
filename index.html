@@ -1620,6 +1620,15 @@ nav#nav .ngl>div a{font-size:13px;font-weight:500}
 nav#nav .ngl>div a.on,nav#nav .ngl>div a[aria-current]{border-radius:8px}
 .rail .ngh{border-left:0;background:none;padding:6px 0}
 .rail .ngl>div{margin:0;padding-left:0;border-left:0}
+.smp-list{display:flex;flex-direction:column;gap:6px;max-height:46vh;overflow:auto;margin:8px 0}
+.smp-row{display:grid;grid-template-columns:22px 1fr;column-gap:10px;align-items:center;padding:9px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;background:var(--surface)}
+.smp-row input{width:18px;height:18px;padding:0;margin:0}
+.smp-row .t{font-weight:600}.smp-row small{grid-column:2;color:var(--muted)}
+.smp-row.off{opacity:.5;cursor:default}.smp-row.all{background:var(--surface2)}
+.smp-step{margin:0;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--brand)}
+.smp-q{margin:6px 0 10px;font-size:16px;font-weight:600;line-height:1.4}
+.smp-sum{margin:0 0 14px;padding-left:18px;color:var(--muted);font-size:13px}
+.smp .acts{display:flex;gap:8px;align-items:center;margin-top:10px}
 
 .pp-wrap{max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface2)}
 .paper{background:#fff;color:#1b211d;border-radius:4px;padding:26px 28px;box-shadow:0 1px 8px rgba(0,0,0,.18);font-family:var(--f-body);font-size:13px;line-height:1.5}
@@ -4646,7 +4655,7 @@ function kpiView(){
 
 /* ---- klasifikasi menu ---- */
 var MGRP={ringkasan:'Dasbor',kpi:'Dasbor',rkab:'Perencanaan dan pelaporan',laporan:'Perencanaan dan pelaporan',k3:'Keselamatan dan kesehatan kerja',risiko:'Keselamatan dan kesehatan kerja',reklamasi:'Reklamasi dan lingkungan',sop:'Keselamatan dan kesehatan kerja',inspeksi:'Keselamatan dan kesehatan kerja',temuan:'Keselamatan dan kesehatan kerja',agenda:'Keselamatan dan kesehatan kerja',ptw:'Keselamatan dan kesehatan kerja',inventaris:'Keselamatan dan kesehatan kerja',izin:'Kepatuhan dan administrasi',kontraktor:'Kepatuhan dan administrasi',personel:'Kepatuhan dan administrasi',surat:'Kepatuhan dan administrasi',operasional:'Operasional tambang',kredit:'Setelan dan bantuan',langganan:'Setelan dan bantuan',panduan:'Setelan dan bantuan',setelan:'Setelan dan bantuan'};
-var MORD=['ringkasan','kpi','rkab','laporan','k3','risiko','sop','inspeksi','temuan','agenda','inventaris','ptw','reklamasi','izin','kontraktor','personel','surat','operasional','kredit','langganan','panduan','setelan'];
+var MORD=['ringkasan','kpi','rkab','laporan','k3','risiko','sop','inspeksi','temuan','agenda','inventaris','ptw','operasional','reklamasi','izin','kontraktor','personel','surat','kredit','langganan','panduan','setelan'];
 function navSetup(){
   MODS.push({k:'kpi',t:'Statistik KPI HSE',i:'M4 20V10M10 20V4M16 20v-7M22 20H2'});
   MODS.push({k:'sop',t:'SOP K3 Builder',i:'M7 3h8l4 4v14H7zM15 3v4h4M10 12h6M10 16h4'});
@@ -6762,6 +6771,7 @@ function setView(){
         h('li',{text:'Pilihan tahun ini diingat di perangkat Anda saja, tidak mengubah tampilan pengguna lain.'})))));
 
   try{var hap=typeof hostAccountPanel==='function'?hostAccountPanel():null;if(hap)root.append(hap)}catch(e){}
+  try{var smp=typeof sampleSection==='function'?sampleSection():null;if(smp)root.append(smp)}catch(e){}
 
   /* tampilan */
   root.append(panel('Tampilan','Tema dan efek gerak mengikuti perangkat bila tidak diubah.',
@@ -11450,6 +11460,111 @@ function opView(){
   var fn=V[OP.tab]||opDashView;
   try{box.append(fn())}catch(e){box.append(opNote('Tampilan gagal dimuat: '+(e&&e.message?e.message:'kesalahan tak dikenal'),'warn'));if(window.console)console.error(e)}
   return box;
+}
+/* ===== Data contoh: isi dan hapus per menu, dengan dua kali konfirmasi ===== */
+var SMP_MENU=[
+ {k:'k3',t:'K3 dan Insiden',c:['insiden','jamkerja']},
+ {k:'risiko',t:'IBPR, HIRA dan HIRADC',c:['risiko']},
+ {k:'sop',t:'SOP K3 Builder',c:['sop']},
+ {k:'inspeksi',t:'Inspeksi Teknis',c:['inspeksi']},
+ {k:'temuan',t:'Temuan',c:['temuan']},
+ {k:'agenda',t:'Agenda K3 dan Pelatihan',c:['agenda']},
+ {k:'inventaris',t:'Inventaris K3',c:['inventaris']},
+ {k:'operasional',t:'Operasional tambang',c:['opmaster','opsm','opeto','opbarge','oplog','opplan','oprkab']},
+ {k:'reklamasi',t:'Reklamasi dan pascatambang',c:['reklamasi','revegetasi','jaminan','rkgiat','pucuk','bibit','erosi','pasca','rkdok']},
+ {k:'personel',t:'Personel',c:['personel']},
+ {k:'rkab',t:'RKAB dan Produksi (realisasi bulanan)',c:['produksi']}
+];
+function smpDay(n){var d=new Date(TODAY.getTime());d.setDate(d.getDate()+n);return isoOf(d)}
+function smpOpDocs(){
+  var kon=((S.kontraktor||[])[0]||{}).nama||'Kontraktor Contoh',D='demo-op-';
+  var ym=smpDay(0).slice(0,7),yr=Number(smpDay(0).slice(0,4)),out={};
+  out.opmaster=[['Pit','Pit Contoh A'],['Pit','Pit Contoh B'],['Dome','Dome Contoh 1'],['Dome','Dome Contoh 2'],['Lokasi','EFO Contoh']].map(function(x,i){return {id:D+'ms'+i,tipe:x[0],nama:x[1],lat:x[0]==='Lokasi'?-4.9712:null,lon:x[0]==='Lokasi'?121.9411:null,demo:true}});
+  var base={mode:'Estimasi bucket',faktor:1.5,mc:30,sio2:30,mgo:15,kontraktor:kon,pit:'Pit Contoh A',demo:true};
+  function sm(i,o){return Object.assign({id:D+'sm'+i},base,o)}
+  out.opsm=[
+    sm(1,{kode:'SMC01',tanggal:smpDay(-6),dome:'Dome Contoh 1',bucket:120,wmt:180,ni:1.7,fe:20,final:true,class:'Saprolite Low Grade',etoId:D+'eto1',lab:'LAB-C01'}),
+    sm(2,{kode:'SMC02',tanggal:smpDay(-5),dome:'Dome Contoh 2',bucket:80,wmt:120,ni:1.3,fe:32,final:true,class:'Limonit High Grade',etoId:D+'eto1',lab:'LAB-C02'}),
+    sm(3,{kode:'SMC03',tanggal:smpDay(-2),pit:'Pit Contoh B',dome:'Dome Contoh 1',bucket:60,wmt:90,ni:1.9,fe:12,final:true,class:'Saprolite High Grade',lab:'LAB-C03'}),
+    sm(4,{kode:'SMC04',tanggal:smpDay(-1),pit:'Pit Contoh B',bucket:36,wmt:54,ni:1.1,fe:44,final:false})];
+  out.opeto=[{id:D+'eto1',kode:'BLEND-C01',nama:'BLEND-C01',tanggal:smpDay(-4),status:'EFO',wmt:300,dmt:210,saldo:200,saldoDmt:140,mc:30,ni:1.54,fe:24.8,sio2:30,mgo:15,metode:'Composite Dome final',lokasi:'EFO Contoh',lat:-4.9712,lon:121.9411,tglEfo:smpDay(-3),kontraktor:kon,demo:true,
+    sumber:[{sm:D+'sm1',kode:'SMC01',dome:'Dome Contoh 1',wmt:180,dmt:126,mc:30,ni:1.7,fe:20,sio2:30,mgo:15},{sm:D+'sm2',kode:'SMC02',dome:'Dome Contoh 2',wmt:120,dmt:84,mc:30,ni:1.3,fe:32,sio2:30,mgo:15}]}];
+  out.opbarge=[{id:D+'bg1',tanggal:smpDay(-1),ref:'KARGO-C01',pembeli:'Pembeli Contoh',vessel:'TB Contoh 1',status:'Selesai / Terjual',sumber:[{batch:D+'eto1',wmt:100,dmt:70,nama:'BLEND-C01'}],demo:true}];
+  var ts=new Date().toISOString();
+  out.oplog=[['SM difinalkan','SMC01',180],['ETO dibentuk','BLEND-C01 · 2 sumber',300],['Barging selesai','KARGO-C01 · 1 sumber',100]].map(function(x,i){return {id:D+'lg'+i,ts:ts,aktivitas:x[0],detail:x[1],wmt:x[2],kontraktor:kon,demo:true}});
+  out.opplan=(S.opplan||[]).some(function(r){return r.kind==='bulanan'&&r.bulan===ym})?[]:[{id:D+'pl1',kind:'bulanan',bulan:ym,target:5000,demo:true}];
+  out.oprkab=(S.oprkab||[]).some(function(r){return Number(r.tahun)===yr})?[]:[{id:D+'rk1',tahun:yr,kuota:100000,demo:true}];
+  return out;
+}
+function smpRows(col){
+  if(col.indexOf('op')===0)return smpOpDocs()[col]||[];
+  var have={};(S[col]||[]).forEach(function(r){have[r.id]=1});
+  return (SEED[col]||[]).filter(function(r){return !have[r.id]}).map(function(r){var x=Object.assign({},r);x.demo=true;return x});
+}
+function smpDemo(col){return (S[col]||[]).filter(function(r){return r.demo===true})}
+function smpCount(m,mode){return m.c.reduce(function(n,c){return n+(mode==='add'?smpRows(c).length:smpDemo(c).length)},0)}
+async function smpRun(mode,menus,prog){
+  var total=0,done=0,jobs=[];
+  menus.forEach(function(m){m.c.forEach(function(c){(mode==='add'?smpRows(c):smpDemo(c)).forEach(function(r){jobs.push([c,r])})})});
+  total=jobs.length;
+  for(var i=0;i<jobs.length;i++){
+    var c=jobs[i][0],r=jobs[i][1];
+    if(mode==='add'){var d=Object.assign({},r);var id=d.id;delete d.id;await save(c,id,d)}else{await remove(c,r.id)}
+    done++;if(prog&&(done%5===0||done===total))prog(done,total);
+  }
+  return total;
+}
+function smpWizard(mode){
+  var add=mode==='add',box=h('div',{class:'smp'}),sel={};
+  SMP_MENU.forEach(function(m){sel[m.k]=false});
+  function stepPick(){
+    var list=h('div',{class:'smp-list'}),any=function(){return SMP_MENU.some(function(m){return sel[m.k]})};
+    var next=h('button',{type:'button',class:'btn primary',disabled:true},'Lanjut');
+    function sync(){next.disabled=!any()}
+    var allCb=h('input',{type:'checkbox','aria-label':'Pilih semua'});
+    allCb.addEventListener('change',function(){SMP_MENU.forEach(function(m){if(smpCount(m,mode)>0)sel[m.k]=allCb.checked});list.querySelectorAll('input[data-k]').forEach(function(i){if(!i.disabled)i.checked=allCb.checked});sync()});
+    SMP_MENU.forEach(function(m){
+      var n=smpCount(m,mode),cb=h('input',{type:'checkbox','data-k':m.k,disabled:n===0?true:null});
+      cb.addEventListener('change',function(){sel[m.k]=cb.checked;sync()});
+      list.append(h('label',{class:'smp-row'+(n===0?' off':'')},cb,h('span',{class:'t',text:m.t}),h('small',{text:n===0?(add?'Sudah terisi atau tidak ada contoh':'Tidak ada data contoh'):n+(add?' baris contoh akan ditambahkan':' baris contoh akan dihapus')})));
+    });
+    box.replaceChildren(
+      h('p',{class:'sub',style:'margin:0 0 8px',text:add?'Centang menu yang ingin diisi data contoh. Data contoh diberi tanda khusus sehingga dapat dihapus kapan saja tanpa menyentuh data asli Anda.':'Centang menu yang data contohnya ingin dihapus. Hanya baris bertanda contoh yang dihapus; data asli Anda tidak disentuh.'}),
+      h('label',{class:'smp-row all'},allCb,h('span',{class:'t',text:'Pilih semua menu yang tersedia'})),list,
+      h('div',{class:'acts'},h('button',{type:'button',class:'btn',onclick:closeModal},'Batal'),h('span',{class:'grow'}),next));
+    next.addEventListener('click',function(){stepQ(1)});
+  }
+  function picked(){return SMP_MENU.filter(function(m){return sel[m.k]})}
+  function stepQ(n){
+    var ms=picked(),tot=ms.reduce(function(s,m){return s+smpCount(m,mode)},0);
+    var q=n===1
+      ?(add?'Isi data contoh pada '+ms.length+' menu ('+tot+' baris)?':'Hapus data contoh pada '+ms.length+' menu ('+tot+' baris)?')
+      :(add?'Konfirmasi terakhir: data contoh akan tampil bercampur dengan data Anda di laporan dan dasbor sampai dihapus. Tetap isi sekarang?':'Konfirmasi terakhir: '+tot+' baris data contoh akan dihapus dan tidak dapat dikembalikan. Tetap hapus sekarang?');
+    box.replaceChildren(
+      h('p',{class:'smp-step',text:'Pertanyaan '+n+' dari 2'}),
+      h('p',{class:'smp-q',text:q}),
+      h('ul',{class:'smp-sum'},ms.map(function(m){return h('li',{text:m.t+' · '+smpCount(m,mode)+' baris'})})),
+      h('div',{class:'acts'},h('button',{type:'button',class:'btn',onclick:function(){n===1?stepPick():stepQ(1)}},'Kembali'),h('span',{class:'grow'}),
+        h('button',{type:'button',class:'btn '+(add?'primary':'danger'),onclick:function(){n===1?stepQ(2):stepRun()}},n===1?'Ya, lanjut':(add?'Ya, isi data contoh':'Ya, hapus data contoh'))));
+  }
+  async function stepRun(){
+    var ms=picked(),pr=h('p',{class:'smp-q',text:'Memproses…'});
+    box.replaceChildren(pr,h('p',{class:'sub',text:'Jangan tutup halaman ini sampai selesai.'}));
+    try{var n=await smpRun(mode,ms,function(d,t){pr.textContent='Memproses '+d+' dari '+t+'…'});
+      box.replaceChildren(h('p',{class:'smp-q',text:(add?'Selesai. ':'Selesai. ')+n+' baris data contoh '+(add?'ditambahkan.':'dihapus.')}),h('div',{class:'acts'},h('span',{class:'grow'}),h('button',{type:'button',class:'btn primary',onclick:closeModal},'Tutup')));
+      toast(add?'Data contoh ditambahkan':'Data contoh dihapus');
+    }catch(e){box.replaceChildren(h('p',{class:'err',text:'Proses terhenti: '+(e&&e.message?e.message:'periksa akses Anda')+'. Sebagian data mungkin sudah diproses.'}),h('div',{class:'acts'},h('span',{class:'grow'}),h('button',{type:'button',class:'btn',onclick:closeModal},'Tutup')))}
+  }
+  stepPick();
+  openModal(add?'Isi data contoh':'Hapus data contoh',box);
+}
+function sampleSection(){
+  if(!canWrite)return null;
+  if(typeof HOST!=='undefined'&&HOST&&HOST.sb&&HOST.role&&HOST.role!=='admin'&&HOST.role!=='editor')return null;
+  var tot=SMP_MENU.reduce(function(n,m){return n+smpCount(m,'del')},0);
+  return panel('Data contoh','Isi menu tertentu dengan data contoh untuk mencoba aplikasi, lalu hapus bila sudah tidak diperlukan. Tiap tindakan meminta konfirmasi dua kali.',
+    h('p',{class:'sub',style:'margin:0 0 10px',text:tot?tot+' baris data contoh tersimpan saat ini.':'Belum ada data contoh tersimpan.'}),
+    h('div',{class:'acts',style:'display:flex;gap:8px;flex-wrap:wrap'},h('button',{type:'button',class:'btn primary',onclick:function(){smpWizard('add')}},'Isi data contoh…'),h('button',{type:'button',class:'btn danger',onclick:function(){smpWizard('del')}},'Hapus data contoh…')));
 }
 
 /* ---------- hosting mandiri: Supabase (aktif hanya di luar claude.ai) ---------- */
