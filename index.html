@@ -4665,7 +4665,7 @@ function navSetup(){
   MODS.push({k:'kpi',t:'Statistik KPI HSE',i:'M4 20V10M10 20V4M16 20v-7M22 20H2'});
   MODS.push({k:'sop',t:'SOP K3 Builder',i:'M7 3h8l4 4v14H7zM15 3v4h4M10 12h6M10 16h4'});
   MODS.push({k:'reklamasi',t:'Reklamasi dan pascatambang',i:'M12 21V11M12 11c0-4 3-7 8-7 0 5-3 8-8 8zM12 14c0-3-2-5-6-5 0 4 2 6 6 6'});
-  MODS.push({k:'operasional',t:'Operasional',i:'M3 20l6-10 4 6 3-4 5 8zM3 20h18'});
+  MODS.push({k:'operasional',t:'Overview Penambangan',i:'M3 20l6-10 4 6 3-4 5 8zM3 20h18'});
   MODS.push({k:'kredit',t:'Kredit AI',i:'M12 3l2.4 5.6L20 11l-5.6 2.4L12 19l-2.4-5.6L4 11l5.6-2.4zM19 17l.8 1.7 1.7.8-1.7.8L19 22l-.8-1.7-1.7-.8 1.7-.8z'});
   MODS.push({k:'langganan',t:'Langganan dan paket',i:'M3 7h18v12H3zM3 11h18M7 15h4'});
   MODS.push({k:'panduan',t:'Panduan dan Tutorial',i:'M5 4h10a3 3 0 013 3v13H8a3 3 0 01-3-3zM5 17a3 3 0 013-3h10M9 8h5'});
@@ -6962,11 +6962,11 @@ var SUB_KUNCI_DASAR=['k3','risiko','sop','inspeksi','temuan','agenda','inventari
 var SUB_PLANS=[
  {id:'dasar',label:'Peran KTT',nama:'Dasar',ket:'Untuk KTT yang menertibkan RKAB, laporan dan perizinan.',normal:1500000,bln:500000,sampai:'2026-11-20',sekali:5000000,sekaliNormal:20000000,sekaliSampai:'2026-12-31',peran:['ktt'],
   kunci:SUB_KUNCI_DASAR,
-  fitur:['Dasbor dan Statistik KPI HSE','RKAB dan produksi','Laporan dan RKAB berikutnya','Perizinan','Akses untuk peran KTT','Bisa ditingkatkan ke Profesional'],
+  fitur:['Dasbor dan Statistik KPI HSE','RKAB dan produksi','Laporan dan RKAB berikutnya','Perizinan','Overview Penambangan: produksi, blending, stockpile dan barging','Fitur AI: analisis dasbor dan laporan (memakai Kredit AI)','Akses untuk peran KTT','Bisa ditingkatkan ke Profesional'],
   tidak:['Seluruh menu K3','Reklamasi dan pascatambang','Kontraktor dan CSMS','Personel','Surat menyurat','Izin Kerja (PTW)','Izin Kerja (PTW)','Akses peran HSE dan PJO']},
  {id:'profesional',label:'Peran KTT, HSE dan PJO',nama:'Profesional',ket:'Semua menu terbuka untuk KTT dan tim HSE, ditambah akun PJO untuk surat menyurat dan izin kerja.',normal:3750000,bln:1000000,sampai:'2026-11-20',sekali:9000000,sekaliNormal:50000000,sekaliSampai:'2026-12-31',peran:['ktt','hse','pjo'],populer:true,
   kunci:[],
-  fitur:['Semua fitur paket Dasar','Seluruh menu K3: insiden, IBPR dan HIRADC, SOP Builder, inspeksi, temuan, agenda, inventaris','Reklamasi dan pascatambang','Kontraktor dan CSMS','Personel','Surat menyurat dengan disposisi dari PJO ke akun KTT','Izin Kerja (PTW): PJO mengajukan, HSE dan KTT memutuskan','Izin Kerja (PTW): PJO mengajukan, HSE dan KTT memutuskan','Akses peran KTT, HSE dan PJO, menu menyesuaikan peran']}
+  fitur:['Semua fitur paket Dasar','Fitur AI lengkap, termasuk SOP K3 Builder dan chat bantuan (memakai Kredit AI)','Seluruh menu K3: insiden, IBPR dan HIRADC, SOP Builder, inspeksi, temuan, agenda, inventaris','Reklamasi dan pascatambang','Kontraktor dan CSMS','Personel','Surat menyurat dengan disposisi dari PJO ke akun KTT','Izin Kerja (PTW): PJO mengajukan, HSE dan KTT memutuskan','Izin Kerja (PTW): PJO mengajukan, HSE dan KTT memutuskan','Akses peran KTT, HSE dan PJO, menu menyesuaikan peran']}
 ];
 var SUB_JUAL={nama:'',bank:'',norek:'',atas:'',wa:'',email:'',ppn:11,catatan:'',qris:null};
 function subRp(n){return 'Rp '+Math.round(Number(n)||0).toLocaleString('id-ID')}
