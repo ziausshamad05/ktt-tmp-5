@@ -1629,6 +1629,9 @@ nav#nav .ngl>div a.on,nav#nav .ngl>div a[aria-current]{border-radius:8px}
 .smp-q{margin:6px 0 10px;font-size:16px;font-weight:600;line-height:1.4}
 .smp-sum{margin:0 0 14px;padding-left:18px;color:var(--muted);font-size:13px}
 .smp .acts{display:flex;gap:8px;align-items:center;margin-top:10px}
+.dm-bar{position:fixed;left:0;right:0;top:0;z-index:60;background:var(--brand);color:#fff;padding:6px max(12px,env(safe-area-inset-right,0px)) 6px max(12px,env(safe-area-inset-left,0px));font-size:12.5px;line-height:1.35;text-align:center}
+html.dm-on body{padding-top:30px}
+html.dm-on .dm-bar+*{}
 
 .pp-wrap{max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface2)}
 .paper{background:#fff;color:#1b211d;border-radius:4px;padding:26px 28px;box-shadow:0 1px 8px rgba(0,0,0,.18);font-family:var(--f-body);font-size:13px;line-height:1.5}
@@ -11675,7 +11678,20 @@ function hostScreen(kind,msg){
   function alert2(t){var o=h('p',{class:'hg-ok',role:'status',text:t});f2.before(o)}
   setTimeout(function(){try{em.focus()}catch(e){}},30);
 }
+/* ---- mode demo 24 jam: tanpa akun, data contoh lengkap, disimpan di memori peramban ---- */
+function demoExp(){var m=/[?&]demo=(\d{12,14})(?:&|$)/.exec(location.search);return m?Number(m[1]):0}
+function demoStart(exp){
+  var left=exp-Date.now();
+  if(left<=0||left>26*3600*1000){hostScreen('err','Link demo ini sudah berakhir. Akun demo hanya berlaku 24 jam. Minta link baru kepada pengelola Platform KTT.');return}
+  window.__KTT_DEMO=exp;
+  var t=new Date(exp).toLocaleString('id-ID',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+  var bar=h('div',{class:'dm-bar',role:'status'},h('b',{text:'Akun demo'}),h('span',{text:' · berisi data contoh · berlaku sampai '+t+' · perubahan tidak disimpan setelah halaman dimuat ulang'}));
+  document.body.append(bar);document.documentElement.classList.add('dm-on');
+  setTimeout(function(){location.reload()},Math.min(left+500,2147000000));
+  Promise.resolve(init()).then(function(){return typeof smpRun==='function'?smpRun('add',SMP_MENU):0}).then(function(){schedule()},function(e){if(window.console)console.error(e)});
+}
 function hostStart(){
+  var dx=demoExp();if(dx){demoStart(dx);return}
   if((window.claude&&window.claude.use)||!hostCfg()){init();return}
   if(!window.supabase||!window.supabase.createClient){hostScreen('err','Pustaka penyimpanan gagal dimuat. Periksa sambungan internet lalu muat ulang.');return}
   var c=hostCfg();
@@ -12423,7 +12439,7 @@ function banners(){
   if(MODE==='loading'||(MODE==='live'&&!allLoaded()&&!slow))out.push(h('div',{class:'note'},h('p',{text:'Memuat data tersimpan…'})));
   if(slow)out.push(h('div',{class:'note warn'},h('p',{text:'Data belum dapat dijangkau. Tampilan mungkin belum terbaru.'})));
   if(loadErr)out.push(h('div',{class:'note warn'},h('p',{text:'Sebagian data tidak dapat dimuat ('+loadErr+').'})));
-  if(MODE==='memory')out.push(h('div',{class:'note warn'},h('p',{text:'Mode contoh: penyimpanan bersama tidak tersedia di tampilan ini, perubahan hilang saat halaman ditutup.'})));
+  if(MODE==='memory'&&!window.__KTT_DEMO)out.push(h('div',{class:'note warn'},h('p',{text:'Mode contoh: penyimpanan bersama tidak tersedia di tampilan ini, perubahan hilang saat halaman ditutup.'})));
   if(MODE==='live'&&allLoaded()&&totalRows()===0&&TENANT_BLANK&&!srPjo())out.push(h('div',{class:'note'},h('p',{text:'Akun Anda masih kosong. Mulai dari Setelan: lengkapi profil perusahaan dan data KTT, lalu tambahkan data di tiap menu. Panduan singkat muncul saat Anda membuka menu.'}),h('a',{class:'btn primary',href:'#setelan',text:'Buka Setelan'})));
   else if(MODE==='live'&&allLoaded()&&totalRows()===0&&!srPjo())out.push(h('div',{class:'note'},h('p',{text:'Platform KTT masih kosong. Muat data contoh untuk melihat semua modul terisi, lalu ganti dengan data PT Surya Saga Utama.'}),canWrite?h('button',{class:'btn primary',type:'button',onclick:seed},'Muat data contoh'):null));
   if(allLoaded()&&anyDemo()&&canWrite&&active==='ringkasan'){
