@@ -11481,7 +11481,7 @@ var SMP_MENU=[
 ];
 function smpDay(n){var d=new Date(TODAY.getTime());d.setDate(d.getDate()+n);return isoOf(d)}
 function smpOpDocs(){
-  var kon=((S.kontraktor||[])[0]||{}).nama||'Kontraktor Contoh',D='demo-op-';
+  var kon=window.__KTT_DEMO?'Kontraktor Contoh A':(((S.kontraktor||[])[0]||{}).nama||'Kontraktor Contoh'),D='demo-op-';
   var ym=smpDay(0).slice(0,7),yr=Number(smpDay(0).slice(0,4)),out={};
   out.opmaster=[['Pit','Pit Contoh A'],['Pit','Pit Contoh B'],['Dome','Dome Contoh 1'],['Dome','Dome Contoh 2'],['Lokasi','EFO Contoh']].map(function(x,i){return {id:D+'ms'+i,tipe:x[0],nama:x[1],lat:x[0]==='Lokasi'?-4.9712:null,lon:x[0]==='Lokasi'?121.9411:null,demo:true}});
   var base={mode:'Estimasi bucket',faktor:1.5,mc:30,sio2:30,mgo:15,kontraktor:kon,pit:'Pit Contoh A',demo:true};
@@ -11569,6 +11569,75 @@ function sampleSection(){
   return panel('Data contoh','Isi menu tertentu dengan data contoh untuk mencoba aplikasi, lalu hapus bila sudah tidak diperlukan. Tiap tindakan meminta konfirmasi dua kali.',
     h('p',{class:'sub',style:'margin:0 0 10px',text:tot?tot+' baris data contoh tersimpan saat ini.':'Belum ada data contoh tersimpan.'}),
     h('div',{class:'acts',style:'display:flex;gap:8px;flex-wrap:wrap'},h('button',{type:'button',class:'btn primary',onclick:function(){smpWizard('add')}},'Isi data contoh…'),h('button',{type:'button',class:'btn danger',onclick:function(){smpWizard('del')}},'Hapus data contoh…')));
+}
+async function demoKon(){
+  var kA='Kontraktor Contoh A',kB='Kontraktor Contoh B';
+  var put=async function(c,rows){for(var i=0;i<rows.length;i++){var d=Object.assign({},rows[i],{demo:true}),id=d.id;delete d.id;await save(c,id,d)}};
+  await put('kontraktor',[
+    {id:'dm-c1',nama:kA,bidang:'Penambangan dan pengangkutan',pic:'PIC Contoh A',status:'Qualified',skor:86,evaluasi:smpDay(-45),berikut:smpDay(135),catatan:'Kinerja K3 baik.'},
+    {id:'dm-c2',nama:kB,bidang:'Pembangunan jalan dan drainase',pic:'PIC Contoh B',status:'Percobaan',skor:68,evaluasi:smpDay(-20),berikut:smpDay(70),catatan:'Perlu perbaikan pelaporan harian.'},
+    {id:'dm-c3',nama:'Kontraktor Contoh C',bidang:'Jasa angkutan laut',pic:'PIC Contoh C',status:'Belum dievaluasi',catatan:'Baru masuk, evaluasi dijadwalkan.'}]);
+}
+/* ===== Akun demo: data contoh lengkap, seluruhnya fiktif ===== */
+async function demoFill(){
+  var kA='Kontraktor Contoh A',kB='Kontraktor Contoh B',D='dm-',yr=Number(smpDay(0).slice(0,4)),ym=smpDay(0).slice(0,7);
+  var put=async function(c,rows){for(var i=0;i<rows.length;i++){var d=Object.assign({},rows[i],{demo:true}),id=d.id;delete d.id;await save(c,id,d)}};
+  /* profil perusahaan dan RKAB */
+  await saveProf({nama:'PT CONTOH TAMBANG NUSANTARA',izin_jenis:'IUP Operasi Produksi',nib:'0000000000001',npwp:'00.000.000.0-000.000',no_izin:'CONTOH/IUP-OP/001/2024',tgl_izin:'15 Januari tahun 2024',penerbit:'Instansi Penerbit Contoh',no_sk:'CONTOH/IUP-OP/001/2024',kode_wiup:'0000000000000000',jangka:'Mulai 15 Januari 2024 - 15 Januari 2034',luas:'500',desa:'Desa Contoh',kec:'Kecamatan Contoh',kab:'Kabupaten Contoh',prov:'Provinsi Contoh',alamat:'Jl. Contoh No. 1, Kota Contoh',status_pm:'PMDN',telp:'0800-0000-0000',kbli:'07295 - Pertambangan Bijih Nikel',pj:'Direktur Contoh',jabatan:'Direktur Utama',ktt_nama:'Contoh KTT',ktt_status:'KTT definitif',ktt_no:'CONTOH/KTT/001/2026',ktt_tgl:smpDay(-120),dok_ling:'Persetujuan lingkungan contoh Nomor 001 Tahun 2023',fs:'Persetujuan studi kelayakan contoh Nomor 002 Tahun 2023',saham:'1. Pemegang Saham Contoh A (60%)\n2. Pemegang Saham Contoh B (40%)',pengurus:'Direksi :\n1. Direktur Utama: Direktur Contoh\nDewan Komisaris :\n2. Komisaris Utama: Komisaris Contoh',blok:'Blok I\nBlok II\nBlok III',kota:'Kota Contoh'});
+  await saveRkab({tahun:yr,nomor:'CONTOH/RKAB/001/'+yr,tgl:smpDay(-300),berlaku:yr+'-12-31',limit:120000,satuan:'ton',komoditas:'bijih nikel',penerbit:'Instansi Penerbit Contoh',sifat:'Segera',lampiran:'Satu berkas',perihal:'Persetujuan RKAB Tahun '+yr+' PT Contoh Tambang Nusantara',ketentuan:'Persetujuan diberikan berdasarkan evaluasi data dan dokumen pendukung.\nDilarang disalahgunakan untuk kegiatan yang tidak sesuai peraturan.\nKetidakbenaran data menjadi tanggung jawab perusahaan.'});
+  try{await saveRkpl({tahun:yr+1,kuota:150000,satuan:'WMT',status:'Draft di MinerbaOne',catatan:'Rencana contoh.'})}catch(e){}
+  /* kontraktor, perizinan, surat, distribusi */
+  await put('izin',[
+    {id:'z01',judul:'Persetujuan RKAB Tahun '+yr,nomor:'CONTOH/RKAB/001/'+yr,penerbit:'Instansi Penerbit Contoh',terbit:smpDay(-300),berlaku:yr+'-12-31',catatan:'Produksi bijih nikel maksimal 120.000 ton.'},
+    {id:'z02',judul:'IUP Operasi Produksi',nomor:'CONTOH/IUP-OP/001/2024',penerbit:'Instansi Penerbit Contoh',terbit:'2024-01-15',berlaku:'2034-01-15',catatan:''},
+    {id:'z03',judul:'Persetujuan dokumen lingkungan',nomor:'CONTOH/LH/002/2023',penerbit:'Instansi Lingkungan Contoh',terbit:'2023-06-01',berlaku:smpDay(40),catatan:'Perpanjangan perlu disiapkan.'},
+    {id:'z04',judul:'Persetujuan rencana reklamasi dan pascatambang',nomor:'CONTOH/REK/003/2024',penerbit:'Instansi Penerbit Contoh',terbit:'2024-03-10',berlaku:smpDay(400),catatan:''},
+    {id:'z05',judul:'Izin penggunaan terminal khusus',nomor:'CONTOH/TUKS/004/2024',penerbit:'Instansi Perhubungan Contoh',terbit:'2024-05-20',berlaku:smpDay(-10),catatan:'Sudah lewat masa berlaku, proses perpanjangan berjalan.'},
+    {id:'z06',judul:'Pinjam pakai lahan terminal',nomor:'CONTOH/LHN/005/2024',penerbit:'Pemilik Lahan Contoh',terbit:'2024-07-01',berlaku:smpDay(900),catatan:''}]);
+  await put('surat',[
+    {id:'s01',arah:'Keluar',nomor:'001/SE-KTT/'+yr,tanggal:smpDay(-12),perihal:'Surat Edaran KTT: Kaidah teknik pertambangan yang baik',pihak:'Seluruh jajaran dan kontraktor',status:'Terkirim'},
+    {id:'s02',arah:'Keluar',nomor:'',tanggal:smpDay(-3),perihal:'Surat Edaran KTT: Kewaspadaan musim hujan',pihak:'Seluruh jajaran dan kontraktor',status:'Draft'},
+    {id:'s03',arah:'Masuk',nomor:'CONTOH/RKAB/001/'+yr,tanggal:smpDay(-300),perihal:'Persetujuan RKAB Tahun '+yr,pihak:'Instansi Penerbit Contoh',status:'Diterima'},
+    {id:'s04',arah:'Masuk',nomor:'CONTOH/INS/017/'+yr,tanggal:smpDay(-25),perihal:'Hasil inspeksi tambang triwulan lalu',pihak:'Inspektur Tambang Contoh',status:'Ditindaklanjuti'}]);
+  await put('distribusi',[
+    {id:'d1',urut:1,nama:'Direktur Utama PT Contoh Tambang Nusantara',kelompok:'Direksi',diterima:true},
+    {id:'d2',urut:2,nama:'Seluruh Head Departemen',kelompok:'Departemen',diterima:true},
+    {id:'d3',urut:3,nama:'Inspektur Tambang Contoh',kelompok:'Pemerintah',diterima:false},
+    {id:'d4',urut:4,nama:'Head Departemen HSE Contoh',kelompok:'Departemen',diterima:true},
+    {id:'d5',urut:5,nama:'Seluruh Head Departemen Contoh',kelompok:'Departemen',diterima:true},
+    {id:'d6',urut:6,nama:kA,kelompok:'Kontraktor',diterima:true},
+    {id:'d7',urut:7,nama:kB,kelompok:'Kontraktor',diterima:false}]);
+  /* izin kerja */
+  await put('ptw',[
+    {id:'w01',nomor:'PTW-'+ym.replace('-','')+'-001',jenis:'Pekerjaan Panas (Las, Gerinda)',lokasi:'Workshop utama',pelaksana:'Regu las workshop',pemohon:'PJO Workshop',asal:'staf',mulai:smpDay(-6),selesai:smpDay(-6),jumlah:3,pekerjaan:'Pengelasan perbaikan bucket excavator.',bahaya:'Percikan api, luka bakar, asap las.',kendali:'Area bersih radius 10 m, APAR dan pengawas api siaga.',apd:'Helm, topeng las, sarung tangan kulit.',status:'Ditutup',diputus_oleh:'Head HSE',diputus_peran:'HSE',tutup_oleh:'Head HSE',catatan_tutup:'Area bersih, tidak ada bara tersisa.'},
+    {id:'w02',nomor:'PTW-'+ym.replace('-','')+'-002',jenis:'Pekerjaan di Ketinggian',lokasi:'Menara lampu stockpile',pelaksana:'Regu listrik',pemohon:'PJO Pemeliharaan',asal:'staf',mulai:smpDay(0),selesai:smpDay(1),jumlah:2,pekerjaan:'Penggantian armatur lampu setinggi 9 m.',bahaya:'Jatuh dari ketinggian, benda jatuh.',kendali:'Harness terkait, area bawah dibatasi, perkakas diikat.',apd:'Full body harness, helm bertali dagu.',status:'Disetujui',diputus_oleh:'Head HSE',diputus_peran:'HSE'},
+    {id:'w03',nomor:'PTW-'+ym.replace('-','')+'-003',jenis:'Penggalian',lokasi:'Drainase tepi jalan hauling',pelaksana:kB,pemohon:'PJO Sipil',asal:'staf',mulai:smpDay(2),selesai:smpDay(4),jumlah:5,pekerjaan:'Penggalian parit drainase sedalam 1,5 m sepanjang 40 m.',bahaya:'Longsoran dinding galian, jaringan utilitas.',kendali:'Cek utilitas, dinding galian dilandaikan, pagar dan rambu.',apd:'Helm, sepatu keselamatan, rompi reflektif.',status:'Menunggu'}]);
+  /* personel, produksi, laporan, checklist RKAB */
+  await put('personel',[
+    {id:'p01',nama:'Contoh KTT',jabatan:'Kepala Teknik Tambang',sertifikat:'KTT Kelas I',berlaku:smpDay(900),catatan:''},
+    {id:'p05',nama:'Contoh Geologis',jabatan:'Geologis',sertifikat:'Sertifikat Kompetensi Geologi',berlaku:smpDay(500),catatan:''},
+    {id:'p06',nama:'Contoh Surveyor',jabatan:'Surveyor Tambang',sertifikat:'Sertifikat Kompetensi Survei',berlaku:smpDay(25),catatan:'Perpanjangan perlu disiapkan.'},
+    {id:'p07',nama:'Contoh Petugas Lingkungan',jabatan:'Petugas Lingkungan',sertifikat:'Pengelola Lingkungan',berlaku:smpDay(300),catatan:''}]);
+  await Promise.all(['r01','r02'].map(function(i){return remove('produksi',i)}));
+  var pr=[[1,8200],[2,9100],[3,10400],[4,9800],[5,11200],[6,10100],[7,9600],[8,10800],[9,10300],[10,11500]],mm=Number(smpDay(0).slice(5,7));
+  await put('produksi',pr.filter(function(x){return x[0]<mm}).map(function(x){return {id:'dm-r'+x[0],periode:yr+'-'+('0'+x[0]).slice(-2),realisasi:x[1],catatan:'Realisasi contoh.'}}).concat([{id:'dm-r'+mm,periode:ym,realisasi:4400,catatan:'Berjalan.'}]));
+  var bab={};for(var i=0;i<=12;i++)bab['bab_'+i]=i<8?'Terisi':'Nihil';
+  await put('laporan',[1,2,3].map(function(t){return Object.assign({id:'tw-'+yr+'-'+t,tahun:yr,tw:t,status:t<3?'Disampaikan':'Disusun',ob:t*52000,jual:t*28000,biaya:t*9500000000,tk:48,k3:0,ppm:t*180000000,pnbp:t*2100000000,catatan:'Laporan contoh triwulan '+t+'.'},bab)}));
+  var pl=['Dokumen administratif perusahaan','Laporan estimasi sumber daya dan cadangan','Bukti pembayaran PNBP mineral','Peta digital realisasi dan rencana','Pengesahan Kepala Teknik Tambang','Bukti jaminan reklamasi','Produksi tidak melebihi kapasitas studi kelayakan','Justifikasi perkiraan produksi','Pengisian formulir dan unggah dokumen','Laporan berkala triwulan berjalan lengkap','Rencana persetujuan penggunaan kawasan'],st=['Selesai','Selesai','Selesai','Proses','Selesai','Proses','Selesai','Belum','Proses','Selesai','Belum'];
+  await put('rkabplan',pl.map(function(t,i){return {id:'p'+('0'+(i+1)).slice(-2),no:i+1,item:t,dasar:'Ketentuan RKAB (contoh)',status:st[i]}}));
+  /* operasional: tambahan agar alur Pit, Dome, ETO, EFO, Barging terlihat lengkap */
+  var O='demo-op-',base={mode:'Estimasi bucket',faktor:1.5,mc:30,sio2:30,mgo:15,kontraktor:kA};
+  function sm(i,o){return Object.assign({id:O+'sm'+i},base,o)}
+  var s5=sm(5,{kode:'SMC05',tanggal:smpDay(-4),pit:'Pit Contoh B',dome:'Dome Contoh 2',bucket:100,wmt:150,ni:1.6,fe:18,final:true,etoId:O+'eto2',lab:'LAB-C05'}),
+      s6=sm(6,{kode:'SMC06',tanggal:smpDay(-3),pit:'Pit Contoh A',dome:'Dome Contoh 2',bucket:60,wmt:90,ni:1.45,fe:26,final:true,etoId:O+'eto2',lab:'LAB-C06'});
+  s5['class']=opClass(1.6,18).name;s6['class']=opClass(1.45,26).name;
+  var rows={opsm:[s5,s6,sm(7,{kode:'SMC07',tanggal:smpDay(0),pit:'Pit Contoh A',bucket:48,wmt:72,ni:1.2,fe:35,final:false}),sm(8,{kode:'SMC08',tanggal:smpDay(0),pit:'Pit Contoh B',dome:'Dome Contoh 1',bucket:40,wmt:60,ni:1.8,fe:14,final:false})],
+    opeto:[{id:O+'eto2',kode:'BLEND-C02',nama:'BLEND-C02',tanggal:smpDay(-2),status:'ETO',wmt:240,dmt:168,saldo:240,saldoDmt:168,mc:30,ni:1.54,fe:21,sio2:30,mgo:15,metode:'Composite Dome final',kontraktor:kA,
+      sumber:[{sm:O+'sm5',kode:'SMC05',dome:'Dome Contoh 2',wmt:150,dmt:105,mc:30,ni:1.6,fe:18,sio2:30,mgo:15},{sm:O+'sm6',kode:'SMC06',dome:'Dome Contoh 2',wmt:90,dmt:63,mc:30,ni:1.45,fe:26,sio2:30,mgo:15}]}],
+    opbarge:[{id:O+'bg2',tanggal:smpDay(0),ref:'KARGO-C02',pembeli:'Pembeli Contoh',vessel:'TB Contoh 2',status:'Dalam Proses',sumber:[{batch:O+'eto1',wmt:60,dmt:42,nama:'BLEND-C01'}]}],
+    oplog:[['SM difinalkan','SMC05',150],['SM difinalkan','SMC06',90],['ETO dibentuk','BLEND-C02 · 2 sumber',240]].map(function(x,i){return {id:O+'lg'+(10+i),ts:new Date().toISOString(),aktivitas:x[0],detail:x[1],wmt:x[2],kontraktor:kA}}),
+    opplan:[0,1,2,3,4,5].map(function(n){return {id:O+'ph'+n,kind:'harian',tanggal:smpDay(-n),target:200}})};
+  for(var c in rows)await put(c,rows[c]);
 }
 
 /* ---------- hosting mandiri: Supabase (aktif hanya di luar claude.ai) ---------- */
@@ -11690,10 +11759,10 @@ function demoStart(exp){
   document.body.append(bar);document.documentElement.classList.add('dm-on');
   setTimeout(function(){location.reload()},Math.min(left+500,2147000000));
   var real={};COLS.forEach(function(c){(SEED[c]||[]).forEach(function(r){if(!r.demo)real[c+':'+r.id]=1})});
-  var SAN=[['Andy Fadjrun Assiddiqi','Contoh KTT'],['PT Inti Resources Mandiri','Kontraktor Contoh A'],['PT Maleo Berkah Perkasa','Kontraktor Contoh B'],['Tim reklamasi SSU','Tim reklamasi perusahaan'],['Personel SSU','Personel perusahaan'],['Persemaian SSU','Persemaian perusahaan']];
+  var SAN=[['Andy Fadjrun Assiddiqi','Contoh KTT'],['PT Inti Resources Mandiri','Kontraktor Contoh A'],['PT Maleo Berkah Perkasa','Kontraktor Contoh B'],['Tim reklamasi SSU','Tim reklamasi perusahaan'],['Personel SSU','Personel perusahaan'],['Persemaian SSU','Persemaian perusahaan'],['Terminal khusus Mapila','Terminal khusus']];
   function strip(){COLS.forEach(function(c){var j=JSON.stringify(S[c].filter(function(r){return !real[c+':'+r.id]}));SAN.forEach(function(x){j=j.split(x[0]).join(x[1])});S[c]=JSON.parse(j)})}
   try{if(typeof tenantBlank==='function')tenantBlank()}catch(e){}
-  Promise.resolve(init()).then(function(){strip();return typeof smpRun==='function'?smpRun('add',SMP_MENU):0}).then(function(){strip();schedule()},function(e){if(window.console)console.error(e)});
+  Promise.resolve(init()).then(function(){strip();return typeof demoKon==='function'?demoKon():0}).then(function(){return typeof smpRun==='function'?smpRun('add',SMP_MENU):0}).then(function(){strip();return typeof demoFill==='function'?demoFill():0}).then(function(){schedule()},function(e){if(window.console)console.error(e)});
 }
 function hostStart(){
   var dx=demoExp();if(dx){demoStart(dx);return}
@@ -12447,7 +12516,7 @@ function banners(){
   if(MODE==='memory'&&!window.__KTT_DEMO)out.push(h('div',{class:'note warn'},h('p',{text:'Mode contoh: penyimpanan bersama tidak tersedia di tampilan ini, perubahan hilang saat halaman ditutup.'})));
   if(MODE==='live'&&allLoaded()&&totalRows()===0&&TENANT_BLANK&&!srPjo())out.push(h('div',{class:'note'},h('p',{text:'Akun Anda masih kosong. Mulai dari Setelan: lengkapi profil perusahaan dan data KTT, lalu tambahkan data di tiap menu. Panduan singkat muncul saat Anda membuka menu.'}),h('a',{class:'btn primary',href:'#setelan',text:'Buka Setelan'})));
   else if(MODE==='live'&&allLoaded()&&totalRows()===0&&!srPjo())out.push(h('div',{class:'note'},h('p',{text:'Platform KTT masih kosong. Muat data contoh untuk melihat semua modul terisi, lalu ganti dengan data PT Surya Saga Utama.'}),canWrite?h('button',{class:'btn primary',type:'button',onclick:seed},'Muat data contoh'):null));
-  if(allLoaded()&&anyDemo()&&canWrite&&active==='ringkasan'){
+  if(allLoaded()&&anyDemo()&&canWrite&&active==='ringkasan'&&!window.__KTT_DEMO){
     var armed=false,b=h('button',{class:'btn',type:'button'},'Hapus data contoh');
     b.addEventListener('click',function(){if(!armed){armed=true;b.textContent='Klik lagi untuk menghapus';setTimeout(function(){armed=false;b.textContent='Hapus data contoh'},4000);return}removeDemo()});
     out.push(h('div',{class:'note'},h('p',{text:'Baris bertanda “contoh” adalah data ilustrasi. Dokumen RKAB, surat Pjs. KTT, dan nama dua kontraktor berasal dari dokumen asli; skor, bidang, dan kontrak kontraktor masih kosong untuk Anda isi.'}),b));
