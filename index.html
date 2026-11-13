@@ -1629,7 +1629,7 @@ nav#nav .ngl>div a.on,nav#nav .ngl>div a[aria-current]{border-radius:8px}
 .smp-q{margin:6px 0 10px;font-size:16px;font-weight:600;line-height:1.4}
 .smp-sum{margin:0 0 14px;padding-left:18px;color:var(--muted);font-size:13px}
 .smp .acts{display:flex;gap:8px;align-items:center;margin-top:10px}
-.dm-bar{position:fixed;left:0;right:0;top:0;z-index:60;background:var(--brand);color:#fff;padding:6px max(12px,env(safe-area-inset-right,0px)) 6px max(12px,env(safe-area-inset-left,0px));font-size:12.5px;line-height:1.35;text-align:center}
+.dm-bar{position:fixed;left:0;right:0;top:0;z-index:60;background:#0b6b61;color:#fff;padding:6px max(12px,env(safe-area-inset-right,0px)) 6px max(12px,env(safe-area-inset-left,0px));font-size:12.5px;line-height:1.35;text-align:center}
 html.dm-on body{padding-top:30px}
 html.dm-on .dm-bar+*{}
 
@@ -6720,6 +6720,7 @@ function wySaveBackup(onlyYear){
 }
 
 /* tampilan */
+document.addEventListener('ktt-theme',function(){schedule()});
 function wyTheme(){var a=document.documentElement.getAttribute('data-theme');return a==='dark'||a==='light'?a:'auto'}
 function wySetTheme(v){
   var r=document.documentElement;
@@ -12480,10 +12481,10 @@ var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function isDark(){var a=root.getAttribute('data-theme');return a?a==='dark':mq.matches}
 function sync(){var d=isDark();tt.setAttribute('aria-pressed',d?'true':'false');tt.setAttribute('aria-label',d?'Mode malam aktif, ganti ke siang':'Mode siang aktif, ganti ke malam')}
 sync();
-if(mq.addEventListener)mq.addEventListener('change',sync);
+if(mq.addEventListener)mq.addEventListener('change',function(){sync();try{document.dispatchEvent(new Event('ktt-theme'))}catch(e){}});
 tt.addEventListener('click',function(){
   var next=isDark()?'light':'dark',r=tt.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
-  var apply=function(){root.setAttribute('data-theme',next);try{localStorage.setItem('ktt-theme',next)}catch(e){}sync()};
+  var apply=function(){root.setAttribute('data-theme',next);try{localStorage.setItem('ktt-theme',next)}catch(e){}sync();try{document.dispatchEvent(new Event('ktt-theme'))}catch(e){}};
   if(document.startViewTransition&&!reduced){
     var vt=document.startViewTransition(apply);
     vt.ready.then(function(){var rad=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y));
