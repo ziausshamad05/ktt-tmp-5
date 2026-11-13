@@ -2172,12 +2172,14 @@ var CFG={
    {k:'jabatan',l:'Jabatan',t:'text',req:1},
    {k:'sertifikat',l:'Sertifikat atau kompetensi',t:'text'},
    {k:'berlaku',l:'Berlaku sampai',t:'date'},
+   {k:'kerja',l:'Keterangan kerja',t:'select',o:['Masih bekerja','Tidak aktif']},
    {k:'catatan',l:'Catatan',t:'area'}],
-  defaults:{},
+  defaults:{kerja:'Masih bekerja'},
   sort:function(a,b){return String(a.nama||'').localeCompare(String(b.nama||''))},
   cols:[
    {l:'Nama',r:function(r){return r.nama}},
    {l:'Jabatan',r:function(r){return r.jabatan||'—'}},
+   {l:'Keterangan kerja',r:function(r){return r.kerja==='Tidak aktif'?badge('Tidak aktif','crit'):r.kerja==='Masih bekerja'?badge('Masih bekerja','good'):badge('Belum diisi','')}},
    {l:'Sertifikat',r:function(r){return r.sertifikat||'—'}},
    {l:'Berlaku s/d',r:function(r){return fmt(r.berlaku)}},
    {l:'Status',r:function(r){var s=sertStatus(r);return badge(s[0],s[1])}}]},
@@ -11627,6 +11629,7 @@ async function demoFill(){
     {id:'p05',nama:'Contoh Geologis',jabatan:'Geologis',sertifikat:'Sertifikat Kompetensi Geologi',berlaku:smpDay(500),catatan:''},
     {id:'p06',nama:'Contoh Surveyor',jabatan:'Surveyor Tambang',sertifikat:'Sertifikat Kompetensi Survei',berlaku:smpDay(25),catatan:'Perpanjangan perlu disiapkan.'},
     {id:'p07',nama:'Contoh Petugas Lingkungan',jabatan:'Petugas Lingkungan',sertifikat:'Pengelola Lingkungan',berlaku:smpDay(300),catatan:''}]);
+  await put('personel',S.personel.map(function(r){return Object.assign({},r,{kerja:r.id==='p04'?'Tidak aktif':'Masih bekerja'})}));
   await Promise.all(['r01','r02'].map(function(i){return remove('produksi',i)}));
   var pr=[[1,8200],[2,9100],[3,10400],[4,9800],[5,11200],[6,10100],[7,9600],[8,10800],[9,10300],[10,11500]],mm=Number(smpDay(0).slice(5,7));
   await put('produksi',pr.filter(function(x){return x[0]<mm}).map(function(x){return {id:'dm-r'+x[0],periode:yr+'-'+('0'+x[0]).slice(-2),realisasi:x[1],catatan:'Realisasi contoh.'}}).concat([{id:'dm-r'+mm,periode:ym,realisasi:4400,catatan:'Berjalan.'}]));
