@@ -1662,6 +1662,22 @@ html.dm-on .dm-bar+*{}
 .pg-tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .pg-tl li{display:grid;gap:2px;padding:10px 12px 10px 14px;border-left:3px solid var(--line);background:var(--mute-soft);border-radius:0 8px 8px 0}
 .pg-tl li small{color:var(--muted)}.pg-tl li.ok{border-left-color:var(--good)}.pg-tl li.run{border-left-color:var(--info);background:var(--info-soft)}
+/* ===== pelacakan publik ===== */
+html.lc-on body>*:not(.lc-pub):not(script):not(style){display:none!important}
+.lc-pub{min-height:100vh;background:var(--bg);color:var(--ink);padding-block:clamp(24px,6vw,64px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.lc-wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.lc-eyebrow{margin:0;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lc-t{margin:0;font-family:var(--f-head);font-size:clamp(26px,5vw,38px);line-height:1.1;text-wrap:balance}
+.lc-s{margin:0;color:var(--muted);max-width:58ch}
+.lc-form{display:flex;gap:8px;flex-wrap:wrap}.lc-in{flex:1 1 240px;min-width:0}
+.lc-res{display:flex;flex-direction:column;gap:12px}
+.lc-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.lc-big{margin:0;font-family:var(--f-head);font-size:20px}
+.lc-bar{height:8px;border-radius:99px;background:var(--mute-soft);overflow:hidden}.lc-bar i{display:block;height:100%;background:var(--good);border-radius:99px}
+.lc-sub,.lc-foot{margin:0;color:var(--muted);font-size:13px}
+.lc-h{margin:0;font-size:15px}
+.lc-st{font-size:12px;color:var(--muted)}
+.lc-card.pg-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
 
 .pp-wrap{max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface2)}
 .paper{background:#fff;color:#1b211d;border-radius:4px;padding:26px 28px;box-shadow:0 1px 8px rgba(0,0,0,.18);font-family:var(--f-body);font-size:13px;line-height:1.5}
@@ -2028,6 +2044,8 @@ function izinStatus(r){
   if(d<=90)return [d+' hari lagi','warn'];
   return ['Aktif','good'];
 }
+/* personel yang masih bekerja: dipakai untuk semua KPI */
+function persAkt(){return S.personel.filter(function(r){return r.kerja!=='Tidak aktif'})}
 function sertStatus(r){
   if(!r.berlaku)return ['Tanpa tanggal berakhir','mute'];
   var d=daysTo(r.berlaku);
@@ -2464,7 +2482,7 @@ function metrics(){
   m.ptwOpen=ptwMetrik().tunggu+ptwMetrik().kedal;
   m.izinAttn=S.izin.filter(function(r){var t=izinStatus(r)[1];return t==='crit'||t==='warn'});
   m.izinIncomplete=S.izin.filter(function(r){return izinStatus(r)[0]==='Lengkapi data'});
-  m.persAttn=S.personel.filter(function(r){var t=sertStatus(r)[1];return t==='crit'||t==='warn'});
+  m.persAttn=persAkt().filter(function(r){var t=sertStatus(r)[1];return t==='crit'||t==='warn'});
   m.inspLate=S.inspeksi.filter(function(r){return inspState(r).late});
   m.inspBad=S.inspeksi.filter(function(r){return r.kondisi&&r.kondisi!=='Baik'});
   m.pjoAll=S.surat.filter(function(r){return r.asal==='pjo'}).length;
@@ -4640,7 +4658,7 @@ function hseLead(Y){
   out.push(['Pengendalian risiko tepat target',pc(rOk,rk.length),HSE_TGT.kendali,rOk+' dari '+rk.length+' pengendalian','risiko']);
   var sp=(S.sop||[]),spOk=sp.filter(function(r){return r.status==='Disahkan'}).length;
   out.push(['SOP K3 berstatus disahkan',pc(spOk,sp.length),HSE_TGT.sop,spOk+' dari '+sp.length+' SOP','sop']);
-  var ps=S.personel.filter(function(r){return r.berlaku}),pOk=ps.filter(function(r){return sertStatus(r)[1]==='good'}).length;
+  var ps=persAkt().filter(function(r){return r.berlaku}),pOk=ps.filter(function(r){return sertStatus(r)[1]==='good'}).length;
   out.push(['Sertifikat kompetensi berlaku',pc(pOk,ps.length),HSE_TGT.sert,pOk+' dari '+ps.length+' personel','personel']);
   return out;
 }
@@ -6906,7 +6924,7 @@ var GD_FAQ=[
  ['Mengisi data kontraktor dan sertifikat','Buka Kontraktor dan CSMS, klik baris kontraktor, lalu isi PJO, petugas K3, nomor dan masa berlaku kontrak. Gulir ke Kelengkapan sertifikat dan dokumen wajib, klik sel (misalnya SMK3 atau SIO) untuk mengisi nomor, penerbit, dan masa berlaku. Hijau berarti berlaku, kuning berakhir dalam 90 hari, merah kedaluwarsa. Pindaian dokumen dapat dilampirkan pada form yang sama.'],
  ['Melihat contoh peta untuk matriks yang memerlukan peta','Buka formulir matriks yang bertanda Perlu peta, lalu klik Contoh peta dan isi yang diharapkan di bagian Lampiran peta. Tersedia gambar contoh dan daftar isi yang perlu ada di peta (judul, utara, skala, grid koordinat, legenda, batas WIUP, sumber data dan pengesahan) serta isi khusus tiap matriks. Klik gambar untuk memperbesar atau Unduh contoh (PNG) untuk disimpan. Contoh hanya ilustrasi skematik dan tidak ikut masuk ke PDF. Susun peta asli dari data survei lalu unggah sebagai lampiran.'],
  ['Memilih dan membeli paket langganan','Buka menu Langganan dan paket. Pilih Bulanan (harga promo berlaku sampai 20 November) atau Sekali beli untuk akses seumur hidup, klik tombol paket, isi data penagihan lalu Buat pesanan. Paket Dasar yang dibeli sekali dapat ditingkatkan ke Profesional, dan harganya dipotong sebesar harga Dasar yang sudah dibayar. Harga diskon seumur hidup berlaku sampai akhir tahun. Transfer sesuai nominal (termasuk kode unik) ke rekening yang tampil, kemudian unggah bukti transfer di jendela pesanan. Admin memeriksa bukti dan menekan Terima dan aktifkan, sehingga paket dan masa berlakunya muncul di bagian Paket Anda. Admin mengatur harga, tanggal promo, isi paket, rekening, PPN dan QRIS lewat Kelola paket dan rekening.'],
- ['Paket Dasar, Profesional, dan peran KTT atau HSE','Paket Dasar hanya untuk peran KTT: menu K3, reklamasi, surat menyurat, kontraktor dan CSMS, serta personel terkunci (tampil dengan ikon gembok). Paket Profesional membuka semua menu dan mendukung peran KTT, HSE dan PJO. Admin memilih peran tiap anggota di Setelan, bagian Anggota; anggota berperan HSE hanya melihat menu dasbor, K3, reklamasi, kontraktor dan CSMS, serta personel. Anggota berperan PJO (Penanggung Jawab Operasional) hanya melihat menu Surat Menyurat, harus berhak akses Penyunting dan bukan Admin.'],
+ ['Paket Dasar, Profesional, dan peran KTT atau HSE','Paket Dasar hanya untuk peran KTT: menu K3, reklamasi, Pengapalan, surat menyurat, kontraktor dan CSMS, serta personel terkunci (tampil dengan ikon gembok). Paket Profesional membuka semua menu dan mendukung peran KTT, HSE dan PJO. Admin memilih peran tiap anggota di Setelan, bagian Anggota; anggota berperan HSE hanya melihat menu dasbor, K3, reklamasi, kontraktor dan CSMS, serta personel. Anggota berperan PJO (Penanggung Jawab Operasional) hanya melihat menu Surat Menyurat, harus berhak akses Penyunting dan bukan Admin.'],
  ['Mengubah daftar blok dan melampirkan peta per matriks','Buka Laporan dan RKAB Berikutnya, lalu gulir ke Form matriks laporan. Bagian Daftar blok mengatur nama blok yang menjadi baris di Matrik 3, 4.a, 6, 7.b, 8.a, 8.b, 9.a, 10.d, dan 11.a. Mengganti nama aman. Menambah atau menghapus blok akan mengosongkan isian manual di tabel tersebut, jadi aplikasi meminta Anda klik sekali lagi untuk konfirmasi. Untuk peta, klik Isi pada tabel yang bertanda Perlu peta (misalnya Matrik 8.a, 15, 16, 17), lalu unggah gambar atau PDF di bagian Lampiran peta. Setiap peta menjadi halaman Lampiran di akhir PDF, dan tabelnya diberi rujukan nomor lampiran.'],
  ['Menyesuaikan nama perusahaan dan KTT','Buka Setelan, bagian Perusahaan dan Kepala Teknik Tambang. Klik Ubah data KTT untuk mengganti nama, status (Pjs. KTT atau KTT definitif), nomor dan tanggal surat. Klik Ubah profil perusahaan untuk mengganti nama perusahaan dan jenis izin. Perubahan langsung tampil di bagian atas aplikasi, Dasbor, dan laporan PDF.'],
  ['Rencana reklamasi dan bukaan lahan per tahun','Buka Reklamasi dan pascatambang, tab Rencana vs realisasi. Klik Tambah rencana tahun, lalu isi rencana bukaan lahan, rencana reklamasi, biaya, dan nomor dokumen rencana reklamasi. Tombol ini mengisi awal dengan angka tahun sebelumnya agar Anda cukup mengubah penambahannya. Realisasi dihitung dari daftar area menurut Tahun rencana. Sisa bukaan yang belum direklamasi tampil di kartu ringkasan.'],
@@ -6996,15 +7014,15 @@ function fx2Svg(svg){
 /* ===== Langganan: pilih paket, buat pesanan, bayar manual, verifikasi admin ===== */
 var IS_ADM=true;
 var SUB={docs:{}};
-var SUB_KUNCI_DASAR=['k3','risiko','sop','inspeksi','temuan','agenda','inventaris','reklamasi','kontraktor','personel','surat','ptw'];
+var SUB_KUNCI_DASAR=['k3','risiko','sop','inspeksi','temuan','agenda','inventaris','reklamasi','kontraktor','personel','surat','ptw','pgdash','pgship','pgarsip','pgmaster','pgset','pgtrack'];
 var SUB_PLANS=[
  {id:'dasar',label:'Peran KTT',nama:'Dasar',ket:'Untuk KTT yang menertibkan RKAB, laporan dan perizinan.',normal:1500000,bln:500000,sampai:'2026-11-20',sekali:5000000,sekaliNormal:20000000,sekaliSampai:'2026-12-31',peran:['ktt'],
   kunci:SUB_KUNCI_DASAR,
-  fitur:['Dasbor dan Statistik KPI HSE','RKAB dan produksi','Laporan dan RKAB berikutnya','Perizinan','Overview Penambangan: produksi, blending, stockpile dan barging','Pengapalan: shipment 12 tahap, 6 dokumen resmi, arsip PDF, master data dan kalkulator HPM','Fitur AI: analisis dasbor dan laporan (memakai Kredit AI)','Akses untuk peran KTT','Bisa ditingkatkan ke Profesional'],
-  tidak:['Seluruh menu K3','Reklamasi dan pascatambang','Kontraktor dan CSMS','Personel','Surat menyurat','Izin Kerja (PTW)','Izin Kerja (PTW)','Akses peran HSE dan PJO']},
+  fitur:['Dasbor dan Statistik KPI HSE','RKAB dan produksi','Laporan dan RKAB berikutnya','Perizinan','Overview Penambangan: produksi, blending, stockpile dan barging','Fitur AI: analisis dasbor dan laporan (memakai Kredit AI)','Akses untuk peran KTT','Bisa ditingkatkan ke Profesional'],
+  tidak:['Seluruh menu K3','Reklamasi dan pascatambang','Kontraktor dan CSMS','Personel','Pengapalan: shipment 12 tahap, dokumen resmi, arsip PDF, master data dan kalkulator HPM','Surat menyurat','Izin Kerja (PTW)','Akses peran HSE dan PJO']},
  {id:'profesional',label:'Peran KTT, HSE dan PJO',nama:'Profesional',ket:'Semua menu terbuka untuk KTT dan tim HSE, ditambah akun PJO untuk surat menyurat dan izin kerja.',normal:3750000,bln:1000000,sampai:'2026-11-20',sekali:9000000,sekaliNormal:50000000,sekaliSampai:'2026-12-31',peran:['ktt','hse','pjo'],populer:true,
   kunci:[],
-  fitur:['Semua fitur paket Dasar','Fitur AI lengkap, termasuk SOP K3 Builder dan chat bantuan (memakai Kredit AI)','Seluruh menu K3: insiden, IBPR dan HIRADC, SOP Builder, inspeksi, temuan, agenda, inventaris','Reklamasi dan pascatambang','Kontraktor dan CSMS','Personel','Surat menyurat dengan disposisi dari PJO ke akun KTT','Izin Kerja (PTW): PJO mengajukan, HSE dan KTT memutuskan','Izin Kerja (PTW): PJO mengajukan, HSE dan KTT memutuskan','Akses peran KTT, HSE dan PJO, menu menyesuaikan peran']}
+  fitur:['Semua fitur paket Dasar','Fitur AI lengkap, termasuk SOP K3 Builder dan chat bantuan (memakai Kredit AI)','Seluruh menu K3: insiden, IBPR dan HIRADC, SOP Builder, inspeksi, temuan, agenda, inventaris','Reklamasi dan pascatambang','Kontraktor dan CSMS','Personel','Pengapalan: shipment 12 tahap, 6 dokumen resmi, arsip PDF, master data, kalkulator HPM dan pelacakan','Surat menyurat dengan disposisi dari PJO ke akun KTT','Izin Kerja (PTW): PJO mengajukan, HSE dan KTT memutuskan','Akses peran KTT, HSE dan PJO, menu menyesuaikan peran']}
 ];
 var SUB_JUAL={nama:'',bank:'',norek:'',atas:'',wa:'',email:'',ppn:11,catatan:'',qris:null};
 function subRp(n){return 'Rp '+Math.round(Number(n)||0).toLocaleString('id-ID')}
@@ -7184,7 +7202,7 @@ function subDemoGo(p){
 }
 function subFaq(J){
   var q=[
-    ['Apa beda paket Dasar dan Profesional?','Dasar untuk peran KTT: dasbor, Statistik KPI HSE, RKAB dan produksi, laporan, dan perizinan. Menu K3, reklamasi, surat menyurat, izin kerja (PTW), kontraktor dan CSMS, serta personel terkunci. Profesional membuka semua menu dan menambah peran HSE dan PJO, sehingga tiap anggota hanya melihat menu yang sesuai perannya. PJO hanya melihat menu Surat Menyurat dan Izin Kerja (PTW).'],
+    ['Apa beda paket Dasar dan Profesional?','Dasar untuk peran KTT: dasbor, Statistik KPI HSE, RKAB dan produksi, laporan, dan perizinan. Menu K3, reklamasi, Pengapalan, surat menyurat, izin kerja (PTW), kontraktor dan CSMS, serta personel terkunci. Profesional membuka semua menu dan menambah peran HSE dan PJO, sehingga tiap anggota hanya melihat menu yang sesuai perannya. PJO hanya melihat menu Surat Menyurat dan Izin Kerja (PTW).'],
     ['Apa maksud sekali beli?','Anda membayar sekali dan paket aktif seumur hidup tanpa biaya perpanjangan. Paket Dasar yang dibeli sekali bisa ditingkatkan ke Profesional: harga Profesional dipotong sebesar harga Dasar yang sudah Anda bayar. Harga diskon seumur hidup berlaku sampai akhir tahun (31 Desember 2026), sesudahnya harga normal berlaku.'],
     ['Sampai kapan harga promo berlaku?','Harga promo bulanan berlaku untuk pesanan yang dibuat sampai tanggal yang tertera di kartu paket. Sesudah itu harga kembali ke harga normal. Harga diskon seumur hidup punya batas sendiri, yaitu akhir tahun.'],
     ['Bagaimana cara membayar?',subHosted()?'Pilih paket, lalu klik Lanjut ke pembayaran. Kode QRIS muncul dengan nominal yang sudah terisi. Pindai dengan aplikasi bank atau e-wallet apa pun, lalu tekan Saya sudah bayar. Paket aktif setelah pengelola mengonfirmasi pembayaran.':'Buat pesanan dari kartu paket, lalu bayar sesuai total yang tertera (sudah termasuk kode unik agar mudah dicocokkan). Anda mengunggah bukti pembayaran di langkah pesanan, dan paket aktif setelah admin memverifikasi.'],
@@ -10434,7 +10452,7 @@ function aiDashContext(){
     rkab:{tahun:RKAB.tahun,batas:RKAB.limit,satuan:RKAB.satuan||'ton',realisasi:m.prod,sisa_hari:daysTo(RKAB_END)},
     k3:{hari_tanpa_lti:m.lti,insiden_90_hari:m.ins90,temuan_terbuka:m.open.length,temuan_terlambat:m.late.length},
     perizinan:{perlu_perhatian:m.izinAttn.length,belum_lengkap:m.izinIncomplete.length,total:S.izin.length},
-    personel:{sertifikat_perlu_perhatian:m.persAttn.length,total:S.personel.length},
+    personel:{sertifikat_perlu_perhatian:m.persAttn.length,total:persAkt().length},
     inspeksi:{terlambat:m.inspLate.length,kondisi_tidak_baik:m.inspBad.length,total:S.inspeksi.length},
     agenda:{terlewat:m.agendaLate.length,dalam_14_hari:m.agendaUp.length},
     inventaris_perhatian:m.invAttn.length,kontraktor_perhatian:m.kontAttn.length,
@@ -11774,12 +11792,14 @@ function pgOpts(c,fn,ph){return [['',ph||'Pilih…']].concat(pgSorted(c).map(fun
 function pgShipForm(row){
   var ro=!pgCan(),d=Object.assign({},row||{}),nx=pgNextNo(),f={},err=h('p',{class:'err',hidden:true});
   if(!row){d.no=nx.no;d.resi=nx.resi;d.delivery='FOB barge';d.kurs=(pgHma()[0]||{}).kurs||'';d.rkabTahun=String(TODAY.getFullYear());d.tglSurat=isoOf(TODAY);d.tglMuat=isoOf(TODAY);d.rek='1'}
+  d.publik=d.publik?'true':'';
   var form=h('form',{class:'form',novalidate:true});
   function T(k,l,type,attrs,wide){var e=opInp(type||'text',d[k],Object.assign({disabled:ro},attrs||{}));f[k]=e;form.append(opFld(l,e,wide))}
   function S2(k,l,opts,wide){var e=opSel(opts,d[k],{disabled:ro});f[k]=e;form.append(opFld(l,e,wide));return e}
   function H(t){form.append(h('h3',{class:'pg-fh',text:t}))}
   H('Customer dan kontrak');
   T('no','Nomor pengapalan');T('resi','Nomor resi pelacakan');
+  S2('publik','Pelacakan publik tanpa login',[['','Tidak aktif (hanya anggota)'],['true','Aktif (siapa pun dengan nomor resi)']],true);
   var sc=S2('custId','Customer atau smelter pembeli',pgOpts('pgcust',function(r){return r.nama+(r.kode?' ('+r.kode+')':'')},'— Pilih customer —'));
   var sk=S2('kontrakId','Kontrak atau perjanjian terkait',pgOpts('pgkontrak',function(r){return r.no+' · '+(r.custNama||'')},'— Pilih kontrak —'));
   H('Armada dan rute pelabuhan');
@@ -11813,6 +11833,7 @@ function pgShipForm(row){
     var out=Object.assign({},row||{});delete out.id;
     ['no','resi','custId','kontrakId','bargeId','loadId','dischId','stockId','survId','tglMuat','rkabTahun','rkabNo','delivery','rek','tglSurat'].forEach(function(k){out[k]=f[k].value.trim()});
     ['wmt','ni','fe','mc','sio','harga','kurs','diskon'].forEach(function(k){out[k]=f[k].value===''?null:pgNum(f[k].value)});
+    out.publik=f.publik.value==='true';
     out.nomor=PG_DOC.map(function(_,i){return f['n'+i].value.trim()||(out.no+'/F'+(i+1))});
     if(!out.st)out.st=PG_STAGE.map(function(){return 'Pending'});
     if(row&&row.demo)out.demo=true;
@@ -11949,7 +11970,7 @@ function pgTrack(){
         h('div',{class:'acts'},h('button',{type:'button',class:'btn',onclick:function(){navigator.clipboard&&navigator.clipboard.writeText(s.resi||s.no).then(function(){toast('Nomor resi disalin')}).catch(function(){toast('Salin manual dari kolom di atas')})}},'Salin nomor resi'),h('button',{type:'button',class:'btn',onclick:function(){PG.sel=s.id;location.hash='pgship'}},'Buka shipment'))),
       panel('Pelacakan alur 12 tahap',null,tl),
       panel('Kelengkapan enam dokumen resmi',null,h('div',{class:'pg-docs'},PG_DOC.map(function(x,i){var ok=(s.nomor||[])[i]&&st[Math.min(11,[5,4,3,7,5,11][i])]==='Selesai';return h('div',{class:'pg-dcard'},h('span',{class:'n',text:String(i+1)}),h('b',{text:x[0]}),badge(ok?'Terverifikasi sistem':'Dalam proses',ok?'good':''))}))),
-      h('p',{class:'sub',text:'Halaman ini hanya untuk anggota perusahaan yang sudah masuk. Portal pelacakan publik tanpa login belum tersedia.'}));
+      s.publik?h('div',{class:'acts'},h('button',{type:'button',class:'btn',onclick:function(){var u=lacakUrl(s);navigator.clipboard&&navigator.clipboard.writeText(u).then(function(){toast('Tautan pelacakan publik disalin')}).catch(function(){toast(u)})}},'Salin tautan pelacakan publik'),h('span',{class:'sub',text:'Siapa pun yang memegang tautan atau nomor resi bisa melihat tahap, tongkang, pelabuhan, dan kuantitas, tanpa harga atau kadar.'})):h('p',{class:'sub',text:'Pelacakan publik belum diaktifkan untuk shipment ini. Aktifkan lewat Ubah, pilihan Pelacakan publik tanpa login.'}));
   }
   qi.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();go()}});
   root.append(h('div',{class:'toolbar'},qi,h('button',{type:'button',class:'btn primary',onclick:go},'Lacak resi')),res);
@@ -11976,6 +11997,45 @@ function pgSampleDocs(){
     shp(3,{custId:D+'c2',kontrakId:D+'k2',bargeId:D+'b3',loadId:D+'j1',dischId:D+'j3',stockId:D+'s2',survId:D+'v2',wmt:6500,ni:1.45,fe:27,mc:34,harga:44,tglMuat:smpDay(-3),tglSurat:smpDay(-4),st:st(4,true)}),
     shp(4,{custId:D+'c2',kontrakId:D+'k2',bargeId:D+'b2',loadId:D+'j1',dischId:D+'j3',stockId:D+'s2',survId:D+'v2',wmt:7000,ni:1.5,fe:26,mc:33,harga:44,tglMuat:smpDay(5),tglSurat:smpDay(2),st:st(1,true)})];
   return out;
+}
+/* ===== Pelacakan publik tanpa login: memanggil RPC ktt_lacak_publik, hanya shipment yang ditandai publik ===== */
+function lacakUrl(s){return location.origin+location.pathname+'?lacak='+encodeURIComponent(s.resi||s.no||'')}
+function lacakDraw(res,d){
+  var st=(d.st||[]).slice(0,12);while(st.length<12)st.push('Pending');
+  var done=st.filter(function(x){return x==='Selesai'}).length,cur=st.findIndex(function(x){return x!=='Selesai'}),pct=Math.round(done/12*100);
+  var kv=[['Perusahaan',d.perusahaan||'—'],['No. pengapalan',d.no||'—'],['No. resi',d.resi||'—'],['Tongkang',d.tongkang||'—'],['Pelabuhan muat',d.muat||'—'],['Pelabuhan bongkar',d.bongkar||'—'],['Tanggal muat',d.tglMuat?fmt(d.tglMuat):'—'],['Kuantitas',d.wmt!=null?nf(d.wmt)+' WMT':'—']];
+  var bar=h('div',{class:'lc-bar',role:'progressbar','aria-valuenow':String(pct),'aria-valuemin':'0','aria-valuemax':'100'},h('i',{style:'width:'+pct+'%'}));
+  var tl=h('ol',{class:'pg-tl'},PG_STAGE.map(function(t,i){var k=st[i]==='Selesai'?'ok':(i===cur?'run':'');return h('li',{class:k},h('b',{text:'Tahap '+(i+1)+' · '+t[0]}),h('small',{text:t[1]}),h('span',{class:'lc-st',text:st[i]==='Selesai'?'Selesai':(i===cur?'Sedang berjalan':'Menunggu')}))}));
+  var nd=(d.nomor_ada||[]).filter(Boolean).length;
+  res.replaceChildren(
+    h('div',{class:'lc-card'},h('p',{class:'lc-big',text:cur<0?'Seluruh tahap selesai':'Tahap '+(cur+1)+' dari 12: '+PG_STAGE[cur][0]}),bar,h('p',{class:'lc-sub',text:done+' dari 12 tahap selesai · '+nd+' dari 6 nomor dokumen sudah diterbitkan'})),
+    h('dl',{class:'pg-kv lc-card'},kv.map(function(r){return h('div',null,h('dt',{text:r[0]}),h('dd',{text:r[1]}))})),
+    h('div',{class:'lc-card'},h('h2',{class:'lc-h',text:'Alur 12 tahap'}),tl),
+    h('p',{class:'lc-foot',text:'Pembaruan terakhir '+(d.diperbarui?new Date(d.diperbarui).toLocaleString('id-ID',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—')+'. Halaman ini tidak menampilkan harga, kadar, atau isi kontrak.'}));
+}
+function lacakPublik(q0){
+  document.documentElement.classList.add('lc-on');
+  var c=hostCfg(),res=h('div',{class:'lc-res'}),qi=h('input',{type:'search',class:'lc-in',placeholder:'Nomor resi, contoh TRK-ABC-2026-001','aria-label':'Nomor resi',value:q0||''}),sb=null;
+  var btn=h('button',{type:'button',class:'btn primary',onclick:function(){go()}},'Lacak');
+  var root=h('main',{class:'lc-pub'},h('div',{class:'lc-wrap'},h('p',{class:'lc-eyebrow',text:'Pelacakan pengapalan'}),h('h1',{class:'lc-t',text:'Cek posisi pengapalan'}),h('p',{class:'lc-s',text:'Masukkan nomor resi dari perusahaan pengirim untuk melihat tahap pengapalan dan kelengkapan dokumen.'}),h('div',{class:'lc-form'},qi,btn),res));
+  document.body.append(root);
+  async function go(){
+    var q=qi.value.trim();
+    if(q.length<8){res.replaceChildren(h('p',{class:'empty',text:'Masukkan nomor resi lengkap, minimal 8 karakter.'}));return}
+    if(!c||!window.supabase||!window.supabase.createClient){res.replaceChildren(h('p',{class:'empty',text:'Layanan pelacakan belum dapat dihubungi. Muat ulang halaman.'}));return}
+    try{
+      if(!sb)sb=window.supabase.createClient(c.url,c.key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+      btn.disabled=true;res.replaceChildren(h('p',{class:'empty',text:'Mencari...'}));
+      var r=await sb.rpc('ktt_lacak_publik',{p_resi:q});
+      if(r.error)throw r.error;
+      if(!r.data){res.replaceChildren(h('p',{class:'empty',text:'Data pelacakan tidak ditemukan. Periksa nomor resi, atau tanyakan kepada perusahaan pengirim apakah pelacakan publik sudah diaktifkan.'}));return}
+      lacakDraw(res,r.data);
+      try{history.replaceState(null,'',location.pathname+'?lacak='+encodeURIComponent(q))}catch(e){}
+    }catch(e){res.replaceChildren(h('p',{class:'empty',text:'Gagal mengambil data. Coba lagi sebentar lagi.'}))}
+    finally{btn.disabled=false}
+  }
+  qi.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();go()}});
+  if(q0)go();
 }
 /* ===== Data contoh: isi dan hapus per menu, dengan dua kali konfirmasi ===== */
 var SMP_MENU=[
@@ -12284,6 +12344,7 @@ function demoStart(exp){
   Promise.resolve(init()).then(function(){try{DL=hostDlShim()}catch(e){}strip();return typeof demoKon==='function'?demoKon():0}).then(function(){return typeof smpRun==='function'?smpRun('add',SMP_MENU):0}).then(function(){strip();return typeof demoFill==='function'?demoFill():0}).then(function(){schedule()},function(e){if(window.console)console.error(e)});
 }
 function hostStart(){
+  var lq=/[?&]lacak=([^&]*)/.exec(location.search);if(lq&&hostCfg()&&typeof lacakPublik==='function'){var qv='';try{qv=decodeURIComponent(lq[1])}catch(e){}lacakPublik(qv);return}
   var dx=demoExp();if(dx){demoStart(dx);return}
   if((window.claude&&window.claude.use)||!hostCfg()){init();return}
   if(!window.supabase||!window.supabase.createClient){hostScreen('err','Pustaka penyimpanan gagal dimuat. Periksa sambungan internet lalu muat ulang.');return}
@@ -12572,7 +12633,7 @@ var VIEWS={
         h('div',null,badge(ix.score==null?'Belum ada data':ix.score>=80?'Baik':ix.score>=60?'Perlu perhatian':'Perlu tindakan segera',tone))))));
 
   /* KPI per kelompok */
-  var persD=S.personel.filter(function(r){return r.berlaku}),persOk=persD.filter(function(r){return sertStatus(r)[1]==='good'}).length;
+  var persD=persAkt().filter(function(r){return r.berlaku}),persOk=persD.filter(function(r){return sertStatus(r)[1]==='good'}).length;
   var izinOk=S.izin.filter(function(r){var t=izinStatus(r)[1];return t==='good'||t==='info'}).length;
   var ytd=S.insiden.filter(function(r){return String(r.tanggal||'').slice(0,4)===yr}).length;
   var near=S.insiden.filter(function(r){var d=daysTo(r.tanggal);return /Nyaris/.test(r.jenis||'')&&d!=null&&d>=-90&&d<=0}).length;
@@ -12711,7 +12772,7 @@ var VIEWS={
    {to:'ptw',t:'Izin Kerja (PTW)',v:S.ptw.length+' izin',s:ptwMetrik().tunggu+' menunggu keputusan · '+ptwMetrik().kedal+' kedaluwarsa',c:ptwMetrik().kedal?'crit':ptwMetrik().tunggu?'warn':'info'},
    {to:'izin',t:'Perizinan',v:S.izin.length+' dokumen',s:m.izinAttn.length+' perlu tindakan · '+m.izinIncomplete.length+' belum lengkap',c:m.izinAttn.length?'warn':m.izinIncomplete.length?'info':'good'},
    {to:'surat',t:'Surat Menyurat',v:S.surat.length+' surat',s:m.pjoAll?m.pjoOpen+' surat PJO belum selesai':'Disposisi dari PJO',c:'info'},
-   {to:'personel',t:'Personel',v:S.personel.length+' orang',s:m.persAttn.length+' sertifikat perlu tindakan',c:m.persAttn.length?'warn':'good'}];
+   {to:'personel',t:'Personel',v:persAkt().length+' orang',s:m.persAttn.length+' sertifikat perlu tindakan',c:m.persAttn.length?'warn':'good'}];
   root.append(panel('Status per modul','Warna tepi kartu: hijau sesuai, kuning perlu tindakan, merah mendesak, biru informasi.',
     h('div',{class:'mods'},mods.map(function(x){return h('a',{class:'mod',href:'#'+x.to,style:'border-left-color:var(--'+x.c+')'},h('span',{class:'l',text:x.t}),h('b',{text:x.v}),h('span',{class:'s',text:x.s}))}))));
 
@@ -12808,7 +12869,7 @@ var VIEWS={
   var m=metrics(),root=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
   root.append(head('Personel dan Kompetensi','Pengawas, petugas K3, dan masa berlaku sertifikat kompetensi.'));
   root.append(h('div',{class:'grid'},
-    kpi('Personel',String(S.personel.length),'Terdaftar'),
+    kpi('Personel',String(persAkt().length),'Masih bekerja'+(S.personel.length>persAkt().length?', '+(S.personel.length-persAkt().length)+' tidak aktif':'')),
     kpi('Sertifikat perlu tindakan',String(m.persAttn.length),'Kedaluwarsa atau segera berakhir',m.persAttn.length?'warn':'good')));
   root.append(panel('Daftar personel',null,listView('personel')));
   return root;
@@ -12864,7 +12925,7 @@ function monthsBack(n){var r=[],i;for(i=n-1;i>=0;i--){var d=new Date(TODAY.getFu
 function monthsFwd(n){var r=[],i;for(i=0;i<n;i++){var d=new Date(TODAY.getFullYear(),TODAY.getMonth()+i,1);r.push({k:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),l:MON[d.getMonth()]})}return r}
 function readiness(m){
   var izinOk=S.izin.filter(function(r){var t=izinStatus(r)[1];return t==='good'||t==='info'}).length;
-  var pers=S.personel.filter(function(r){return r.berlaku}),persOk=pers.filter(function(r){return sertStatus(r)[1]==='good'}).length;
+  var pers=persAkt().filter(function(r){return r.berlaku}),persOk=pers.filter(function(r){return sertStatus(r)[1]==='good'}).length;
   var inspOk=S.inspeksi.filter(function(r){return inspState(r).tone==='good'}).length;
   var invOk=S.inventaris.filter(function(r){return invStatus(r)[1]==='good'}).length;
   var kontOk=S.kontraktor.filter(function(r){return !kontIssue(r)}).length;
