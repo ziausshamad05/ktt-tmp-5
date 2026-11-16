@@ -174,7 +174,7 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
 .copy{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .copy code{font-family:var(--f-mono);font-size:13px;background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;user-select:all;overflow-wrap:anywhere}
 
-/* dasbor */
+/* dashboard */
 .ctx{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));padding:12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:8px}
 .ctxi{display:flex;flex-direction:column;gap:1px;min-width:0}
 .ctxi .l{color:var(--muted);font-size:12px}
@@ -566,7 +566,7 @@ nav#nav a .nt{flex:1;min-width:0}
   .rail nav#nav a .n{position:absolute;top:3px;right:8px;min-width:16px;padding:0 4px;font-size:9.5px;line-height:16px;margin:0}
 }
 
-/* ===== dasbor ===== */
+/* ===== dashboard ===== */
 .dhead{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
 .dhead .pagehead{flex:1 1 320px;min-width:0}
 .dact{position:relative;flex:none}
@@ -708,7 +708,7 @@ nav#nav a,.dtabs button{position:relative;z-index:1;overflow:hidden}
 .cn.crit{animation:cpulse 2.6s var(--apple) infinite}
 @keyframes cpulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--crit) 40%,transparent)}60%{box-shadow:0 0 0 6px color-mix(in srgb,var(--crit) 0%,transparent)}}
 
-/* tata letak dasbor: kolom utama + aside, kategori berikon */
+/* tata letak dashboard: kolom utama + aside, kategori berikon */
 .dgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:20px}
 .dmain,.daside{display:flex;flex-direction:column;gap:18px;min-width:0}
 @media (min-width:1240px){.dgrid{grid-template-columns:minmax(0,1fr) 340px;align-items:start}}
@@ -1726,6 +1726,7 @@ html.lc-on body>*:not(.lc-pub):not(script):not(style){display:none!important}
 .kt-foto img{width:100%;height:100%;object-fit:cover}.kt-foto small{font-size:11px;color:var(--muted);text-align:center}
 .kt-fotoact{display:flex;flex-direction:column;gap:4px;min-width:0}.kt-fotoact small{color:var(--muted)}
 .kt-mini{width:24px;height:32px;border-radius:3px;object-fit:cover;display:block;border:1px solid var(--line)}.kt-mini0{background:var(--mute-soft)}
+.pj-strip{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}.pj-strip>span{color:var(--muted)}
 
 .pp-wrap{max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface2)}
 .paper{background:#fff;color:#1b211d;border-radius:4px;padding:26px 28px;box-shadow:0 1px 8px rgba(0,0,0,.18);font-family:var(--f-body);font-size:13px;line-height:1.5}
@@ -2685,7 +2686,7 @@ async function openRkabDoc(){
   var file=h('input',{type:'file',id:'rk-file',accept:accept}),ta=h('textarea',{id:'rk-text',rows:6,placeholder:'Atau tempel teks dokumen persetujuan RKAB di sini…'});
   var st=h('p',{class:'sub',role:'status',style:'margin:0'}),go=h('button',{type:'button',class:'btn primary'},'Baca dengan AI');
   var box=h('div',{style:'display:flex;flex-direction:column;gap:12px'},
-    h('p',{class:'sub',style:'margin:0',text:'Unggah dokumen persetujuan RKAB (PDF atau foto) atau tempel teksnya. AI membaca nomor, tanggal, batas produksi, dan ketentuan. Anda tetap meninjau semua kolom sebelum disimpan, lalu Dasbor dan halaman RKAB menyesuaikan.'}),
+    h('p',{class:'sub',style:'margin:0',text:'Unggah dokumen persetujuan RKAB (PDF atau foto) atau tempel teksnya. AI membaca nomor, tanggal, batas produksi, dan ketentuan. Anda tetap meninjau semua kolom sebelum disimpan, lalu Dashboard dan halaman RKAB menyesuaikan.'}),
     h('label',{class:'fld',for:'rk-file'},h('span',{text:'Berkas dokumen'}),file),
     h('label',{class:'fld',for:'rk-text'},h('span',{text:'Teks dokumen'}),ta),st,
     h('div',{class:'acts',style:'display:flex;gap:8px;justify-content:flex-end'},h('button',{type:'button',class:'btn',onclick:closeModal},'Batal'),go));
@@ -4402,7 +4403,7 @@ function openKttForm(){
     h('label',{class:'fld',for:'kt-st'},h('span',{text:'Status'}),st),
     h('label',{class:'fld',for:'kt-no'},h('span',{text:'Nomor surat penunjukan atau pengesahan'}),no),
     h('label',{class:'fld',for:'kt-tgl'},h('span',{text:'Tanggal surat (mulai bertugas)'}),tg),
-    h('p',{class:'sub wide',style:'margin:0'},'Nama dan status tampil di bagian atas aplikasi, Dasbor, dan laporan PDF. Pilih KTT definitif bila pengesahan sudah selesai.'),err,
+    h('p',{class:'sub wide',style:'margin:0'},'Nama dan status tampil di bagian atas aplikasi, Dashboard, dan laporan PDF. Pilih KTT definitif bila pengesahan sudah selesai.'),err,
     h('div',{class:'acts'},h('span',{class:'grow'}),h('button',{type:'button',class:'btn',onclick:closeModal},'Batal'),
       h('button',{type:'submit',class:'btn primary'},'Simpan')));
   form.addEventListener('submit',async function(e){
@@ -4466,7 +4467,7 @@ function openLapPdf(Y){
   render();
 }
 
-/* ---------- IBPR, HIRA dan HIRADC: register risiko, matriks 5x5 dan dasbor ---------- */
+/* ---------- IBPR, HIRA dan HIRADC: register risiko, matriks 5x5 dan dashboard ---------- */
 var RSK_KAT=['Geoteknik dan lereng','Lalu lintas dan alat berat','Kebakaran dan peledakan','Kelistrikan dan mekanik','Kesehatan kerja','Lingkungan','Pengelolaan B3','Bekerja di air atau ketinggian','Keamanan dan lainnya'];
 var RSK_K=['Sangat jarang','Jarang','Mungkin','Sering','Hampir pasti'];
 var RSK_S=['Sangat ringan','Ringan','Sedang','Berat','Sangat berat'];
@@ -4593,7 +4594,7 @@ function openRisk(row){
 }
 
 /* ---- daftar per tab ---- */
-var RK_TABS=[['dasbor','Dasbor'],['ibpr','IBPR'],['hira','HIRA'],['hiradc','HIRADC'],['matriks','Matriks']];
+var RK_TABS=[['dashboard','Dashboard'],['ibpr','IBPR'],['hira','HIRA'],['hiradc','HIRADC'],['matriks','Matriks']];
 function rkRows(){var qq=(ui.q.risiko||'').toLowerCase(),ff=ui.f.risiko||'';
   return S.risiko.slice().sort(CFG.risiko.sort).filter(function(r){return (!ff||r.kategori===ff)&&(!qq||CFG.risiko.fields.some(function(f){return String(r[f.k]==null?'':r[f.k]).toLowerCase().indexOf(qq)>=0}))})}
 function rkList(tab){
@@ -4622,12 +4623,12 @@ function rkHier(r){
 
 /* ---- tampilan utama ---- */
 function rkView(){
-  var m=rkStat(),root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),tab=ui.rt||'dasbor';
-  if(!RK_TABS.some(function(t){return t[0]===tab}))tab=ui.rt='dasbor';
+  var m=rkStat(),root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),tab=ui.rt||'dashboard';
+  if(!RK_TABS.some(function(t){return t[0]===tab}))tab=ui.rt='dashboard';
   root.append(head('IBPR, HIRA dan HIRADC','Identifikasi bahaya dan penilaian risiko (IBPR), penilaian dengan pengendalian yang ada (HIRA), dan penentuan pengendalian tambahan (HIRADC) dalam satu register, dengan matriks risiko 5×5.'));
   var tabs=h('div',{class:'rtabs',role:'tablist'},RK_TABS.map(function(t){return h('button',{type:'button',role:'tab','aria-selected':String(tab===t[0]),onclick:function(){ui.rt=t[0];paint()}},t[1])}));
   root.append(tabs);
-  if(tab==='dasbor'){
+  if(tab==='dashboard'){
     root.append(h('div',{class:'grid'},
       kpi('Risiko terdaftar',String(m.n),'Dalam register'),
       kpi('Tinggi atau ekstrem awal',String(m.hi1),'Sebelum pengendalian',m.hi1?'warn':'good'),
@@ -4678,7 +4679,7 @@ function rkView(){
   return root;
 }
 
-/* ---------- Statistik KPI HSE, klasifikasi menu, ringkasan HSE di dasbor ---------- */
+/* ---------- Statistik KPI HSE, klasifikasi menu, ringkasan HSE di dashboard ---------- */
 CFG.insiden.fields.splice(CFG.insiden.fields.length-1,0,{k:'hari_hilang',l:'Hari kerja hilang (untuk LTI)',t:'number',min:0});
 CFG.jamkerja={key:'jamkerja',add:'Catat jam kerja',empty:'Belum ada jam kerja tercatat.',title:'Jam kerja',
   fields:[{k:'periode',l:'Bulan',t:'month',req:1},{k:'jam',l:'Jam kerja orang (manhours)',t:'number',req:1,min:0},{k:'tk',l:'Rata-rata tenaga kerja (orang)',t:'number',min:0},{k:'catatan',l:'Catatan',t:'area'}],
@@ -4763,7 +4764,7 @@ function kpiView(){
 }
 
 /* ---- klasifikasi menu ---- */
-var MGRP={ringkasan:'Dasbor',kpi:'Dasbor',setuju:'Dasbor',permit:'Keselamatan dan kesehatan kerja',rkab:'Perencanaan dan pelaporan',laporan:'Perencanaan dan pelaporan',k3:'Keselamatan dan kesehatan kerja',risiko:'Keselamatan dan kesehatan kerja',reklamasi:'Reklamasi dan lingkungan',sop:'Keselamatan dan kesehatan kerja',inspeksi:'Keselamatan dan kesehatan kerja',temuan:'Keselamatan dan kesehatan kerja',agenda:'Keselamatan dan kesehatan kerja',ptw:'Keselamatan dan kesehatan kerja',inventaris:'Keselamatan dan kesehatan kerja',izin:'Kepatuhan dan administrasi',kontraktor:'Kepatuhan dan administrasi',personel:'Kepatuhan dan administrasi',surat:'Kepatuhan dan administrasi',operasional:'Operasional tambang',pgdash:'Operasional tambang',pgship:'Operasional tambang',pgarsip:'Operasional tambang',pgmaster:'Operasional tambang',pgset:'Operasional tambang',pgtrack:'Operasional tambang',kredit:'Setelan dan bantuan',langganan:'Setelan dan bantuan',panduan:'Setelan dan bantuan',setelan:'Setelan dan bantuan'};
+var MGRP={ringkasan:'Dashboard',kpi:'Dashboard',setuju:'Dashboard',permit:'Keselamatan dan kesehatan kerja',rkab:'Perencanaan dan pelaporan',laporan:'Perencanaan dan pelaporan',k3:'Keselamatan dan kesehatan kerja',risiko:'Keselamatan dan kesehatan kerja',reklamasi:'Reklamasi dan lingkungan',sop:'Keselamatan dan kesehatan kerja',inspeksi:'Keselamatan dan kesehatan kerja',temuan:'Keselamatan dan kesehatan kerja',agenda:'Keselamatan dan kesehatan kerja',ptw:'Keselamatan dan kesehatan kerja',inventaris:'Keselamatan dan kesehatan kerja',izin:'Kepatuhan dan administrasi',kontraktor:'Kepatuhan dan administrasi',personel:'Kepatuhan dan administrasi',surat:'Kepatuhan dan administrasi',operasional:'Operasional tambang',pgdash:'Operasional tambang',pgship:'Operasional tambang',pgarsip:'Operasional tambang',pgmaster:'Operasional tambang',pgset:'Operasional tambang',pgtrack:'Operasional tambang',kredit:'Setelan dan bantuan',langganan:'Setelan dan bantuan',panduan:'Setelan dan bantuan',setelan:'Setelan dan bantuan'};
 var MORD=['ringkasan','kpi','setuju','rkab','laporan','k3','risiko','sop','inspeksi','temuan','agenda','inventaris','ptw','permit','operasional','pgdash','pgship','pgarsip','pgmaster','pgset','pgtrack','reklamasi','izin','kontraktor','personel','surat','kredit','langganan','panduan','setelan'];
 function navSetup(){
   MODS.push({k:'setuju',t:'Persetujuan Perubahan',i:'M9 12l2 2 4-4M7 4h10a2 2 0 012 2v14l-7-3-7 3V6a2 2 0 012-2z'});
@@ -4772,7 +4773,7 @@ function navSetup(){
   MODS.push({k:'sop',t:'SOP K3 Builder',i:'M7 3h8l4 4v14H7zM15 3v4h4M10 12h6M10 16h4'});
   MODS.push({k:'reklamasi',t:'Reklamasi dan pascatambang',i:'M12 21V11M12 11c0-4 3-7 8-7 0 5-3 8-8 8zM12 14c0-3-2-5-6-5 0 4 2 6 6 6'});
   MODS.push({k:'operasional',t:'Overview Penambangan',i:'M3 20l6-10 4 6 3-4 5 8zM3 20h18'});
-  MODS.push({k:'pgdash',t:'Dasbor Pengapalan',i:'M4 20V10M10 20V4M16 20v-7M22 20H2'});
+  MODS.push({k:'pgdash',t:'Dashboard Pengapalan',i:'M4 20V10M10 20V4M16 20v-7M22 20H2'});
   MODS.push({k:'pgship',t:'Shipment dan Dokumen',i:'M3 17l2 3h14l2-3zM6 17V9h12v8M9 9V5h6v4'});
   MODS.push({k:'pgarsip',t:'Arsip PDF',i:'M4 5h16v4H4zM6 9v10h12V9M10 13h4'});
   MODS.push({k:'pgmaster',t:'Master Data Pengapalan',i:'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6'});
@@ -4785,7 +4786,7 @@ function navSetup(){
   MODS.sort(function(a,b){return MORD.indexOf(a.k)-MORD.indexOf(b.k)});
   MODS.forEach(function(x){x.g=MGRP[x.k]||''});
 }
-/* ringkasan HSE pada dasbor utama */
+/* ringkasan HSE pada dashboard utama */
 function hseStrip(){
   var Y=String(TODAY.getFullYear()),c=hseCalc(Y),m=metrics(),rs=rkStat(),sp=S.sop||[],spOk=sp.filter(function(r){return r.status==='Disahkan'}).length;
   return h('section',{class:'panel'},h('div',{style:'display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline'},h('h2',{text:'Ringkasan HSE '+Y}),h('a',{href:'#kpi',text:'Buka statistik KPI HSE'})),
@@ -4980,7 +4981,7 @@ function sopView(){
   root.append(panel('Daftar SOP K3',SMP?'Klik baris untuk membuka dan mengubah. Tombol Susun SOP memakai AI.':'Klik baris untuk membuka dan mengubah. AI tidak tersedia di tampilan ini; templat tetap berjalan.',listView('sop')));
   return root;
 }
-/* ---------- Reklamasi dan pascatambang: rencana vs realisasi, dasbor, revegetasi, jaminan ---------- */
+/* ---------- Reklamasi dan pascatambang: rencana vs realisasi, dashboard, revegetasi, jaminan ---------- */
 var RC_JENIS=['Pengisian kembali (backfilling)','Penataan permukaan lahan','Penghijauan (revegetasi)','Reklamasi bentuk lain'];
 var RC_TAHAP=['Persiapan lahan','Penataan lahan','Tanah pucuk','Revegetasi','Pemeliharaan','Evaluasi keberhasilan','Selesai'];
 var RC_SHORT=['Backfilling','Penataan lahan','Revegetasi','Bentuk lain'];
@@ -5159,7 +5160,7 @@ function rcTrend(rows){
       h('div',{class:'rct-tg',style:'bottom:'+RC_REV_TGT+'%'},h('span',{text:'target '+RC_REV_TGT+'%'}))),
     h('div',{class:'rct-lab',style:g},rows.map(function(r){return h('span',{text:rcShort(fmt(r.tanggal))})})));
 }
-var RC_TABS=[['dasbor','Dasbor',function(){return rcDash()}],['rencana','Rencana vs realisasi',function(){return rcPlan()}],['revegetasi','Revegetasi',function(){return rcRev()}],['jaminan','Jaminan',function(){return rcJam()}]];
+var RC_TABS=[['dashboard','Dashboard',function(){return rcDash()}],['rencana','Rencana vs realisasi',function(){return rcPlan()}],['revegetasi','Revegetasi',function(){return rcRev()}],['jaminan','Jaminan',function(){return rcJam()}]];
 var RC_ATTN=[],RC_DASH=[];
 function rcTabs(tab){
   return h('div',{class:'rtabs',role:'tablist'},RC_TABS.map(function(t){
@@ -5180,7 +5181,7 @@ function rcTable(heads,rows,totalRow){
       totalRow?h('tr',{class:'tot'},totalRow.map(function(v,i){return h('td',{class:i?'mono':'',data:{label:heads[i]},text:String(v)})})):null)));
 }
 
-/* ---- tab: dasbor ---- */
+/* ---- tab: dashboard ---- */
 function rcDash(){
   var R=S.reklamasi,rn=rcSum(R,'rencana'),rl=rcSum(R,'realisasi'),bk=rcSum(R,'bukaan'),pct=rcPct(rl,rn),base=bk>0?bk:rn,sisa=Math.max(0,base-rl);
   var rv=rcRevStat(),jm=rcJamStat(),late=R.filter(function(r){return rcSt(r).late}),root=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
@@ -5344,8 +5345,8 @@ function rcJam(){
 }
 
 function rcView(){
-  var tab=ui.rc||'dasbor',root=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
-  root.append(head('Reklamasi dan pascatambang','Rencana dan realisasi per area, dasbor statistik, pemantauan revegetasi, serta jaminan reklamasi dan pascatambang.'));
+  var tab=ui.rc||'dashboard',root=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
+  root.append(head('Reklamasi dan pascatambang','Rencana dan realisasi per area, dashboard statistik, pemantauan revegetasi, serta jaminan reklamasi dan pascatambang.'));
   root.append(rcTabs(tab));
   var cur=RC_TABS.filter(function(t){return t[0]===tab})[0]||RC_TABS[0];
   root.append(cur[2]());
@@ -6167,7 +6168,7 @@ RC_ATTN.push(function(){
   return a;
 });
 
-/* ===== dasbor tambahan: tahapan, peta skematis, ringkasan pendukung ===== */
+/* ===== dashboard tambahan: tahapan, peta skematis, ringkasan pendukung ===== */
 function rcMap(){
   var P=S.reklamasi.filter(function(r){return r.lat!=null&&r.lng!=null&&isFinite(r.lat)&&isFinite(r.lng)});
   if(!P.length)return h('p',{class:'empty',text:'Isi lintang dan bujur pada area untuk menampilkan peta skematis.'});
@@ -6207,7 +6208,7 @@ RC_DASH.push(function(){
     h('div',{class:'toolbar',style:'margin:12px 0 0'},rcGo('giat','Kegiatan lapangan'),rcGo('tanah','Tanah pucuk dan bibit'),rcGo('erosi','Pengendali erosi'),rcGo('dok','Dokumen dan laporan')));
 });
 
-RC_TABS=[['dasbor','Dasbor',function(){return rcDash()}],['rencana','Rencana vs realisasi',function(){return rcPlan()}],['giat','Kegiatan lapangan',rcGiat],['revegetasi','Revegetasi',function(){return rcRev()}],
+RC_TABS=[['dashboard','Dashboard',function(){return rcDash()}],['rencana','Rencana vs realisasi',function(){return rcPlan()}],['giat','Kegiatan lapangan',rcGiat],['revegetasi','Revegetasi',function(){return rcRev()}],
   ['tanah','Tanah pucuk dan bibit',rcTanah],['erosi','Pengendali erosi',rcErosi],['pasca','Evaluasi dan pascatambang',rcPasca],['jaminan','Jaminan',function(){return rcJam()}],['dok','Dokumen dan laporan',rcDok]];
 
 /* ===== navigasi dengan toggle: ponsel = buka/tutup, desktop = ciutkan ke ikon, grup bisa dilipat ===== */
@@ -6425,14 +6426,14 @@ function fxAfter(){
   fxScroll();
 }
 
-/* ===== dasbor: terklasifikasi per kategori, tab, aside perhatian dan tenggat ===== */
+/* ===== dashboard: terklasifikasi per kategori, tab, aside perhatian dan tenggat ===== */
 var DASH_TO=[['Realisasi produksi','rkab'],['Dokumen izin','izin'],['Izin perlu','izin'],['Sertifikat personel','personel'],['Hari tanpa LTI','k3'],['Insiden','k3'],['Nyaris celaka','k3'],['Risiko tinggi','k3'],['Inspeksi terlambat','inspeksi'],['Temuan terbuka','temuan'],['Progres reklamasi','reklamasi'],['Inventaris perlu','inventaris'],['Distribusi surat','surat'],['Surat berstatus','surat'],['Agenda 14','agenda'],['Kontraktor dinilai','kontraktor']];
 var DI={shield:'M12 3l8 3v6c0 4.5-3.2 8.2-8 9-4.8-.8-8-4.5-8-9V6zM9 12l2 2 4-4',pulse:'M3 12h4l2-5 4 10 2-5h6',search:'M11 4a7 7 0 100 14 7 7 0 000-14zM21 21l-5-5',mail:'M3 6h18v12H3zM3 7l9 7 9-7',plan:'M7 3h8l4 4v14H7zM15 3v4h4M10 12h6M10 16h4',leaf:'M12 21V11M12 11c0-4 3-7 8-7 0 5-3 8-8 8zM12 14c0-3-2-5-6-5 0 4 2 6 6 6',grid:'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',help:'M5 4h10a3 3 0 013 3v13H8a3 3 0 01-3-3zM5 17a3 3 0 013-3h10M9 8h5',chart:'M4 20V10M10 20V4M16 20v-7M22 20H2'};
 var DCAT=[{g:'Kepatuhan dan perizinan',lab:'Kepatuhan',cc:'--c1',d:DI.shield,s:'Produksi, izin, dan sertifikat'},
  {g:'K3 dan lingkungan',lab:'K3',cc:'--c2',d:DI.pulse,s:'Insiden, risiko, dan keselamatan'},
  {g:'Operasional lapangan',lab:'Lapangan',cc:'--c3',d:DI.search,s:'Inspeksi, temuan, dan reklamasi'},
  {g:'Koordinasi dan pihak ketiga',lab:'Koordinasi',cc:'--c4',d:DI.mail,s:'Surat, agenda, dan kontraktor'}];
-var DGRP={'Dasbor':['--c1',DI.grid],'Perencanaan dan pelaporan':['--c3',DI.plan],'Keselamatan dan kesehatan kerja':['--c2',DI.pulse],'Reklamasi dan lingkungan':['--c1',DI.leaf],'Kepatuhan dan administrasi':['--c4',DI.shield],'Operasional tambang':['--c2',DI.plan],'Setelan dan bantuan':['--c3',DI.help]};
+var DGRP={'Dashboard':['--c1',DI.grid],'Perencanaan dan pelaporan':['--c3',DI.plan],'Keselamatan dan kesehatan kerja':['--c2',DI.pulse],'Reklamasi dan lingkungan':['--c1',DI.leaf],'Kepatuhan dan administrasi':['--c4',DI.shield],'Operasional tambang':['--c2',DI.plan],'Setelan dan bantuan':['--c3',DI.help]};
 var DTABS=['ringkas','perhatian','grafik','modul'];
 var DASH_POP=false;
 function dashPopClose(){
@@ -6492,7 +6493,7 @@ function dashLayout(r){
   var tab=ui.dtab||'ringkas',dir=ui.dnew;ui.dnew=null;
   var TABS=[['ringkas','Ringkasan',0],['perhatian','Perhatian',att.length],['grafik','Grafik',0],['modul','Modul',0]];
   function setTab(t){var i=DTABS.indexOf(tab),j=DTABS.indexOf(t);if(i===j)return;ui.dtab=t;ui.dnew=j>i?'r':'l';paint()}
-  var tl=h('div',{class:'dtabs',role:'tablist','aria-label':'Bagian dasbor',onkeydown:function(e){
+  var tl=h('div',{class:'dtabs',role:'tablist','aria-label':'Bagian dashboard',onkeydown:function(e){
     var i=DTABS.indexOf(tab),d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;
     if(!d)return;e.preventDefault();setTab(DTABS[(i+d+DTABS.length)%DTABS.length]);
     setTimeout(function(){var b=$('.dtabs [aria-selected="true"]');if(b)b.focus()},0)}},
@@ -6794,7 +6795,7 @@ function wyBanner(){
   if(!wyIsReal()){
     out.push(h('div',{class:'note wy-note'},
       h('p',null,h('b',{text:'Tahun kerja '+WY+(WY<REALNOW.getFullYear()?' (arsip)':' (mendatang)')+'. '}),
-        'Data tahun lain tetap tersimpan. Tanggal acuan dasbor: '+fmt(isoOf(TODAY))+'.'),
+        'Data tahun lain tetap tersimpan. Tanggal acuan dashboard: '+fmt(isoOf(TODAY))+'.'),
       h('button',{class:'btn',type:'button',onclick:function(){wyPick(REALNOW.getFullYear())}},'Kembali ke '+REALNOW.getFullYear())));
   }
   return out;
@@ -6885,7 +6886,7 @@ function setView(){
         h('li',{text:'Catatan bertanggal disaring menurut tahun: '+scoped.join(', ')+'.'}),
         h('li',{text:'Data induk tampil di semua tahun: '+shared+'.'}),
         h('li',{text:'RKAB dan rencana RKAB disimpan terpisah untuk tiap tahun. Tahun yang belum diisi menampilkan isian kosong.'}),
-        h('li',{text:'Catatan baru otomatis memakai tahun terpilih. Tanggal acuan dasbor: hari ini untuk tahun berjalan, 31 Desember untuk arsip, 1 Januari untuk tahun mendatang.'}),
+        h('li',{text:'Catatan baru otomatis memakai tahun terpilih. Tanggal acuan dashboard: hari ini untuk tahun berjalan, 31 Desember untuk arsip, 1 Januari untuk tahun mendatang.'}),
         h('li',{text:'Pilihan tahun ini diingat di perangkat Anda saja, tidak mengubah tampilan pengguna lain.'})))));
 
   try{var hap=typeof hostAccountPanel==='function'?hostAccountPanel():null;if(hap)root.append(hap)}catch(e){}
@@ -6914,7 +6915,7 @@ function setView(){
 
   /* perusahaan dan KTT */
   profLoad();
-  root.append(panel('Perusahaan dan Kepala Teknik Tambang','Nama perusahaan dan KTT di sini dipakai di bagian atas aplikasi, Dasbor, dan laporan PDF.',
+  root.append(panel('Perusahaan dan Kepala Teknik Tambang','Nama perusahaan dan KTT di sini dipakai di bagian atas aplikasi, Dashboard, dan laporan PDF.',
     h('dl',{class:'kv'},
       h('dt',{text:'Perusahaan'}),h('dd',{text:coName()}),
       h('dt',{text:'Jenis izin'}),h('dd',{text:PROF.izin_jenis||'—'}),
@@ -6939,15 +6940,15 @@ if(!wyFxOn())document.documentElement.classList.add('fx-off');
 
 /* ---------- Panduan: fitur, tutorial lengkap, alur data, tanya jawab ---------- */
 var GD_FITUR=[
- ['ringkasan','Dasbor','Kondisi kepatuhan, keselamatan, teknis, dan koordinasi wilayah IUP dalam satu layar.',['Indeks kesiapan dari 8 modul, daftar "Perlu perhatian", dan tenggat 60 hari ke depan','Ringkasan HSE (hari tanpa LTI, LTIFR, risiko tinggi, SOP disahkan)','Grafik insiden, inspeksi, temuan, reklamasi, inventaris, agenda','Tombol Catat cepat untuk insiden, inspeksi, temuan, agenda, surat, barang, kontraktor, risiko'],''],
+ ['ringkasan','Dashboard','Kondisi kepatuhan, keselamatan, teknis, dan koordinasi wilayah IUP dalam satu layar.',['Indeks kesiapan dari 8 modul, daftar "Perlu perhatian", dan tenggat 60 hari ke depan','Ringkasan HSE (hari tanpa LTI, LTIFR, risiko tinggi, SOP disahkan)','Grafik insiden, inspeksi, temuan, reklamasi, inventaris, agenda','Tombol Catat cepat untuk insiden, inspeksi, temuan, agenda, surat, barang, kontraktor, risiko'],''],
  ['kpi','Statistik KPI HSE','Indikator lagging dan leading keselamatan.',['LTIFR, Frequency Rate, Severity Rate per 1.000.000 jam kerja','Tren insiden bulanan dan tabel per triwulan','6 indikator proaktif dengan target','Pencatatan jam kerja orang (manhours) per bulan'],'Angka per triwulan sejalan dengan Matrik 24.'],
  ['rkab','RKAB dan Produksi','Batas produksi RKAB dan catatan realisasi bulanan.',['Perbandingan realisasi dengan batas RKAB','Input dokumen RKAB dengan bantuan AI, atau ubah data RKAB secara manual','Catatan produksi per bulan'],'Mengisi Matrik 9.a, 13.a, 29 dan narasi 2.3.2.'],
  ['laporan','Laporan dan RKAB Berikutnya','Penyusunan Laporan Berkala Triwulan I sampai IV dan persiapan pengajuan RKAB tahun berikutnya.',['Status tiap triwulan dan tenggat penyampaian','Penanda bab Terisi, Nihil, atau Belum untuk 13 bab','Isian angka (overburden, penjualan, biaya, tenaga kerja, K3, PPM, PNBP)','Form matriks: 61 tabel yang sama dengan PDF, dengan isian otomatis dan kalkulasi','Profil perusahaan dan Buat laporan PDF lengkap (Ringkasan sampai Lampiran)','Daftar kesiapan dokumen RKAB tahun berikutnya'],'Ini menu induk laporan.'],
  ['k3','K3 dan Insiden','Catatan kecelakaan, nyaris celaka, dan dampak lingkungan.',['Jenis insiden, tingkat risiko, tindakan segera, status investigasi','Hari kerja hilang untuk insiden LTI','Hari tanpa LTI dan insiden 90 hari'],'Mengisi Matrik 24 (j. pencegahan dan penyelidikan kecelakaan) dan narasi 2.7.4.'],
- ['risiko','IBPR, HIRA dan HIRADC','Register risiko: identifikasi bahaya, penilaian risiko, dan pengendalian.',['Lima tab: Dasbor, IBPR, HIRA, HIRADC, Matriks','Penilaian tiga tahap (awal, saat ini, residual) dengan matriks 5×5','Hierarki pengendalian: eliminasi/substitusi, rekayasa, administratif, APD','Penanggung jawab, target, status, dan peringatan keterlambatan'],'Mengisi Matrik 24 (f. identifikasi bahaya) dan narasi 2.7.'],
+ ['risiko','IBPR, HIRA dan HIRADC','Register risiko: identifikasi bahaya, penilaian risiko, dan pengendalian.',['Lima tab: Dashboard, IBPR, HIRA, HIRADC, Matriks','Penilaian tiga tahap (awal, saat ini, residual) dengan matriks 5×5','Hierarki pengendalian: eliminasi/substitusi, rekayasa, administratif, APD','Penanggung jawab, target, status, dan peringatan keterlambatan'],'Mengisi Matrik 24 (f. identifikasi bahaya) dan narasi 2.7.'],
  ['sop','SOP K3 Builder','Menyusun SOP K3 dari register risiko dengan bantuan AI.',['AI menulis 12 bagian SOP, perbaikan per bagian, dan pemeriksaan kelengkapan','Templat dari register risiko bila AI tidak tersedia','Status Draf, Ditinjau, Disahkan dan jadwal tinjau ulang','Unduh SOP sebagai PDF'],'Jumlah SOP muncul di narasi 2.7.'],
  ['inspeksi','Inspeksi Teknis','Jadwal dan kondisi lereng, drainase, jalan, B3, reklamasi, batas IUP, dan alat.',['Frekuensi harian, mingguan, atau bulanan dengan jadwal berikut otomatis','Kondisi Baik, Perlu perbaikan, atau Kritis','Progres reklamasi kini dikelola di menu Reklamasi dan Pascatambang'],'Mengisi Matrik 24 (a. Inspeksi) dan narasi 2.3.7 dan 2.6.1.7.'],
- ['reklamasi','Reklamasi dan Pascatambang','Menu sendiri dengan sembilan tab: Dasbor, Rencana vs realisasi, Kegiatan lapangan, Revegetasi, Tanah pucuk dan bibit, Pengendali erosi, Evaluasi dan pascatambang, Jaminan, serta Dokumen dan laporan.',['Rencana dan realisasi per area (ha), jenis kegiatan, tahap reklamasi, target waktu, biaya, dan koordinat untuk peta skematis','Kegiatan lapangan: backfilling, penataan lahan, tanah pucuk, penanaman, pemeliharaan, dengan luas, volume, dan biaya','Revegetasi: tingkat hidup tanaman, tinggi, tutupan, kondisi, dan tren pemantauan','Tanah pucuk (neraca stockpile) dan mutasi bibit (stok per jenis)','Pengendali erosi: kolam sedimen, drainase, check dam, dengan jadwal cek dan peringatan sedimen 70%','Evaluasi tahapan area dan program pascatambang beserta biaya','Jaminan reklamasi dan pascatambang: kebutuhan, nilai ditempatkan, cakupan, masa berlaku','Dokumen: rencana reklamasi, rencana pascatambang, laporan pelaksanaan dengan tenggat dan masa berlaku'],'Mengisi Matrik 17 (total per jenis dan realisasi per triwulan dari kegiatan lapangan), Matrik 15 butir 7, dan narasi 2.6.1.1.'],
+ ['reklamasi','Reklamasi dan Pascatambang','Menu sendiri dengan sembilan tab: Dashboard, Rencana vs realisasi, Kegiatan lapangan, Revegetasi, Tanah pucuk dan bibit, Pengendali erosi, Evaluasi dan pascatambang, Jaminan, serta Dokumen dan laporan.',['Rencana dan realisasi per area (ha), jenis kegiatan, tahap reklamasi, target waktu, biaya, dan koordinat untuk peta skematis','Kegiatan lapangan: backfilling, penataan lahan, tanah pucuk, penanaman, pemeliharaan, dengan luas, volume, dan biaya','Revegetasi: tingkat hidup tanaman, tinggi, tutupan, kondisi, dan tren pemantauan','Tanah pucuk (neraca stockpile) dan mutasi bibit (stok per jenis)','Pengendali erosi: kolam sedimen, drainase, check dam, dengan jadwal cek dan peringatan sedimen 70%','Evaluasi tahapan area dan program pascatambang beserta biaya','Jaminan reklamasi dan pascatambang: kebutuhan, nilai ditempatkan, cakupan, masa berlaku','Dokumen: rencana reklamasi, rencana pascatambang, laporan pelaksanaan dengan tenggat dan masa berlaku'],'Mengisi Matrik 17 (total per jenis dan realisasi per triwulan dari kegiatan lapangan), Matrik 15 butir 7, dan narasi 2.6.1.1.'],
  ['temuan','Temuan','Temuan dari inspeksi, audit, dan Inspektur Tambang sampai ditutup.',['Tingkat, tenggat, dan status yang dapat diubah langsung di daftar','Peringatan temuan terlambat'],'Temuan terbuka masuk narasi 2.7.4.'],
  ['agenda','Agenda K3 dan Pelatihan','Rapat, pelatihan, simulasi, inspeksi, dan audit.',['Jenis dan status agenda','Peringatan agenda yang terlewat'],'Agenda berstatus Selesai mengisi Matrik 24 dan Matrik 26.b.'],
  ['inventaris','Inventaris K3','Peralatan keselamatan: APAR, P3K, spill kit, rambu, APD, radio.',['Jumlah, lokasi, kondisi, dan masa berlaku','Peringatan kedaluwarsa dan kondisi perlu perbaikan'],'Masuk narasi 2.7.4.'],
@@ -6958,23 +6959,23 @@ var GD_FITUR=[
  ['surat','Surat Menyurat','Register surat masuk dan keluar. Surat dari akun PJO (berupa lampiran berkas surat) masuk sebagai disposisi ke akun KTT dan statusnya berubah otomatis.',['PJO menulis perihal dan melampirkan berkas surat (foto, scan, atau PDF), tanpa mengetik isi surat','Menu Surat dibuka KTT: status otomatis Diterima','Draf balasan mulai ditulis: status otomatis Ditindaklanjuti','Balasan terkirim: status otomatis Selesai dan tersimpan di register','Status tidak bisa diubah manual','Email resmi KTT untuk koordinasi'],'Tidak dipakai di laporan triwulan.']
 ];
 var GD_TUT=[
- ['Memulai dan mengenal tampilan',['Menu di sisi kiri dikelompokkan: Dasbor, Perencanaan dan pelaporan, Keselamatan dan kesehatan kerja, Reklamasi dan lingkungan, Kepatuhan dan administrasi, Bantuan. Di HP, menu berupa barisan yang bisa digeser.','Angka merah di samping menu menandai jumlah hal yang perlu tindakan.','Pita kuning "Mode contoh" berarti penyimpanan bersama tidak tersedia dan perubahan hilang saat halaman ditutup. Tanpa pita itu, data tersimpan di database dan dilihat semua pengguna.','Data berlabel "contoh" adalah ilustrasi. Hapus seluruhnya lewat tombol "Hapus data contoh" di Dasbor setelah data asli dimasukkan.','Daftar yang kosong menampilkan tombol "Muat data contoh" bila ingin melihat gambaran isinya.','Jika yang muncul hanya tombol "Tutup" pada form, akun Bapak berhak melihat saja dan tidak bisa mengubah data.'],'Bapak paham status penyimpanan dan hak akses.'],
- ['Mencatat insiden dan hari kerja hilang',['Buka K3 dan Insiden, klik "+ Catat insiden" (atau "+ Insiden" di Dasbor).','Isi tanggal, jenis, tingkat risiko, lokasi, uraian kejadian, dan tindakan segera.','Untuk jenis LTI, isi "Hari kerja hilang". Angka ini dipakai Severity Rate.','Ubah status ke Investigasi lalu Selesai seiring tindak lanjut.','Klik baris mana pun untuk membuka dan mengubah.'],'Insiden masuk ke Hari tanpa LTI, KPI HSE, Matrik 24, dan narasi 2.7.4.'],
+ ['Memulai dan mengenal tampilan',['Menu di sisi kiri dikelompokkan: Dashboard, Perencanaan dan pelaporan, Keselamatan dan kesehatan kerja, Reklamasi dan lingkungan, Kepatuhan dan administrasi, Bantuan. Di HP, menu berupa barisan yang bisa digeser.','Angka merah di samping menu menandai jumlah hal yang perlu tindakan.','Pita kuning "Mode contoh" berarti penyimpanan bersama tidak tersedia dan perubahan hilang saat halaman ditutup. Tanpa pita itu, data tersimpan di database dan dilihat semua pengguna.','Data berlabel "contoh" adalah ilustrasi. Hapus seluruhnya lewat tombol "Hapus data contoh" di Dashboard setelah data asli dimasukkan.','Daftar yang kosong menampilkan tombol "Muat data contoh" bila ingin melihat gambaran isinya.','Jika yang muncul hanya tombol "Tutup" pada form, akun Bapak berhak melihat saja dan tidak bisa mengubah data.'],'Bapak paham status penyimpanan dan hak akses.'],
+ ['Mencatat insiden dan hari kerja hilang',['Buka K3 dan Insiden, klik "+ Catat insiden" (atau "+ Insiden" di Dashboard).','Isi tanggal, jenis, tingkat risiko, lokasi, uraian kejadian, dan tindakan segera.','Untuk jenis LTI, isi "Hari kerja hilang". Angka ini dipakai Severity Rate.','Ubah status ke Investigasi lalu Selesai seiring tindak lanjut.','Klik baris mana pun untuk membuka dan mengubah.'],'Insiden masuk ke Hari tanpa LTI, KPI HSE, Matrik 24, dan narasi 2.7.4.'],
  ['Inspeksi teknis dan temuan',['Buka Inspeksi Teknis, klik "+ Catat inspeksi", isi objek, frekuensi, tanggal terakhir diinspeksi, kondisi, dan PIC.','Setiap selesai inspeksi, ubah tanggal "Terakhir diinspeksi" dan kondisi. Jadwal berikut dihitung otomatis dari frekuensi.','Bila ada kelainan, buka Temuan, klik "+ Tambah temuan", isi tingkat dan tenggat.','Ubah status temuan langsung dari kolom Status sampai Selesai.'],'Inspeksi terlambat dan temuan terlambat muncul di Perlu perhatian.'],
  ['Agenda K3, pelatihan, dan peserta',['Buka Agenda K3 dan Pelatihan, klik "+ Tambah agenda".','Pilih jenis: Rapat, Pelatihan, Simulasi darurat, Inspeksi, Audit, atau Lainnya.','Pada kolom Peserta tulis jumlah ("12 orang") atau daftar nama dipisah koma. Sistem menghitung jumlah pesertanya.','Setelah kegiatan, ubah status ke Selesai. Hanya agenda Selesai yang dihitung di laporan.','Judul pelatihan memuat kata kunci (misalnya POP, K3, SMKP, Stockpile) agar jatuh ke baris yang tepat di Matrik 26.b.'],'Agenda Selesai mengisi Matrik 24 dan Matrik 26.b.'],
- ['Mengelola reklamasi, revegetasi, dan jaminan',['Buka Reklamasi dan Pascatambang. Tab Rencana vs realisasi: klik "+ Tambah area", isi area, jenis kegiatan, tahun, luas bukaan, rencana dan realisasi (ha), target selesai, dan biaya.','Perbarui realisasi tiap kali ada kemajuan. Status Terlambat, Mendekati target, atau Selesai muncul otomatis dari target waktu dan progres.','Tab Revegetasi: klik "+ Catat pemantauan", pilih area, isi jumlah ditanam dan hidup, tinggi, tutupan, dan kondisi. Tingkat hidup terhitung sendiri dan dibandingkan dengan target.','Bila kondisi Perlu penyulaman, tulis tindakan pemeliharaannya. Gunakan pilihan Area untuk melihat tren per pemantauan.','Tab Jaminan: catat jaminan reklamasi atau pascatambang dengan kebutuhan, nilai yang ditempatkan, masa berlaku, dan status.','Tab Kegiatan lapangan: catat setiap pekerjaan (backfilling, penataan, penanaman, pemeliharaan) dengan luas dan biaya. Tab Tanah pucuk dan bibit: catat pengupasan, penebaran, dan mutasi bibit. Tab Pengendali erosi: daftarkan kolam sedimen dan saluran, isi persentase sedimen.','Tab Evaluasi dan pascatambang: ubah "Tahap saat ini" pada area dan catat program pascatambang. Tab Dokumen dan laporan: catat rencana, persetujuan, dan tenggat laporan.','Buka tab Dasbor untuk membaca ringkasan, peta skematis, dan daftar perlu perhatian.'],'Matrik 17 dan 15 serta narasi 2.6.1.1 terisi dari data ini. Peringatan masuk ke daftar Perlu perhatian di Dasbor utama.'],
- ['Menyusun register IBPR, HIRA dan HIRADC',['Buka IBPR, HIRA dan HIRADC, klik "+ Tambah risiko".','Bagian 1 (IBPR): isi aktivitas, area, kategori, sumber bahaya, dan risiko yang ditimbulkan.','Bagian 2: nilai kemungkinan (1–5) dan keparahan (1–5) tanpa pengendalian. Tingkat risiko muncul langsung.','Bagian 3 (HIRA): tulis pengendalian yang sudah ada, lalu nilai ulang.','Bagian 4 (HIRADC): isi pengendalian tambahan menurut hierarki, lalu nilai risiko residual.','Isi penanggung jawab, target penyelesaian, status, dan tanggal tinjau terakhir. Simpan.','Pantau di tab Dasbor dan Matriks. Klik sel matriks untuk melihat risikonya.','Tinjau ulang risiko tiap 12 bulan atau saat ada perubahan kegiatan.'],'Risiko residual tidak boleh melebihi risiko awal. Sistem menolak isian seperti itu.'],
+ ['Mengelola reklamasi, revegetasi, dan jaminan',['Buka Reklamasi dan Pascatambang. Tab Rencana vs realisasi: klik "+ Tambah area", isi area, jenis kegiatan, tahun, luas bukaan, rencana dan realisasi (ha), target selesai, dan biaya.','Perbarui realisasi tiap kali ada kemajuan. Status Terlambat, Mendekati target, atau Selesai muncul otomatis dari target waktu dan progres.','Tab Revegetasi: klik "+ Catat pemantauan", pilih area, isi jumlah ditanam dan hidup, tinggi, tutupan, dan kondisi. Tingkat hidup terhitung sendiri dan dibandingkan dengan target.','Bila kondisi Perlu penyulaman, tulis tindakan pemeliharaannya. Gunakan pilihan Area untuk melihat tren per pemantauan.','Tab Jaminan: catat jaminan reklamasi atau pascatambang dengan kebutuhan, nilai yang ditempatkan, masa berlaku, dan status.','Tab Kegiatan lapangan: catat setiap pekerjaan (backfilling, penataan, penanaman, pemeliharaan) dengan luas dan biaya. Tab Tanah pucuk dan bibit: catat pengupasan, penebaran, dan mutasi bibit. Tab Pengendali erosi: daftarkan kolam sedimen dan saluran, isi persentase sedimen.','Tab Evaluasi dan pascatambang: ubah "Tahap saat ini" pada area dan catat program pascatambang. Tab Dokumen dan laporan: catat rencana, persetujuan, dan tenggat laporan.','Buka tab Dashboard untuk membaca ringkasan, peta skematis, dan daftar perlu perhatian.'],'Matrik 17 dan 15 serta narasi 2.6.1.1 terisi dari data ini. Peringatan masuk ke daftar Perlu perhatian di Dashboard utama.'],
+ ['Menyusun register IBPR, HIRA dan HIRADC',['Buka IBPR, HIRA dan HIRADC, klik "+ Tambah risiko".','Bagian 1 (IBPR): isi aktivitas, area, kategori, sumber bahaya, dan risiko yang ditimbulkan.','Bagian 2: nilai kemungkinan (1–5) dan keparahan (1–5) tanpa pengendalian. Tingkat risiko muncul langsung.','Bagian 3 (HIRA): tulis pengendalian yang sudah ada, lalu nilai ulang.','Bagian 4 (HIRADC): isi pengendalian tambahan menurut hierarki, lalu nilai risiko residual.','Isi penanggung jawab, target penyelesaian, status, dan tanggal tinjau terakhir. Simpan.','Pantau di tab Dashboard dan Matriks. Klik sel matriks untuk melihat risikonya.','Tinjau ulang risiko tiap 12 bulan atau saat ada perubahan kegiatan.'],'Risiko residual tidak boleh melebihi risiko awal. Sistem menolak isian seperti itu.'],
  ['Menyusun SOP K3 dengan AI',['Buka SOP K3 Builder. Risiko tinggi tanpa SOP tampil di atas; klik "Susun SOP" untuk memulai dari risiko itu, atau klik "+ Susun SOP".','Isi judul dan kategori, lalu centang risiko terkait. Bahaya dan pengendaliannya dibawa ke AI.','Tulis arahan tambahan bila perlu, misalnya fokus pada musim hujan.','Klik "Susun dengan AI". Draf 12 bagian terisi dalam kurang lebih satu menit. Tanpa AI, klik "Isi dari templat".','Baca seluruh bagian. Klik "Perbaiki dengan AI" pada bagian tertentu dan tulis instruksi, misalnya "buat lebih ringkas".','Klik "Periksa kelengkapan (AI)" untuk skor dan saran. Lengkapi nilai bertanda [tetapkan nilai].','Verifikasi dasar hukum, isi nama pengesah, ubah status ke Disahkan, isi tanggal berlaku dan tinjau ulang, lalu Simpan.','Klik "Unduh PDF" untuk dokumen SOP bertanda tangan KTT.'],'AI hanya menyusun draf. Pengesahan tetap di tangan Kepala Teknik Tambang.'],
  ['Mengisi KPI HSE',['Buka Statistik KPI HSE dan gulir ke "Jam kerja orang (manhours)".','Klik "+ Catat jam kerja", pilih bulan, isi jam kerja seluruh personel dan kontraktor di lokasi.','Kembali ke bagian atas: LTIFR, Frequency Rate, dan Severity Rate terhitung otomatis.','Pilih tahun lain lewat pilihan Tahun di atas halaman.','Indikator proaktif dibaca dari menu lain, jadi tidak perlu diisi di sini.'],'LTIFR = LTI × 1.000.000 ÷ jam kerja. FR = (LTI + P3K) × 1.000.000 ÷ jam kerja. SR = hari hilang × 1.000.000 ÷ jam kerja.'],
  ['Menyusun Laporan Berkala Triwulan sampai PDF',['Buka Laporan dan RKAB Berikutnya, pilih triwulan.','Klik "Profil perusahaan" dan lengkapi nama, alamat, pengurus, dan data legal. Data ini sekali isi.','Lengkapi menu sumber sepanjang triwulan: insiden, inspeksi, agenda, inventaris, kontraktor, perizinan, personel, reklamasi, risiko, dan produksi.','Tandai tiap bab sebagai Terisi, Nihil, atau Belum. Bab Nihil menghasilkan narasi nihil dan tabel "-".','Isi angka laporan: overburden, penjualan, biaya, tenaga kerja, K3, PPM, PNBP.','Buka panel "Form matriks laporan", cari matrik, klik "Isi", dan lengkapi sel yang belum otomatis.','Klik "Buat laporan PDF", pilih triwulan dan tanggal laporan, lalu periksa jumlah halaman dan tabel.','Klik "Unduh PDF". Browser meminta konfirmasi simpan berkas.','Setelah dikirim ke Kementerian, ubah status triwulan ke Disampaikan dan catat tanggalnya.'],'Hasil: PDF A4 dengan Ringkasan, Kata Pengantar, Daftar Isi/Tabel/Lampiran, Bab I, Bab II (61 tabel Matrik), dan Lampiran.'],
  ['Mengisi matriks manual dan memahami kalkulasi otomatis',['Di panel Form matriks laporan, cari tabel (mis. "Matrik 24" atau "keselamatan"), klik "Isi".','Kelompok baris dapat dibuka dan ditutup. Setiap kartu baris berisi kolom yang dapat diisi.','Teks abu-abu pada sel adalah nilai bawaan atau hasil otomatis. Kosongkan sel untuk memakainya.','Isi angka secukupnya. Total, jumlah, persentase, dan saldo dihitung sendiri saat Simpan.','Isi sel total secara manual bila ingin menimpa hasil hitung. Isian manual selalu menang.','"Kosongkan semua" menghapus seluruh isian tabel itu dan kembali ke otomatis.'],'Prioritas: manual, lalu otomatis dari menu lain atau hasil hitung, lalu isian bawaan.'],
- ['RKAB, produksi, dan persiapan pengajuan berikutnya',['Buka RKAB dan Produksi untuk melihat batas RKAB dan realisasi.','Klik "Input dokumen RKAB (AI)", unggah atau tempel dokumen, klik "Baca dengan AI", periksa hasilnya, lalu "Simpan dan terapkan".','Atau klik "Ubah data RKAB" untuk mengisi manual.','Catat realisasi produksi bulanan lewat "Catat realisasi".','Di Laporan dan RKAB Berikutnya, ubah status tiap butir persyaratan RKAB tahun berikutnya sesuai kemajuan, dan "Ubah rencana" untuk kuota dan status pengajuan.'],'Realisasi melebihi batas RKAB memunculkan peringatan merah di Dasbor.'],
- ['Perizinan, personel, kontraktor, dan inventaris',['Perizinan: tambah dokumen dengan nomor dan masa berlaku. Peringatan muncul 90 hari sebelum berakhir.','Personel: catat jabatan, sertifikat, dan masa berlaku sertifikat kompetensi. Jabatan "Kepala Teknik Tambang" otomatis masuk Matrik 1.','Kontraktor: isi bidang pekerjaan, PIC, dan hasil evaluasi CSMS.','Inventaris K3: catat jumlah, lokasi, kondisi, dan masa berlaku.'],'Semua peringatan terkumpul di "Perlu perhatian" pada Dasbor.'],
+ ['RKAB, produksi, dan persiapan pengajuan berikutnya',['Buka RKAB dan Produksi untuk melihat batas RKAB dan realisasi.','Klik "Input dokumen RKAB (AI)", unggah atau tempel dokumen, klik "Baca dengan AI", periksa hasilnya, lalu "Simpan dan terapkan".','Atau klik "Ubah data RKAB" untuk mengisi manual.','Catat realisasi produksi bulanan lewat "Catat realisasi".','Di Laporan dan RKAB Berikutnya, ubah status tiap butir persyaratan RKAB tahun berikutnya sesuai kemajuan, dan "Ubah rencana" untuk kuota dan status pengajuan.'],'Realisasi melebihi batas RKAB memunculkan peringatan merah di Dashboard.'],
+ ['Perizinan, personel, kontraktor, dan inventaris',['Perizinan: tambah dokumen dengan nomor dan masa berlaku. Peringatan muncul 90 hari sebelum berakhir.','Personel: catat jabatan, sertifikat, dan masa berlaku sertifikat kompetensi. Jabatan "Kepala Teknik Tambang" otomatis masuk Matrik 1.','Kontraktor: isi bidang pekerjaan, PIC, dan hasil evaluasi CSMS.','Inventaris K3: catat jumlah, lokasi, kondisi, dan masa berlaku.'],'Semua peringatan terkumpul di "Perlu perhatian" pada Dashboard.'],
  ['Mengekspor data',['Tiap daftar punya tombol "Ekspor CSV" untuk membuka datanya di Excel.','PDF laporan triwulan dibuat dari "Buat laporan PDF"; PDF SOP dari editor SOP.','Penyimpanan berkas memerlukan konfirmasi di browser. Bila ditolak, ulangi dan setujui.'],'Ekspor tidak tersedia pada pratinjau yang tidak mengizinkan unduhan.']
 ];
 var GD_FAQ=[
  ['Cara memakai tombol Menu','Di ponsel, ketuk Menu untuk membuka daftar modul; daftar menutup sendiri setelah Anda memilih modul. Di layar lebar, tombol Menu menciutkan sidebar menjadi deretan ikon (arahkan kursor untuk melihat nama). Judul kelompok seperti Keselamatan dan kesehatan kerja dapat dilipat dan pilihan Anda diingat di perangkat ini. Angka merah pada kelompok yang dilipat menjumlahkan butir yang perlu tindakan.'],
- ['Cara membaca Dasbor','Dasbor dibagi empat tab: Ringkasan, Perhatian, Grafik, dan Modul. Pada Ringkasan, klik kartu indikator untuk membuka modulnya, dan pakai penyaring di atas indikator, misalnya Perlu tindakan, untuk hanya melihat yang kuning atau merah. Tombol Catat cepat membuka menu pencatatan semua modul.'],
+ ['Cara membaca Dashboard','Dashboard dibagi empat tab: Ringkasan, Perhatian, Grafik, dan Modul. Pada Ringkasan, klik kartu indikator untuk membuka modulnya, dan pakai penyaring di atas indikator, misalnya Perlu tindakan, untuk hanya melihat yang kuning atau merah. Tombol Catat cepat membuka menu pencatatan semua modul.'],
  ['Memilih tahun kerja di Setelan','Buka menu Setelan atau pakai pilihan Tahun di header. Pilih tahun, maka catatan bertanggal (insiden, produksi, agenda, surat, reklamasi, dan sejenisnya) serta RKAB tampil untuk tahun itu saja. Data tahun lain tetap tersimpan di basis data dan muncul lagi saat tahunnya dipilih. Catatan baru memakai tahun terpilih. Tahun arsip memakai tanggal acuan 31 Desember. Di Setelan juga ada tema, efek gerak, dan unduh cadangan JSON.'],
  ['Melampirkan berkas pada catatan','Buka catatan apa pun (surat, perizinan, insiden, temuan, kontraktor, dokumen reklamasi, dan lainnya), lalu gulir ke bagian Lampiran di bawah form. Pilih atau tarik foto, hasil pindai, atau PDF. Foto dikecilkan otomatis, berkas lain maksimal 450 KB. Satu catatan dapat memiliki sampai 6 lampiran. Lampiran baru disimpan saat Anda menekan Simpan. Klik Lihat atau Unduh untuk membukanya lagi. Lampiran ikut terhapus bila catatannya dihapus.'],
  ['Mengisi data kontraktor dan sertifikat','Buka Kontraktor dan CSMS, klik baris kontraktor, lalu isi PJO, petugas K3, nomor dan masa berlaku kontrak. Gulir ke Kelengkapan sertifikat dan dokumen wajib, klik sel (misalnya SMK3 atau SIO) untuk mengisi nomor, penerbit, dan masa berlaku. Hijau berarti berlaku, kuning berakhir dalam 90 hari, merah kedaluwarsa. Pindaian dokumen dapat dilampirkan pada form yang sama.'],
@@ -6982,7 +6983,7 @@ var GD_FAQ=[
  ['Memilih dan membeli paket langganan','Buka menu Langganan dan paket. Pilih Bulanan (harga promo berlaku sampai 20 November) atau Sekali beli untuk akses seumur hidup, klik tombol paket, isi data penagihan lalu Buat pesanan. Paket Dasar yang dibeli sekali dapat ditingkatkan ke Profesional, dan harganya dipotong sebesar harga Dasar yang sudah dibayar. Harga diskon seumur hidup berlaku sampai akhir tahun. Transfer sesuai nominal (termasuk kode unik) ke rekening yang tampil, kemudian unggah bukti transfer di jendela pesanan. Admin memeriksa bukti dan menekan Terima dan aktifkan, sehingga paket dan masa berlakunya muncul di bagian Paket Anda. Admin mengatur harga, tanggal promo, isi paket, rekening, PPN dan QRIS lewat Kelola paket dan rekening.'],
  ['Paket, peran, dan persetujuan perubahan','Paket Dasar untuk peran Direktur Utama dan KTT: menu K3, reklamasi, Pengapalan, surat menyurat, kontraktor dan CSMS, serta personel terkunci (tampil dengan ikon gembok). Paket Profesional membuka semua menu dan menambah peran HSE, PJO, QAQC dan Produksi. Direktur Utama dan KTT melihat seluruh menu; akses Direktur Utama hanya dapat diubah oleh Direktur Utama. HSE membuka seluruh menu K3, reklamasi dan surat; dapat menambah data, sedangkan perubahan data lama dikirim ke KTT untuk disetujui; data kontraktor hanya dapat dilihat. PJO terikat ke satu kontraktor dan hanya melihat data kontraktornya di K3 (tanpa SOP Builder), Overview Penambangan, reklamasi, kontraktor dan CSMS, personel, dan suratnya sendiri; perubahan K3, reklamasi dan PSI perlu persetujuan KTT. QAQC dari Owner membuka seluruh Overview Penambangan; QAQC dari kontraktor hanya data kegiatannya sendiri. Peran Produksi hanya membuka Produksi Harian. Semua permohonan diputuskan di menu Persetujuan Perubahan.'],
  ['Mengubah daftar blok dan melampirkan peta per matriks','Buka Laporan dan RKAB Berikutnya, lalu gulir ke Form matriks laporan. Bagian Daftar blok mengatur nama blok yang menjadi baris di Matrik 3, 4.a, 6, 7.b, 8.a, 8.b, 9.a, 10.d, dan 11.a. Mengganti nama aman. Menambah atau menghapus blok akan mengosongkan isian manual di tabel tersebut, jadi aplikasi meminta Anda klik sekali lagi untuk konfirmasi. Untuk peta, klik Isi pada tabel yang bertanda Perlu peta (misalnya Matrik 8.a, 15, 16, 17), lalu unggah gambar atau PDF di bagian Lampiran peta. Setiap peta menjadi halaman Lampiran di akhir PDF, dan tabelnya diberi rujukan nomor lampiran.'],
- ['Menyesuaikan nama perusahaan dan KTT','Buka Setelan, bagian Perusahaan dan Kepala Teknik Tambang. Klik Ubah data KTT untuk mengganti nama, status (Pjs. KTT atau KTT definitif), nomor dan tanggal surat. Klik Ubah profil perusahaan untuk mengganti nama perusahaan dan jenis izin. Perubahan langsung tampil di bagian atas aplikasi, Dasbor, dan laporan PDF.'],
+ ['Menyesuaikan nama perusahaan dan KTT','Buka Setelan, bagian Perusahaan dan Kepala Teknik Tambang. Klik Ubah data KTT untuk mengganti nama, status (Pjs. KTT atau KTT definitif), nomor dan tanggal surat. Klik Ubah profil perusahaan untuk mengganti nama perusahaan dan jenis izin. Perubahan langsung tampil di bagian atas aplikasi, Dashboard, dan laporan PDF.'],
  ['Rencana reklamasi dan bukaan lahan per tahun','Buka Reklamasi dan pascatambang, tab Rencana vs realisasi. Klik Tambah rencana tahun, lalu isi rencana bukaan lahan, rencana reklamasi, biaya, dan nomor dokumen rencana reklamasi. Tombol ini mengisi awal dengan angka tahun sebelumnya agar Anda cukup mengubah penambahannya. Realisasi dihitung dari daftar area menurut Tahun rencana. Sisa bukaan yang belum direklamasi tampil di kartu ringkasan.'],
  ['Menambah lampiran laporan','Buka Laporan dan RKAB Berikutnya, pilih triwulan, lalu gulir ke bagian Lampiran laporan pada Form matriks. Tarik gambar atau PDF ke kotak unggah (di HP, pilih foto atau kamera). Beri judul, atur urutan dengan panah, dan hapus bila salah. Setiap lampiran menjadi satu halaman di akhir PDF dan tercantum di Daftar Lampiran, setelah Lampiran 1 Peta WIUP.'],
  ['Pencarian cepat dan pintasan','Tekan Ctrl+K (Cmd+K di Mac) atau tombol / untuk membuka pencarian menu, ketik nama modul, pilih dengan panah, lalu Enter. Esc menutup. Di layar sentuh, pakai tombol kaca pembesar di header.'],
@@ -7074,7 +7075,7 @@ var SUB_KUNCI_DASAR=['k3','risiko','sop','inspeksi','temuan','agenda','inventari
 var SUB_PLANS=[
  {id:'dasar',label:'Peran KTT',nama:'Dasar',ket:'Untuk KTT yang menertibkan RKAB, laporan dan perizinan.',normal:1500000,bln:500000,sampai:'2026-11-20',sekali:5000000,sekaliNormal:20000000,sekaliSampai:'2026-12-31',peran:['ktt'],
   kunci:SUB_KUNCI_DASAR,
-  fitur:['Dasbor dan Statistik KPI HSE','RKAB dan produksi','Laporan dan RKAB berikutnya','Perizinan','Overview Penambangan: produksi, blending, stockpile dan barging','Fitur AI: analisis dasbor dan laporan (memakai Kredit AI)','Akses untuk peran KTT','Bisa ditingkatkan ke Profesional'],
+  fitur:['Dashboard dan Statistik KPI HSE','RKAB dan produksi','Laporan dan RKAB berikutnya','Perizinan','Overview Penambangan: produksi, blending, stockpile dan barging','Fitur AI: analisis dashboard dan laporan (memakai Kredit AI)','Akses untuk peran KTT','Bisa ditingkatkan ke Profesional'],
   tidak:['Seluruh menu K3','Reklamasi dan pascatambang','Kontraktor dan CSMS','Personel','Pengapalan: shipment 12 tahap, dokumen resmi, arsip PDF, master data dan kalkulator HPM','Surat menyurat','Izin Kerja (PTW)','Permit: Mine Permit dan SIMPER','Peran HSE, PJO, QAQC dan Produksi']},
  {id:'profesional',label:'Peran KTT, HSE dan PJO',nama:'Profesional',ket:'Semua menu terbuka untuk KTT dan tim HSE, ditambah akun PJO untuk surat menyurat dan izin kerja.',normal:3750000,bln:1000000,sampai:'2026-11-20',sekali:9000000,sekaliNormal:50000000,sekaliSampai:'2026-12-31',peran:['ktt','hse','pjo'],populer:true,
   kunci:[],
@@ -7258,7 +7259,7 @@ function subDemoGo(p){
 }
 function subFaq(J){
   var q=[
-    ['Apa beda paket Dasar dan Profesional?','Dasar untuk peran KTT: dasbor, Statistik KPI HSE, RKAB dan produksi, laporan, dan perizinan. Menu K3, reklamasi, Pengapalan, surat menyurat, izin kerja (PTW), kontraktor dan CSMS, serta personel terkunci. Profesional membuka semua menu dan menambah peran HSE, PJO, QAQC dan Produksi. Tiap anggota hanya melihat menu dan data sesuai perannya, data tiap kontraktor terpisah, dan perubahan dari HSE atau PJO berlaku setelah disetujui KTT. Peran Direktur Utama dan KTT tersedia di kedua paket.'],
+    ['Apa beda paket Dasar dan Profesional?','Dasar untuk peran KTT: dashboard, Statistik KPI HSE, RKAB dan produksi, laporan, dan perizinan. Menu K3, reklamasi, Pengapalan, surat menyurat, izin kerja (PTW), kontraktor dan CSMS, serta personel terkunci. Profesional membuka semua menu dan menambah peran HSE, PJO, QAQC dan Produksi. Tiap anggota hanya melihat menu dan data sesuai perannya, data tiap kontraktor terpisah, dan perubahan dari HSE atau PJO berlaku setelah disetujui KTT. Peran Direktur Utama dan KTT tersedia di kedua paket.'],
     ['Apa maksud sekali beli?','Anda membayar sekali dan paket aktif seumur hidup tanpa biaya perpanjangan. Paket Dasar yang dibeli sekali bisa ditingkatkan ke Profesional: harga Profesional dipotong sebesar harga Dasar yang sudah Anda bayar. Harga diskon seumur hidup berlaku sampai akhir tahun (31 Desember 2026), sesudahnya harga normal berlaku.'],
     ['Sampai kapan harga promo berlaku?','Harga promo bulanan berlaku untuk pesanan yang dibuat sampai tanggal yang tertera di kartu paket. Sesudah itu harga kembali ke harga normal. Harga diskon seumur hidup punya batas sendiri, yaitu akhir tahun.'],
     ['Bagaimana cara membayar?',subHosted()?'Pilih paket, lalu klik Lanjut ke pembayaran. Kode QRIS muncul dengan nominal yang sudah terisi. Pindai dengan aplikasi bank atau e-wallet apa pun, lalu tekan Saya sudah bayar. Paket aktif setelah pengelola mengonfirmasi pembayaran.':'Buat pesanan dari kartu paket, lalu bayar sesuai total yang tertera (sudah termasuk kode unik agar mudah dicocokkan). Anda mengunggah bukti pembayaran di langkah pesanan, dan paket aktif setelah admin memverifikasi.'],
@@ -7565,17 +7566,17 @@ function aksView(k){
       h('p',{text:'Paket '+L.plan.nama+' hanya untuk peran KTT dan tidak mencakup menu K3, reklamasi, surat menyurat, izin kerja (PTW), kontraktor dan CSMS, serta personel. Tingkatkan ke Profesional untuk membuka semuanya, dengan akses yang menyesuaikan peran KTT, HSE dan PJO.'}),
       h('div',{class:'ak-acts'},
         h('a',{class:'btn primary',href:'#langganan',onclick:function(){SUB_CYC='sekali'}},'Lihat paket Profesional'),
-        h('a',{class:'btn',href:'#ringkasan'},'Kembali ke Dasbor')),
+        h('a',{class:'btn',href:'#ringkasan'},'Kembali ke Dashboard')),
       h('p',{class:'sub',style:'margin:0',hidden:!!IS_ADM,text:'Pembelian dan peningkatan paket dilakukan oleh admin.'}));
   }else{
     var pj=aksPeran()==='pjo';
     box.append(ic,h('h2',{text:t+(pj?' tidak tersedia untuk peran PJO':' tidak ditampilkan untuk peran HSE')}),
-      h('p',{text:pj?'Akun Anda berperan PJO (Penanggung Jawab Operasional), sehingga hanya menu Surat Menyurat dan Izin Kerja (PTW) yang dapat dibuka. Hubungi admin bila peran Anda perlu diubah.':'Akun Anda berperan HSE, sehingga menu yang tampil dibatasi pada dasbor, K3, reklamasi, izin kerja (PTW), kontraktor dan CSMS, serta personel. Hubungi admin bila peran Anda perlu diubah.'}),
-      h('div',{class:'ak-acts'},h('a',{class:'btn primary',href:pj?'#surat':'#ringkasan'},pj?'Ke Surat Menyurat':'Kembali ke Dasbor')));
+      h('p',{text:pj?'Akun Anda berperan PJO (Penanggung Jawab Operasional), sehingga hanya menu Surat Menyurat dan Izin Kerja (PTW) yang dapat dibuka. Hubungi admin bila peran Anda perlu diubah.':'Akun Anda berperan HSE, sehingga menu yang tampil dibatasi pada dashboard, K3, reklamasi, izin kerja (PTW), kontraktor dan CSMS, serta personel. Hubungi admin bila peran Anda perlu diubah.'}),
+      h('div',{class:'ak-acts'},h('a',{class:'btn primary',href:pj?'#surat':'#ringkasan'},pj?'Ke Surat Menyurat':'Kembali ke Dashboard')));
   }
   root.append(box);return root;
 }
-/* sembunyikan tautan ke menu yang disembunyikan karena peran (kartu modul dan daftar perhatian di dasbor) */
+/* sembunyikan tautan ke menu yang disembunyikan karena peran (kartu modul dan daftar perhatian di dashboard) */
 function aksAfter(){
   if(aksPeran()!=='hse'&&aksPeran()!=='pjo')return;
   var main=document.getElementById('main');if(!main)return;
@@ -8303,8 +8304,8 @@ CFG.ptw={key:'ptw',add:'Catat izin kerja',empty:'Belum ada izin kerja.',title:'I
    ".kelas" selektor CSS | "p:teks" panel yang judulnya memuat teks | "b:teks" tombol atau tab bertuliskan teks.
    Beberapa sasaran dipisah "|" (dicoba berurutan). Bila tak ditemukan, yang disorot judul halaman. */
 var TUR_LANGKAH={
- ringkasan:['Dasbor',[
-  ['Dasbor harian','Halaman pertama yang perlu dibuka tiap hari. Semua angkanya dihitung dari data di menu lain.','.dhead'],
+ ringkasan:['Dashboard',[
+  ['Dashboard harian','Halaman pertama yang perlu dibuka tiap hari. Semua angkanya dihitung dari data di menu lain.','.dhead'],
   ['Pindah tampilan','Ringkasan, Perhatian, Grafik, dan Modul memisahkan indeks kesiapan, daftar tindakan, tren, dan status tiap menu.','.dtabs'],
   ['Catat cepat','Catat insiden, inspeksi, temuan, dan lainnya dari sini tanpa pindah menu.','b:Catat cepat'],
   ['Yang perlu perhatian','Yang terlambat, kedaluwarsa, atau belum diisi muncul di tab Perhatian. Klik barisnya untuk langsung ke menu terkait.','b:Perhatian']]],
@@ -8331,7 +8332,7 @@ var TUR_LANGKAH={
  risiko:['IBPR, HIRA dan HIRADC',[
   ['Register risiko','Bahaya dan risiko beserta pengendaliannya.','.pagehead'],
   ['Pilih jenis register','Buka IBPR, HIRA, atau HIRADC lalu tambahkan bahaya di area kerja. Beri penilaian awal pada matriks 5×5, tulis pengendalian, lalu nilai risiko residual.','.rtabs'],
-  ['Lihat sebarannya','Tab Matriks dan Dasbor menunjukkan sebaran risiko dan risiko tinggi yang perlu ditindaklanjuti.','b:Matriks']]],
+  ['Lihat sebarannya','Tab Matriks dan Dashboard menunjukkan sebaran risiko dan risiko tinggi yang perlu ditindaklanjuti.','b:Matriks']]],
  sop:['SOP K3 Builder',[
   ['Menyusun SOP','SOP disusun dari register risiko Anda.','.pagehead'],
   ['Susun SOP','Pilih risiko atau kegiatan lalu isi 12 bagian SOP. Tombol Susun dengan AI membantu menulis draf, dan templat tetap tersedia bila AI tidak dapat dipakai.','b:Susun SOP'],
@@ -8339,7 +8340,7 @@ var TUR_LANGKAH={
  inspeksi:['Inspeksi Teknis',[
   ['Inspeksi rutin','Jadwal dan kondisi lereng, drainase, jalan, B3, dan alat.','.pagehead'],
   ['Tambah objek','Tambahkan objek inspeksi beserta frekuensinya: harian, mingguan, atau bulanan.','b:Catat inspeksi'],
-  ['Perbarui kondisi','Setelah inspeksi, ubah tanggal terakhir dan kondisinya. Jadwal berikutnya dihitung otomatis. Kondisi Perlu perbaikan atau Kritis muncul di Dasbor.','p:Jadwal dan kondisi']]],
+  ['Perbarui kondisi','Setelah inspeksi, ubah tanggal terakhir dan kondisinya. Jadwal berikutnya dihitung otomatis. Kondisi Perlu perbaikan atau Kritis muncul di Dashboard.','p:Jadwal dan kondisi']]],
  temuan:['Temuan',[
   ['Temuan dan tindak lanjut','Temuan inspeksi, audit, dan Inspektur Tambang sampai ditutup.','.pagehead'],
   ['Catat temuan','Isi tingkat, penanggung jawab, dan tenggat.','b:Tambah temuan'],
@@ -8356,7 +8357,7 @@ var TUR_LANGKAH={
   ['Reklamasi','Rencana, realisasi, revegetasi, dan jaminan reklamasi.','.pagehead'],
   ['Rencana dan realisasi','Mulai dengan menambahkan area reklamasi di tab ini, lalu catat realisasinya.','b:Rencana vs realisasi'],
   ['Catat di lapangan','Kegiatan lapangan, revegetasi, tanah pucuk dan bibit, serta pengendali erosi dicatat di tab masing-masing.','.rtabs'],
-  ['Evaluasi dan jaminan','Isi evaluasi pascatambang, jaminan, dan dokumen. Progres keseluruhan terlihat di tab Dasbor.','b:Evaluasi dan pascatambang']]],
+  ['Evaluasi dan jaminan','Isi evaluasi pascatambang, jaminan, dan dokumen. Progres keseluruhan terlihat di tab Dashboard.','b:Evaluasi dan pascatambang']]],
  izin:['Perizinan',[
   ['Register izin','Izin dan persetujuan beserta masa berlakunya.','.pagehead'],
   ['Tambah dokumen','Isi nomor, tanggal terbit, dan masa berlaku. Tandai dokumen yang belum lengkap.','b:Tambah dokumen'],
@@ -10480,7 +10481,7 @@ function krView(){
   root.append(h('p',{class:'sub',style:'margin:0',text:'Kuota bulanan mengikuti paket (Dasar 100, Profesional 250 kredit) dan direset tiap awal bulan. Kredit tambahan tidak hangus dan dipakai setelah kuota bulanan habis. Bila permintaan AI gagal, kredit tidak terpotong.'}));
   return root;
 }
-/* ===== Analisis AI: Dasbor dan Laporan Triwulan. Memakai Kredit AI (1 kredit per analisis). ===== */
+/* ===== Analisis AI: Dashboard dan Laporan Triwulan. Memakai Kredit AI (1 kredit per analisis). ===== */
 var AIX={dash:{busy:false,res:null,at:null,err:'',keb:''},tw:{}};
 function aiCap(s,n){s=String(s==null?'':s);return s.length>n?s.slice(0,n-1)+'…':s}
 function aiModKeys(){return MODS.map(function(x){return x.k+'='+x.t}).join('; ')}
@@ -10548,9 +10549,9 @@ function dashAiPanel(){
   var kb=h('textarea',{rows:'2',maxlength:'500',placeholder:'Opsional: fokus atau kebutuhan, mis. "siapkan bahan rapat K3 minggu ini" atau "utamakan risiko kepatuhan perizinan"','aria-label':'Kebutuhan analisis'});
   kb.value=st.keb||'';kb.addEventListener('input',function(){st.keb=kb.value});
   var go=h('button',{type:'button',class:'btn primary',onclick:aiDashRun},r?'Analisis ulang':'Buat analisis AI');go.disabled=st.busy||!SMP;
-  p.append(h('div',{class:'aip-h'},h('div',null,h('h2',{text:'Analisis AI'}),h('p',{class:'sub',text:SMP?'Kesimpulan dan solusi rinci dari data Dasbor saat ini. '+aiHint():'AI tidak tersedia di tampilan ini.'})),go));
+  p.append(h('div',{class:'aip-h'},h('div',null,h('h2',{text:'Analisis AI'}),h('p',{class:'sub',text:SMP?'Kesimpulan dan solusi rinci dari data Dashboard saat ini. '+aiHint():'AI tidak tersedia di tampilan ini.'})),go));
   if(SMP&&!r&&!st.busy)p.append(kb);
-  if(st.busy)p.append(aiBusyEl('AI sedang menganalisis data Dasbor. Biasanya 15 sampai 40 detik…'));
+  if(st.busy)p.append(aiBusyEl('AI sedang menganalisis data Dashboard. Biasanya 15 sampai 40 detik…'));
   if(st.err)p.append(h('p',{class:'err',role:'alert'},st.err,' ',st.err.indexOf('Kredit AI habis')===0?h('a',{href:'#kredit',text:'Buka Kredit AI'}):null));
   if(r&&!st.busy){
     aiResultBlocks(r).forEach(function(x){p.append(x)});
@@ -11588,7 +11589,7 @@ function opView(){
   try{box.append(fn())}catch(e){box.append(opNote('Tampilan gagal dimuat: '+(e&&e.message?e.message:'kesalahan tak dikenal'),'warn'));if(window.console)console.error(e)}
   return box;
 }
-/* ===== Pengapalan: ERP kontrak dan logistik ore nikel (Dasbor, Shipment dan Dokumen, Arsip, Master Data, Pengaturan, Pelacakan) =====
+/* ===== Pengapalan: ERP kontrak dan logistik ore nikel (Dashboard, Shipment dan Dokumen, Arsip, Master Data, Pengaturan, Pelacakan) =====
    Koleksi: pgship (shipment), pgbarge, pgjetty, pgsurv, pgkontrak, pgcust, pgstock (master), pgset (profil, rekening, HMA).
    Lampiran arsip memakai sistem berkas yang sudah ada (kol:'pgship'). */
 var PG={master:'pgbarge',sel:null,q:'',af:'',resi:'',hpm:{tipe:'saprolit',ni:1.8,fe:20,co:0.05,mc:32,wmt:7500,per:''},dtab:'tahap'};
@@ -11809,7 +11810,7 @@ function pgBars(rows,max){
 }
 function pgDash(){
   var L=S.pgship||[],root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),hm=pgHma()[0];
-  root.append(opHead('Dasbor Pengapalan','Ringkasan kontrak penjualan nikel, alur 12 tahap tongkang, dokumen resmi, dan penagihan.'));
+  root.append(opHead('Dashboard Pengapalan','Ringkasan kontrak penjualan nikel, alur 12 tahap tongkang, dokumen resmi, dan penagihan.'));
   var done=L.filter(function(s){return pgSt(s)[10]==='Selesai'}),act=L.filter(function(s){return pgStatus(s)==='Berjalan'}),
       inl=L.filter(function(s){var c=pgCur(s);return c>=2&&c<=5||c===9||c===10}),inv=L.reduce(function(a,s){return a+pgInv(s).usd},0),
       paid=L.filter(function(s){return pgSt(s)[11]==='Selesai'}).reduce(function(a,s){return a+pgInv(s).usd},0),
@@ -12022,7 +12023,7 @@ function pgSetting(){
   if(!ro)form.append(h('div',{class:'acts'},h('span',{class:'grow'}),h('button',{type:'submit',class:'btn primary'},'Simpan pengaturan')));
   form.addEventListener('submit',async function(e){e.preventDefault();var o={};Object.keys(f).forEach(function(k){o[k]=f[k].value.trim()});if(kop.b64){o.kopImg=kop.b64;o.kopW=kop.w;o.kopH=kop.h}try{await save('pgset','profil',o);toast('Pengaturan tersimpan');paint()}catch(x){err.textContent='Gagal menyimpan.';err.hidden=false}});
   root.append(panel('Profil dan rekening',null,form));
-  root.append(panel('Data HMA per periode','Dipakai kalkulator HPM di dasbor.',h('p',{class:'sub',text:pgHma().length+' periode tersimpan.'}),pgCan()?h('button',{type:'button',class:'btn',onclick:pgHmaForm},'Ubah data HMA'):null));
+  root.append(panel('Data HMA per periode','Dipakai kalkulator HPM di dashboard.',h('p',{class:'sub',text:pgHma().length+' periode tersimpan.'}),pgCan()?h('button',{type:'button',class:'btn',onclick:pgHmaForm},'Ubah data HMA'):null));
   root.append(panel('Cadangan data pengapalan','Data tersimpan di database perusahaan. Unduh salinan JSON untuk arsip pribadi (berkas arsip tidak ikut).',h('button',{type:'button',class:'btn',onclick:function(){
     var o={app:'Platform KTT · Pengapalan',diekspor:new Date().toISOString()};['pgship','pgbarge','pgjetty','pgsurv','pgkontrak','pgcust','pgstock','pgset'].forEach(function(c){o[c]=S[c]||[]});
     opSave('pengapalan-'+opIso()+'.json','﻿'+JSON.stringify(o,null,1))}},'Unduh cadangan (.json)')));
@@ -12208,7 +12209,7 @@ function smpWizard(mode){
     var ms=picked(),tot=ms.reduce(function(s,m){return s+smpCount(m,mode)},0);
     var q=n===1
       ?(add?'Isi data contoh pada '+ms.length+' menu ('+tot+' baris)?':'Hapus data contoh pada '+ms.length+' menu ('+tot+' baris)?')
-      :(add?'Konfirmasi terakhir: data contoh akan tampil bercampur dengan data Anda di laporan dan dasbor sampai dihapus. Tetap isi sekarang?':'Konfirmasi terakhir: '+tot+' baris data contoh akan dihapus dan tidak dapat dikembalikan. Tetap hapus sekarang?');
+      :(add?'Konfirmasi terakhir: data contoh akan tampil bercampur dengan data Anda di laporan dan dashboard sampai dihapus. Tetap isi sekarang?':'Konfirmasi terakhir: '+tot+' baris data contoh akan dihapus dan tidak dapat dikembalikan. Tetap hapus sekarang?');
     box.replaceChildren(
       h('p',{class:'smp-step',text:'Pertanyaan '+n+' dari 2'}),
       h('p',{class:'smp-q',text:q}),
@@ -12314,7 +12315,7 @@ var PR_RK=['reklamasi','revegetasi','rkgiat','pucuk','bibit','erosi','pasca','rk
 var PR_TAG=PR_K3.concat(PR_RK,['personel','kdok']);
 var PR_MENU={
   hse:['kpi','setuju','k3','risiko','sop','inspeksi','temuan','agenda','inventaris','ptw','permit','reklamasi','surat','setelan','panduan'],
-  pjo:['setuju','k3','risiko','inspeksi','temuan','agenda','inventaris','ptw','permit','operasional','reklamasi','kontraktor','personel','surat','setelan','panduan'],
+  pjo:['ringkasan','setuju','k3','risiko','inspeksi','temuan','agenda','inventaris','ptw','permit','operasional','reklamasi','kontraktor','personel','surat','setelan','panduan'],
   qaqc:['setuju','operasional','panduan','setelan'],
   produksi:['operasional','panduan','setelan']
 };
@@ -12345,7 +12346,9 @@ aksLocked=function(k){
 };
 var PR_AKSVIEW=aksView;
 aksView=function(k){
-  var L=aksLocked(k);if(!L||L.why!=='peran')return PR_AKSVIEW(k);
+  var L=aksLocked(k);
+  if(k==='ringkasan'&&!L&&prPeran()==='pjo')return pjoDash();
+  if(!L||L.why!=='peran')return PR_AKSVIEW(k);
   var m=MODS.find(function(x){return x.k===k}),t=m?m.t:k,p=prPeran(),home=prHome(k);
   var boleh=MODS.filter(function(x){var z=aksLocked(x.k);return !z}).map(function(x){return x.t});
   var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),box=h('section',{class:'ak-lock'}),ic=h('span',{class:'ak-ic'});
@@ -12701,7 +12704,7 @@ function permitSample(){
   };
 }
 
-/* ---------- perhatian di dasbor ---------- */
+/* ---------- perhatian di dashboard ---------- */
 var PR_ATT=attention;
 attention=function(m){
   var a=PR_ATT(m);
@@ -12714,6 +12717,53 @@ attention=function(m){
   }catch(e){}
   return a;
 };
+
+/* ---------- Dashboard PJO: ringkasan semua menu yang tersedia untuk PJO ---------- */
+function pjoDash(){
+  var m=metrics(),kon=prKon(),root=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
+  var kr=(S.kontraktor||[]).find(function(x){return x.nama===kon})||null;
+  root.append(head('Dashboard','Ringkasan '+(kon||'kontraktor Anda')+': keselamatan, produksi, reklamasi, dokumen, personel, dan surat yang menjadi tanggung jawab PJO.'));
+  var bln=String(isoOf(TODAY)).slice(0,7),sm=(S.opsm||[]).filter(function(x){return String(x.tanggal||'').slice(0,7)===bln});
+  var wmt=sm.reduce(function(a,x){return a+(Number(x.wmt)||0)},0),draft=(S.opsm||[]).filter(function(x){return !x.final}).length;
+  var pm=(S.minepermit||[]).concat(S.simper||[]),pmMati=pm.filter(function(x){return pmStatus(x)[1]==='crit'}).length,pmHampir=pm.filter(function(x){return pmStatus(x)[1]==='warn'}).length;
+  var ub=(S.ubah||[]),ubT=ub.filter(function(u){return u.status==='menunggu'}).length,ubX=ub.filter(function(u){return u.status==='ditolak'}).length;
+  var surat=S.surat||[],srBuka=surat.filter(function(x){return ['Selesai','Ditindaklanjuti','Diarsipkan'].indexOf(x.status)<0}).length;
+  var kd=(S.kdok||[]),kdMati=kd.filter(function(x){try{return kdState(x)[1]==='crit'}catch(e){return false}}).length;
+  var rk=S.reklamasi||[],rkReal=rk.reduce(function(a,x){return a+(Number(x.realisasi)||0)},0),rkRen=rk.reduce(function(a,x){return a+(Number(x.rencana)||0)},0);
+  var pw=ptwMetrik();
+  root.append(h('div',{class:'grid'},
+    kpi('Hari tanpa LTI',m.lti==null?'—':String(m.lti),m.ins90+' insiden dalam 90 hari',m.lti==null?'':'good'),
+    kpi('Produksi bulan ini',opNf(wmt,0)+' WMT',sm.length+' catatan · '+draft+' draft',''),
+    kpi('Temuan terbuka',String(m.open.length),m.late.length+' terlambat',m.late.length?'crit':m.open.length?'warn':'good'),
+    kpi('Permohonan ke KTT',String(ubT),ubT?'menunggu keputusan':'tidak ada yang menunggu',ubT?'warn':'')));
+  var att=attention(m).filter(function(a){return !a.to||!aksLocked(a.to)});
+  if(kr){
+    var st=kr.status||'Belum dievaluasi';
+    root.append(panel('Status kontraktor '+kon,'Evaluasi CSMS diisi oleh KTT. Lengkapi profil dan dokumen kontraktor Anda di menu Kontraktor dan CSMS.',
+      h('div',{class:'pj-strip'},badge(st,STAT[st]||'info'),h('span',{text:'Skor evaluasi '+(kr.skor!=null&&kr.skor!==''?kr.skor:'—')}),h('span',{text:'Evaluasi berikutnya '+fmt(kr.berikut)}),h('span',{text:kd.length+' dokumen · '+kdMati+' kedaluwarsa'}),h('a',{class:'btn sm',href:'#kontraktor'},'Buka Kontraktor dan CSMS'))));
+  }
+  root.append(panel('Perlu perhatian','Hal mendesak dari menu yang dapat Anda buka.',
+    att.length?h('ul',{class:'att'},att.slice(0,10).map(function(a){return h('li',null,badge(a.tone==='crit'?'Mendesak':a.tone==='warn'?'Perhatian':'Info',a.tone==='info'?'info':a.tone),a.to?h('a',{href:'#'+a.to,text:a.t,style:'flex:1;text-align:left'}):h('span',{text:a.t,style:'flex:1'}))})):h('p',{class:'empty',text:'Tidak ada yang perlu ditindaklanjuti saat ini.'})));
+  var mods=[
+    {to:'k3',t:'K3 dan Insiden',v:m.lti==null?'—':m.lti+' hari',s:'tanpa LTI · '+m.ins90+' insiden/90 hari',c:m.lti==null?'info':'good'},
+    {to:'risiko',t:'IBPR, HIRA dan HIRADC',v:(S.risiko||[]).length+' risiko',s:'Register risiko kontraktor',c:'info'},
+    {to:'inspeksi',t:'Inspeksi Teknis',v:(S.inspeksi||[]).length+' objek',s:m.inspLate.length+' terlambat · '+m.inspBad.length+' perlu perbaikan',c:(m.inspLate.length||m.inspBad.length)?'warn':'good'},
+    {to:'temuan',t:'Temuan',v:m.open.length+' terbuka',s:m.late.length+' terlambat',c:m.late.length?'crit':m.open.length?'warn':'good'},
+    {to:'agenda',t:'Agenda K3 dan Pelatihan',v:m.agendaUp.length+' dalam 14 hari',s:m.agendaLate.length+' terlewat',c:m.agendaLate.length?'warn':'info'},
+    {to:'inventaris',t:'Inventaris K3',v:(S.inventaris||[]).length+' jenis',s:m.invAttn.length+' perlu tindakan',c:m.invAttn.length?'warn':'good'},
+    {to:'ptw',t:'Izin Kerja (PTW)',v:(S.ptw||[]).length+' izin',s:pw.tunggu+' menunggu keputusan · '+pw.kedal+' kedaluwarsa',c:pw.kedal?'crit':pw.tunggu?'warn':'info'},
+    {to:'permit',t:'Mine Permit dan SIMPER',v:pm.length+' kartu',s:pmHampir+' berakhir ≤ 30 hari · '+pmMati+' kedaluwarsa',c:pmMati?'crit':pmHampir?'warn':'good'},
+    {to:'operasional',t:'Overview Penambangan',v:opNf(wmt,0)+' WMT',s:'Bulan ini · '+draft+' draft belum final',c:draft?'warn':'info'},
+    {to:'reklamasi',t:'Reklamasi dan pascatambang',v:rk.length+' area',s:'Realisasi '+opNf(rkReal,2)+' dari '+opNf(rkRen,2)+' ha',c:'info'},
+    {to:'kontraktor',t:'Kontraktor dan CSMS',v:kr?(kr.status||'Belum dievaluasi'):'—',s:kd.length+' dokumen · '+kdMati+' kedaluwarsa',c:kdMati?'crit':kr&&kr.status==='Qualified'?'good':'warn'},
+    {to:'personel',t:'Personel',v:persAkt().length+' orang',s:m.persAttn.length+' sertifikat perlu tindakan',c:m.persAttn.length?'warn':'good'},
+    {to:'surat',t:'Surat Menyurat',v:surat.length+' surat',s:srBuka+' belum selesai',c:srBuka?'warn':'info'},
+    {to:'setuju',t:'Persetujuan Perubahan',v:ubT+' menunggu',s:ubX+' ditolak · '+ub.filter(function(u){return u.status==='disetujui'}).length+' disetujui',c:ubX?'warn':'info'}
+  ].filter(function(x){return !aksLocked(x.to)});
+  root.append(panel('Status per menu','Warna tepi kartu: hijau sesuai, kuning perlu tindakan, merah mendesak, biru informasi.',
+    h('div',{class:'mods'},mods.map(function(x){return h('a',{class:'mod',href:'#'+x.to,style:'border-left-color:var(--'+x.c+')'},h('span',{class:'l',text:x.t}),h('b',{text:x.v}),h('span',{class:'s',text:x.s}))}))));
+  return root;
+}
 /* ===== Kartu Mine Permit dan SIMPER: PDF 2 x 4 inci (portrait), dua sisi, desain industrial ===== */
 var KT_SET={},KT_SUB=false;
 var KT_ATURAN_MP=[
@@ -13355,6 +13405,11 @@ function hostAccountPanel(){
     p.append(h('h3',{class:'hg-h3',text:'Anggota'}),
       h('p',{class:'sub',style:'margin:0 0 8px',text:'Akun baru menunggu persetujuan. Hak akses: Pembaca hanya melihat, Penyunting dapat mengubah data, Admin juga mengelola anggota dan paket. Peran menentukan menu dan data yang tampil: Direktur Utama dan KTT melihat semua menu; HSE membuka K3, reklamasi dan surat; PJO terikat ke satu kontraktor; QAQC membuka Overview Penambangan (seluruhnya bila dari Owner, atau data kontraktornya saja); Produksi hanya Produksi Harian. Perubahan data oleh HSE dan PJO berlaku setelah disetujui KTT. PJO, QAQC dan Produksi tidak boleh berhak akses Admin. Akses Direktur Utama hanya dapat diubah oleh Direktur Utama. Paket Dasar mendukung Direktur Utama dan KTT; paket Profesional menambah HSE, PJO, QAQC dan Produksi.'}),box);
     hostMembers(box);
+  }else if(HOST.member.peran==='pjo'&&HOST.role==='editor'){
+    var tb=h('div',{class:'hg-mem'},h('p',{class:'sub',text:'Memuat tim kontraktor…'}));
+    p.append(h('h3',{class:'hg-h3',text:'Tim kontraktor '+(HOST.member.kontraktor||'')}),
+      h('p',{class:'sub',style:'margin:0 0 8px',text:'Sebagai PJO, Anda dapat mengundang dan mengatur akun QAQC dan Produksi untuk kontraktor Anda sendiri. QAQC membuka Overview Penambangan untuk data kontraktor ini; Produksi hanya membuka Produksi Harian. Hak akses Pembaca hanya melihat, Penyunting dapat mengisi data.'}),tb);
+    hostTimPjo(tb);
   }
   return p;
 }
@@ -13459,6 +13514,43 @@ async function hostMembers(box){
   if(inv.length)add(box,[h('p',{class:'grouph',text:'Undangan tertunda'})].concat(inv));
 }
 
+async function hostTimPjo(box){
+  var sb=HOST.sb,oid=HOST.member.org_id,kon=HOST.member.kontraktor||'';
+  var r=await sb.from('ktt_members').select('*').eq('org_id',oid).in('peran',['qaqc','produksi']).order('created_at');
+  if(r.error){box.replaceChildren(h('p',{class:'err',text:'Gagal memuat tim: '+hostErrId(r.error.message)}));return}
+  var iv=await sb.from('ktt_undangan').select('*').eq('org_id',oid).order('created_at');
+  function reload(){hostTimPjo(box)}
+  var tim=(r.data||[]).filter(function(x){return x.kontraktor===kon&&(x.peran==='qaqc'||x.peran==='produksi')});
+  var rows=tim.map(function(x){
+    var pr=h('select',{'aria-label':'Peran '+x.email},['qaqc','produksi'].map(function(k){return h('option',{value:k,selected:x.peran===k},HOST_PERAN[k])}));
+    var sel=h('select',{'aria-label':'Hak akses '+x.email},['pending','viewer','editor'].map(function(k){return h('option',{value:k,selected:x.role===k},HOST_ROLE[k])}));
+    async function ubah(patch,el,old){el.disabled=true;var u=await sb.from('ktt_members').update(patch).eq('user_id',x.user_id);el.disabled=false;
+      if(u.error){toast('Gagal menyimpan: '+hostErrId(u.error.message));el.value=old;return}Object.assign(x,patch);toast('Tim diperbarui')}
+    pr.addEventListener('change',function(){ubah({peran:pr.value,kontraktor:kon},pr,x.peran)});
+    sel.addEventListener('change',function(){ubah({role:sel.value},sel,x.role)});
+    var del=h('button',{type:'button',class:'btn',onclick:async function(){
+      var b=this;if(!b._arm){b._arm=true;b.textContent='Keluarkan?';setTimeout(function(){b._arm=false;b.textContent='Keluarkan'},3500);return}
+      var d=await sb.from('ktt_members').delete().eq('user_id',x.user_id);if(d.error){toast('Gagal mengeluarkan: '+hostErrId(d.error.message));return}toast('Anggota dikeluarkan');reload()}},'Keluarkan');
+    return h('div',{class:'hg-mrow'},h('div',{class:'hg-mwho'},h('b',{text:x.nama||x.email}),h('small',{text:x.email+' · daftar '+String(x.created_at).slice(0,10)+(x.role==='pending'?' · menunggu persetujuan Anda':'')})),h('div',{class:'hg-msel'},pr,sel,del));
+  });
+  var inv=((iv&&iv.data)||[]).filter(function(x){return x.kontraktor===kon&&(x.peran==='qaqc'||x.peran==='produksi')}).map(function(x){
+    return h('div',{class:'hg-mrow'},h('div',{class:'hg-mwho'},h('b',{text:x.email}),h('small',{text:'Diundang sebagai '+HOST_PERAN[x.peran]+', '+HOST_ROLE[x.role]+'. Belum mendaftar.'})),
+      h('div',{class:'hg-msel'},h('button',{type:'button',class:'btn',onclick:async function(){var d=await sb.from('ktt_undangan').delete().eq('org_id',oid).eq('email',x.email);if(d.error){toast('Gagal membatalkan undangan');return}toast('Undangan dibatalkan');reload()}},'Batalkan')));
+  });
+  var ie=h('input',{type:'email',placeholder:'nama@kontraktor.co.id','aria-label':'Email anggota tim',maxlength:'120'}),
+    ip=h('select',{'aria-label':'Peran anggota tim'},['qaqc','produksi'].map(function(k){return h('option',{value:k},HOST_PERAN[k])})),
+    ir=h('select',{'aria-label':'Hak akses anggota tim'},['viewer','editor'].map(function(k){return h('option',{value:k,selected:k==='editor'},HOST_ROLE[k])}));
+  var ib=h('button',{type:'button',class:'btn primary',onclick:async function(){
+    var em=ie.value.trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(em)){toast('Isi email yang valid');return}
+    ib.disabled=true;var d=await sb.from('ktt_undangan').upsert({org_id:oid,email:em,role:ir.value,peran:ip.value,kontraktor:kon},{onConflict:'org_id,email'});ib.disabled=false;
+    if(d.error){toast('Gagal mengundang: '+hostErrId(d.error.message));return}
+    toast('Undangan dibuat. Minta '+em+' mendaftar dengan email itu.');reload()}},'Undang');
+  box.replaceChildren();
+  add(box,h('div',{class:'hg-inv'},ie,ip,ir,ib));
+  add(box,rows.length?rows:[h('p',{class:'sub',text:'Belum ada akun QAQC atau Produksi untuk '+kon+'.'})]);
+  if(inv.length)add(box,[h('p',{class:'grouph',text:'Undangan tertunda'})].concat(inv));
+}
+
 /* ---- tombol keluar di bilah atas ---- */
 function hostLogoutAsk(){
   var m=HOST.member||{};
@@ -13481,7 +13573,7 @@ var VIEWS={
   var prodOk=m.prod<=RKAB.limit,yr=String(TODAY.getFullYear());
   var sisa=daysTo(RKAB_END),sejak=-daysTo(PJS_SEJAK),filled=COLS.filter(function(c){return S[c].length}).length;
   var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
-  root.append(head('Dasbor KTT','Kondisi kepatuhan, keselamatan, teknis, dan koordinasi wilayah IUP '+coName()+' dalam satu layar.'));
+  root.append(head('Dashboard KTT','Kondisi kepatuhan, keselamatan, teknis, dan koordinasi wilayah IUP '+coName()+' dalam satu layar.'));
 
   /* konteks */
   root.append(h('div',{class:'ctx'},
@@ -13794,7 +13886,7 @@ var VIEWS={
   return root;
  }
 };
-/* ---------- dasbor: pembantu ---------- */
+/* ---------- dashboard: pembantu ---------- */
 var RKAB_END='2026-12-31',PJS_SEJAK='2026-10-27';profLoad();
 function pctOf(n,d){return d>0?Math.round(n/d*100):null}
 function toneOf(v){return v==null?'mute':v>=80?'good':v>=60?'warn':'crit'}
@@ -13907,7 +13999,7 @@ function copyRow(t){
 
 /* ---------- navigasi ---------- */
 var MODS=[
- {k:'ringkasan',t:'Dasbor',i:'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z'},
+ {k:'ringkasan',t:'Dashboard',i:'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z'},
  {k:'rkab',t:'RKAB dan Produksi',i:'M6 3h9l4 4v14H6zM15 3v4h4M9 12h7M9 16h7'},
  {k:'laporan',t:'Laporan dan RKAB Berikutnya',i:'M5 4h14v16H5zM8 9h8M8 13h8M8 17h5'},
  {k:'k3',t:'K3 dan Insiden',i:'M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM9 12l2 2 4-4'},
