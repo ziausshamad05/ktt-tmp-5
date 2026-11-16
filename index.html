@@ -1632,6 +1632,36 @@ nav#nav .ngl>div a.on,nav#nav .ngl>div a[aria-current]{border-radius:8px}
 .dm-bar{position:fixed;left:0;right:0;top:0;z-index:60;background:#0b6b61;color:#fff;padding:6px max(12px,env(safe-area-inset-right,0px)) 6px max(12px,env(safe-area-inset-left,0px));font-size:12.5px;line-height:1.35;text-align:center}
 html.dm-on body{padding-top:30px}
 html.dm-on .dm-bar+*{}
+/* ===== Pengapalan ===== */
+.pg-pipe{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px}
+.pg-stage{display:flex;flex-direction:column;gap:3px;align-items:flex-start;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel,var(--bg));color:inherit;font:inherit;cursor:pointer}
+.pg-stage .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--mute-soft);color:var(--muted);font-size:11.5px;font-weight:700}
+.pg-stage b{font-size:12.5px;line-height:1.3}.pg-stage small{color:var(--muted);font-size:11.5px}
+.pg-stage.on{border-color:var(--brand)}.pg-stage.on .n{background:var(--brand);color:#fff}
+.pg-bars{display:flex;flex-direction:column;gap:10px}
+.pg-bar{display:grid;grid-template-columns:minmax(80px,150px) 1fr auto;gap:10px;align-items:center;font-size:12.5px}
+.pg-bar .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pg-bar .t{height:10px;border-radius:6px;background:var(--mute-soft);overflow:hidden}
+.pg-bar .t i{display:block;height:100%;background:var(--brand);border-radius:6px}.pg-bar .v{color:var(--muted);white-space:nowrap}
+.pg-prog{height:6px;border-radius:4px;background:var(--mute-soft);overflow:hidden;min-width:90px}.pg-prog i{display:block;height:100%;background:var(--brand)}
+.pg-hpm .form{margin-bottom:12px}.pg-out{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:10px 0}
+.pg-fh{grid-column:1/-1;margin:10px 0 0;font-size:13px;color:var(--brand)}
+.pg-kan{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.pg-col{display:flex;flex-direction:column;gap:8px}.pg-col h4{margin:0;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.pg-card{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.pg-card .n{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}.pg-card small{color:var(--muted);font-size:11.5px;line-height:1.4}
+.pg-card.run{border-color:var(--info)}.pg-card.ok{border-color:var(--good);background:var(--good-soft)}
+.pg-docs{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.pg-dcard{display:flex;flex-direction:column;gap:5px;padding:12px;border:1px solid var(--line);border-radius:10px}
+.pg-dcard .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--brand);color:#fff;font-size:11.5px;font-weight:700}
+.pg-dcard small{color:var(--muted);font-size:11.5px}.pg-dcard .no{font-family:ui-monospace,monospace}
+.pg-prev{margin-top:12px;padding:18px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.pg-doc{max-width:760px;margin:0 auto;font-size:13.5px;line-height:1.6}.pg-dt{margin:0;font-size:17px;text-align:center}.pg-ds{margin:2px 0 14px;text-align:center;color:var(--muted);font-size:12px}
+.pg-kv{display:grid;grid-template-columns:minmax(120px,200px) 1fr;gap:4px 12px;margin:8px 0}.pg-kv dt{color:var(--muted)}.pg-kv dd{margin:0}
+.pg-sign{display:flex;justify-content:flex-end;margin-top:20px}.pg-sign div{display:flex;flex-direction:column;gap:2px;min-width:230px}.pg-sign b{margin-top:54px}.pg-sign small{color:var(--muted)}
+.pg-tot td{font-weight:700;background:var(--good-soft)}
+.pg-tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.pg-tl li{display:grid;gap:2px;padding:10px 12px 10px 14px;border-left:3px solid var(--line);background:var(--mute-soft);border-radius:0 8px 8px 0}
+.pg-tl li small{color:var(--muted)}.pg-tl li.ok{border-left-color:var(--good)}.pg-tl li.run{border-left-color:var(--info);background:var(--info-soft)}
 
 .pp-wrap{max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface2)}
 .paper{background:#fff;color:#1b211d;border-radius:4px;padding:26px 28px;box-shadow:0 1px 8px rgba(0,0,0,.18);font-family:var(--f-body);font-size:13px;line-height:1.5}
@@ -1908,6 +1938,7 @@ SEED.rkdok=[
 ];
 
 SEED.jamkerja=[{id:'jk01',periode:'2026-01',jam:3080,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk02',periode:'2026-02',jam:2800,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk03',periode:'2026-03',jam:3220,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk04',periode:'2026-04',jam:3150,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk05',periode:'2026-05',jam:3300,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk06',periode:'2026-06',jam:3080,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk07',periode:'2026-07',jam:3260,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk08',periode:'2026-08',jam:3320,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk09',periode:'2026-09',jam:3150,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk10',periode:'2026-10',jam:3400,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk11',periode:'2026-11',jam:1800,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true}];
+SEED.pgship=[];SEED.pgbarge=[];SEED.pgjetty=[];SEED.pgsurv=[];SEED.pgkontrak=[];SEED.pgcust=[];SEED.pgstock=[];SEED.pgset=[];
 SEED.kdok=[];SEED.rkthn=[];SEED.opsm=[];SEED.opcat=[];SEED.opeto=[];SEED.opbarge=[];SEED.opform=[];SEED.oplog=[];SEED.opset=[];SEED.opmaster=[];SEED.opplan=[];SEED.oprkab=[];SEED.opkon=[];
 var COLS=Object.keys(SEED);
 var RK_DEF={tahun:2026,nomor:'T-2350.RKAB/MB.04/DJB.M/2026',tgl:'2026-11-09',berlaku:'2026-12-31',limit:0,satuan:'ton',komoditas:'bijih nikel',penerbit:'Direktorat Jenderal Mineral dan Batubara',sifat:'Segera',lampiran:'Satu berkas (pokok-pokok kegiatan)',perihal:'Persetujuan RKAB IUP Tahap Operasi Produksi PT Surya Saga Utama Tahun 2026',
@@ -2914,6 +2945,7 @@ function pdfBuild(M,meta){
         tx(x,y+90,s.name,9.5,true,INK);if(s.sub)tx(x,y+102,s.sub,8.5,false,MUTE)});
       y+=112}
     else if(b.t==='gap'){y+=b.n}
+    else if(b.t==='pb'){np()}
   });
   for(var i=0;i<pages.length;i++){
     ops=pages[i];ln(ML,PH-MB+8,ML+CW,PH-MB+8,0.4,LINE);
@@ -4659,13 +4691,19 @@ function kpiView(){
 }
 
 /* ---- klasifikasi menu ---- */
-var MGRP={ringkasan:'Dasbor',kpi:'Dasbor',rkab:'Perencanaan dan pelaporan',laporan:'Perencanaan dan pelaporan',k3:'Keselamatan dan kesehatan kerja',risiko:'Keselamatan dan kesehatan kerja',reklamasi:'Reklamasi dan lingkungan',sop:'Keselamatan dan kesehatan kerja',inspeksi:'Keselamatan dan kesehatan kerja',temuan:'Keselamatan dan kesehatan kerja',agenda:'Keselamatan dan kesehatan kerja',ptw:'Keselamatan dan kesehatan kerja',inventaris:'Keselamatan dan kesehatan kerja',izin:'Kepatuhan dan administrasi',kontraktor:'Kepatuhan dan administrasi',personel:'Kepatuhan dan administrasi',surat:'Kepatuhan dan administrasi',operasional:'Operasional tambang',kredit:'Setelan dan bantuan',langganan:'Setelan dan bantuan',panduan:'Setelan dan bantuan',setelan:'Setelan dan bantuan'};
-var MORD=['ringkasan','kpi','rkab','laporan','k3','risiko','sop','inspeksi','temuan','agenda','inventaris','ptw','operasional','reklamasi','izin','kontraktor','personel','surat','kredit','langganan','panduan','setelan'];
+var MGRP={ringkasan:'Dasbor',kpi:'Dasbor',rkab:'Perencanaan dan pelaporan',laporan:'Perencanaan dan pelaporan',k3:'Keselamatan dan kesehatan kerja',risiko:'Keselamatan dan kesehatan kerja',reklamasi:'Reklamasi dan lingkungan',sop:'Keselamatan dan kesehatan kerja',inspeksi:'Keselamatan dan kesehatan kerja',temuan:'Keselamatan dan kesehatan kerja',agenda:'Keselamatan dan kesehatan kerja',ptw:'Keselamatan dan kesehatan kerja',inventaris:'Keselamatan dan kesehatan kerja',izin:'Kepatuhan dan administrasi',kontraktor:'Kepatuhan dan administrasi',personel:'Kepatuhan dan administrasi',surat:'Kepatuhan dan administrasi',operasional:'Operasional tambang',pgdash:'Operasional tambang',pgship:'Operasional tambang',pgarsip:'Operasional tambang',pgmaster:'Operasional tambang',pgset:'Operasional tambang',pgtrack:'Operasional tambang',kredit:'Setelan dan bantuan',langganan:'Setelan dan bantuan',panduan:'Setelan dan bantuan',setelan:'Setelan dan bantuan'};
+var MORD=['ringkasan','kpi','rkab','laporan','k3','risiko','sop','inspeksi','temuan','agenda','inventaris','ptw','operasional','pgdash','pgship','pgarsip','pgmaster','pgset','pgtrack','reklamasi','izin','kontraktor','personel','surat','kredit','langganan','panduan','setelan'];
 function navSetup(){
   MODS.push({k:'kpi',t:'Statistik KPI HSE',i:'M4 20V10M10 20V4M16 20v-7M22 20H2'});
   MODS.push({k:'sop',t:'SOP K3 Builder',i:'M7 3h8l4 4v14H7zM15 3v4h4M10 12h6M10 16h4'});
   MODS.push({k:'reklamasi',t:'Reklamasi dan pascatambang',i:'M12 21V11M12 11c0-4 3-7 8-7 0 5-3 8-8 8zM12 14c0-3-2-5-6-5 0 4 2 6 6 6'});
   MODS.push({k:'operasional',t:'Overview Penambangan',i:'M3 20l6-10 4 6 3-4 5 8zM3 20h18'});
+  MODS.push({k:'pgdash',t:'Dasbor Pengapalan',i:'M4 20V10M10 20V4M16 20v-7M22 20H2'});
+  MODS.push({k:'pgship',t:'Shipment dan Dokumen',i:'M3 17l2 3h14l2-3zM6 17V9h12v8M9 9V5h6v4'});
+  MODS.push({k:'pgarsip',t:'Arsip PDF',i:'M4 5h16v4H4zM6 9v10h12V9M10 13h4'});
+  MODS.push({k:'pgmaster',t:'Master Data Pengapalan',i:'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6'});
+  MODS.push({k:'pgset',t:'Pengaturan Pengapalan',i:'M4 7h10M18 7h2M4 17h2M10 17h10M14 5v4M8 15v4'});
+  MODS.push({k:'pgtrack',t:'Pelacakan',i:'M12 21s-6-5.3-6-10a6 6 0 1112 0c0 4.7-6 10-6 10zM12 13a2.5 2.5 0 100-5 2.5 2.5 0 000 5z'});
   MODS.push({k:'kredit',t:'Kredit AI',i:'M12 3l2.4 5.6L20 11l-5.6 2.4L12 19l-2.4-5.6L4 11l5.6-2.4zM19 17l.8 1.7 1.7.8-1.7.8L19 22l-.8-1.7-1.7-.8 1.7-.8z'});
   MODS.push({k:'langganan',t:'Langganan dan paket',i:'M3 7h18v12H3zM3 11h18M7 15h4'});
   MODS.push({k:'panduan',t:'Panduan dan Tutorial',i:'M5 4h10a3 3 0 013 3v13H8a3 3 0 01-3-3zM5 17a3 3 0 013-3h10M9 8h5'});
@@ -6962,7 +7000,7 @@ var SUB_KUNCI_DASAR=['k3','risiko','sop','inspeksi','temuan','agenda','inventari
 var SUB_PLANS=[
  {id:'dasar',label:'Peran KTT',nama:'Dasar',ket:'Untuk KTT yang menertibkan RKAB, laporan dan perizinan.',normal:1500000,bln:500000,sampai:'2026-11-20',sekali:5000000,sekaliNormal:20000000,sekaliSampai:'2026-12-31',peran:['ktt'],
   kunci:SUB_KUNCI_DASAR,
-  fitur:['Dasbor dan Statistik KPI HSE','RKAB dan produksi','Laporan dan RKAB berikutnya','Perizinan','Overview Penambangan: produksi, blending, stockpile dan barging','Fitur AI: analisis dasbor dan laporan (memakai Kredit AI)','Akses untuk peran KTT','Bisa ditingkatkan ke Profesional'],
+  fitur:['Dasbor dan Statistik KPI HSE','RKAB dan produksi','Laporan dan RKAB berikutnya','Perizinan','Overview Penambangan: produksi, blending, stockpile dan barging','Pengapalan: shipment 12 tahap, 6 dokumen resmi, arsip PDF, master data dan kalkulator HPM','Fitur AI: analisis dasbor dan laporan (memakai Kredit AI)','Akses untuk peran KTT','Bisa ditingkatkan ke Profesional'],
   tidak:['Seluruh menu K3','Reklamasi dan pascatambang','Kontraktor dan CSMS','Personel','Surat menyurat','Izin Kerja (PTW)','Izin Kerja (PTW)','Akses peran HSE dan PJO']},
  {id:'profesional',label:'Peran KTT, HSE dan PJO',nama:'Profesional',ket:'Semua menu terbuka untuk KTT dan tim HSE, ditambah akun PJO untuk surat menyurat dan izin kerja.',normal:3750000,bln:1000000,sampai:'2026-11-20',sekali:9000000,sekaliNormal:50000000,sekaliSampai:'2026-12-31',peran:['ktt','hse','pjo'],populer:true,
   kunci:[],
@@ -11476,6 +11514,469 @@ function opView(){
   try{box.append(fn())}catch(e){box.append(opNote('Tampilan gagal dimuat: '+(e&&e.message?e.message:'kesalahan tak dikenal'),'warn'));if(window.console)console.error(e)}
   return box;
 }
+/* ===== Pengapalan: ERP kontrak dan logistik ore nikel (Dasbor, Shipment dan Dokumen, Arsip, Master Data, Pengaturan, Pelacakan) =====
+   Koleksi: pgship (shipment), pgbarge, pgjetty, pgsurv, pgkontrak, pgcust, pgstock (master), pgset (profil, rekening, HMA).
+   Lampiran arsip memakai sistem berkas yang sudah ada (kol:'pgship'). */
+var PG={master:'pgbarge',sel:null,q:'',af:'',resi:'',hpm:{tipe:'saprolit',ni:1.8,fe:20,co:0.05,mc:32,wmt:7500,per:''},dtab:'tahap'};
+var PG_STAGE=[
+ ['Armada TB/BG sandar di jetty','Tugboat dan tongkang sandar di jetty, persiapan pemuatan.','Pre-Loading'],
+ ['SPK surveyor independen','Penunjukan surveyor independen terdaftar Ditjen Minerba ESDM.','Pre-Loading'],
+ ['Loading kargo tongkang','Pemuatan ore nikel dari stockpile tambang ke atas tongkang.','Loading dan dokumen'],
+ ['Ukur tonase draft CoW','Penetapan tonase kargo basah (WMT) dari draft survey (Certificate of Weight).','Loading dan dokumen'],
+ ['Analisis lab CoA muat','Sampling kadar Ni, Fe, MC dan penerbitan Certificate of Sampling and Analysis.','Loading dan dokumen'],
+ ['Penerbitan SKAB WIUP','Surat Keterangan Asal Barang dari WIUP perusahaan sesuai RKAB.','Loading dan dokumen'],
+ ['Pelunasan PNBP royalti ESDM','Kode billing SIMPONI dan pelunasan royalti mineral negara.','Clearance dan verifikasi'],
+ ['Verifikasi teknis LHV ESDM','Penerbitan Laporan Hasil Verifikasi resmi pengapalan ore nikel.','Clearance dan verifikasi'],
+ ['Penerbitan SPB KSOP','Surat Persetujuan Berlayar dari Syahbandar atau KSOP pelabuhan muat.','Clearance dan verifikasi'],
+ ['Pelayaran menuju smelter','Armada tongkang bertolak menuju pelabuhan smelter tujuan.','Pelayaran dan selesai'],
+ ['Bongkar kargo di smelter','Tiba di jetty smelter pembeli dan pembongkaran kargo.','Pelayaran dan selesai'],
+ ['Rekonsiliasi CoA dan settlement lunas','CoA bongkar dan penyelesaian pembayaran final invoice.','Pelayaran dan selesai']
+];
+var PG_DOC=[
+ ['Surat Pernyataan Kebenaran Dokumen','Pernyataan bermaterai kebenaran dokumen pengapalan TB dan BG.'],
+ ['Surat Pernyataan Kualitas (SPK)','Spesifikasi hasil kontrol mutu: Ni, Fe, MC, SiO2/MgO.'],
+ ['Packing List Pengapalan','Seller, consignee, notify party, tugboat dan tongkang, pelabuhan.'],
+ ['Permohonan Penerbitan LHV','Surat permohonan ke surveyor Kementerian ESDM atau Ditjen Minerba.'],
+ ['Surat Keterangan Asal Barang (SKAB)','Legalitas asal bijih nikel dari WIUP sesuai RKAB.'],
+ ['Tagihan atau Shipping Invoice','Invoice 12 baris: FOB barge, kurs USD, PPh 1,5% dan rekening.']
+];
+var PG_HMA0=[
+ {id:'p1',label:'Periode II terkini (contoh)',ni:16960,fe:112.5,co:28450,cr:245,kurs:16250},
+ {id:'p2',label:'Periode I (contoh)',ni:17150,fe:110,co:28600,cr:242,kurs:16200}
+];
+
+/* ---------- util ---------- */
+function pgN(v,d){if(v==null||v===''||!isFinite(v))return '—';return Number(v).toLocaleString('id-ID',{maximumFractionDigits:d==null?2:d})}
+function pgRp(v){return 'Rp '+pgN(Math.round(v||0),0)}
+function pgUsd(v){return 'US$ '+pgN(v||0,2)}
+function pgNum(v){if(v==null||v==='')return 0;var n=Number(String(v).replace(',','.'));return isFinite(n)?n:0}
+function pgGet(c,id){return (S[c]||[]).find(function(r){return r.id===id})||null}
+function pgSorted(c,k){return (S[c]||[]).slice().sort(function(a,b){return String(a[k||'nama']||'').localeCompare(String(b[k||'nama']||''))})}
+function pgCan(){return canWrite&&opPeran()==='ktt'}
+function pgTerb(n){
+  n=Math.floor(Math.abs(n||0));if(!n)return 'nol rupiah';
+  var s=['','satu','dua','tiga','empat','lima','enam','tujuh','delapan','sembilan','sepuluh','sebelas'];
+  function t(x){
+    if(x<12)return s[x];if(x<20)return t(x-10)+' belas';
+    if(x<100)return t(Math.floor(x/10))+' puluh'+(x%10?' '+t(x%10):'');
+    if(x<200)return 'seratus'+(x-100?' '+t(x-100):'');
+    if(x<1000)return t(Math.floor(x/100))+' ratus'+(x%100?' '+t(x%100):'');
+    if(x<2000)return 'seribu'+(x-1000?' '+t(x-1000):'');
+    if(x<1e6)return t(Math.floor(x/1000))+' ribu'+(x%1000?' '+t(x%1000):'');
+    if(x<1e9)return t(Math.floor(x/1e6))+' juta'+(x%1e6?' '+t(x%1e6):'');
+    if(x<1e12)return t(Math.floor(x/1e9))+' miliar'+(x%1e9?' '+t(x%1e9):'');
+    return t(Math.floor(x/1e12))+' triliun'+(x%1e12?' '+t(x%1e12):'');
+  }
+  return t(n)+' rupiah';
+}
+function pgSet(id){return (S.pgset||[]).find(function(r){return r.id===id})||{}}
+function pgProf(){
+  var p=(typeof PROF!=='undefined'&&PROF)?PROF:{},r=pgSet('profil');
+  return Object.assign({nama:(typeof coName==='function'?coName():''),kode:'',bidang:'Penambangan dan penjualan bijih nikel',npwp:'',email:p.email||'',telp:p.telp||'',alamat:[p.alamat,p.kec,p.kab].filter(Boolean).join(', '),
+    direktur:'',jabatan:'Direktur Utama',kota:'',b1_bank:'',b1_no:'',b1_nama:'',b1_swift:'',b2_bank:'',b2_no:'',b2_nama:'',b2_swift:''},r);
+}
+function pgHma(){var r=pgSet('hma');return r.rows&&r.rows.length?r.rows:PG_HMA0}
+/* ---------- status shipment ---------- */
+function pgSt(s){var a=(s.st||[]).slice(0,12);while(a.length<12)a.push('Pending');return a}
+function pgDone(s){return pgSt(s).filter(function(x){return x==='Selesai'}).length}
+function pgCur(s){var a=pgSt(s),i=a.findIndex(function(x){return x!=='Selesai'});return i}
+function pgStatus(s){var d=pgDone(s);if(d===12)return 'Selesai';if(d===0&&pgSt(s).indexOf('In Progress')<0)return 'Draft';return 'Berjalan'}
+function pgInv(s){
+  var q=pgNum(s.wmt),usd=q*pgNum(s.harga),kurs=pgNum(s.kurs)||0,sub=usd*kurs,pph=sub*0.015,disk=pgNum(s.diskon);
+  return {q:q,usd:usd,kurs:kurs,sub:sub,pph:pph,grand:sub,disk:disk,final:sub-disk};
+}
+function pgLabel(s){var b=pgGet('pgbarge',s.bargeId);return b?b.nama:(s.no||'—')}
+function pgBadge(st){return h('span',{class:'badge '+(st==='Selesai'?'good':st==='Berjalan'?'info':''),text:st})}
+function pgNextNo(){
+  var yr=String(TODAY.getFullYear()),k=(pgProf().kode||'KTT').toUpperCase(),n=(S.pgship||[]).length+1;
+  return {no:'SHP/'+k+'/'+yr+'/'+('00'+n).slice(-3),resi:'TRK-'+k+'-'+yr+'-'+('00'+n).slice(-3)};
+}
+/* ---------- master data: CFG ---------- */
+CFG.pgbarge={key:'pgbarge',add:'Tambah armada',empty:'Belum ada armada tongkang.',title:'Armada tongkang',
+ fields:[{k:'kode',l:'Kode armada',t:'text'},{k:'nama',l:'Nama tugboat dan tongkang (TB / BG)',t:'text',req:1},{k:'kap',l:'Kapasitas muatan (WMT)',t:'number',min:0},{k:'owner',l:'Perusahaan pemilik atau shipping line',t:'text'}],
+ defaults:{},sort:function(a,b){return String(a.nama||'').localeCompare(String(b.nama||''))},
+ cols:[{l:'Kode',r:function(r){return r.kode||'—'}},{l:'Tugboat dan tongkang',r:function(r){return r.nama}},{l:'Kapasitas (WMT)',r:function(r){return pgN(r.kap,0)}},{l:'Pemilik',r:function(r){return r.owner||'—'}}]};
+CFG.pgjetty={key:'pgjetty',add:'Tambah pelabuhan',empty:'Belum ada data jetty atau pelabuhan.',title:'Jetty dan pelabuhan',
+ fields:[{k:'kode',l:'Kode',t:'text'},{k:'tipe',l:'Tipe pelabuhan',t:'select',req:1,o:['Pelabuhan muat','Pelabuhan bongkar']},{k:'nama',l:'Nama jetty atau pelabuhan dan titik muat',t:'text',req:1},{k:'lokasi',l:'Lokasi atau wilayah',t:'text'}],
+ defaults:{tipe:'Pelabuhan muat'},filter:{k:'tipe',all:'Semua tipe'},sort:function(a,b){return String(a.nama||'').localeCompare(String(b.nama||''))},
+ cols:[{l:'Kode',r:function(r){return r.kode||'—'}},{l:'Tipe',r:function(r){return r.tipe||'—'}},{l:'Nama',r:function(r){return r.nama}},{l:'Lokasi',r:function(r){return r.lokasi||'—'}}]};
+CFG.pgsurv={key:'pgsurv',add:'Tambah surveyor',empty:'Belum ada surveyor terdaftar.',title:'Surveyor',
+ fields:[{k:'nama',l:'Nama perusahaan surveyor',t:'text',req:1},{k:'akred',l:'Akreditasi atau lisensi',t:'text'},{k:'pic',l:'PIC atau kontak person',t:'text'},{k:'telp',l:'No. telepon atau HP',t:'text'}],
+ defaults:{akred:'ESDM Minerba'},sort:function(a,b){return String(a.nama||'').localeCompare(String(b.nama||''))},
+ cols:[{l:'Surveyor',r:function(r){return r.nama}},{l:'Akreditasi',r:function(r){return r.akred||'—'}},{l:'PIC',r:function(r){return r.pic||'—'}},{l:'Telepon',r:function(r){return r.telp||'—'}}]};
+CFG.pgcust={key:'pgcust',add:'Tambah customer',empty:'Belum ada customer.',title:'Customer',
+ fields:[{k:'kode',l:'Kode customer',t:'text'},{k:'status',l:'Status',t:'select',o:['Active','On Hold','Blacklisted']},{k:'nama',l:'Nama perusahaan',t:'text',req:1},{k:'npwp',l:'NPWP',t:'text'},{k:'pic',l:'Contact person',t:'text'},{k:'email',l:'Email',t:'text'},{k:'telp',l:'No. telepon',t:'text'},{k:'alamat',l:'Alamat smelter (untuk dokumen)',t:'area'}],
+ defaults:{status:'Active'},filter:{k:'status',all:'Semua status'},sort:function(a,b){return String(a.nama||'').localeCompare(String(b.nama||''))},
+ cols:[{l:'Kode',r:function(r){return r.kode||'—'}},{l:'Perusahaan',r:function(r){return r.nama}},{l:'NPWP',r:function(r){return r.npwp||'—'}},{l:'Kontak',r:function(r){return r.pic||'—'}},{l:'Status',r:function(r){return badge(r.status||'—',r.status==='Active'?'good':r.status==='Blacklisted'?'crit':'warn')}}]};
+CFG.pgstock={key:'pgstock',add:'Tambah stockpile',empty:'Belum ada data stockpile.',title:'Stockpile',
+ fields:[{k:'nama',l:'Nama stockpile atau pit asal',t:'text',req:1},{k:'wiup',l:'Lokasi WIUP',t:'text'},{k:'kap',l:'Kapasitas (WMT)',t:'number',min:0},{k:'ni',l:'Kadar standar Ni (%)',t:'number',min:0}],
+ defaults:{},sort:function(a,b){return String(a.nama||'').localeCompare(String(b.nama||''))},
+ cols:[{l:'Stockpile',r:function(r){return r.nama}},{l:'WIUP',r:function(r){return r.wiup||'—'}},{l:'Kapasitas (WMT)',r:function(r){return pgN(r.kap,0)}},{l:'Kadar Ni',r:function(r){return r.ni!=null?pgN(r.ni)+' %':'—'}}]};
+CFG.pgkontrak={key:'pgkontrak',add:'Tambah kontrak',empty:'Belum ada kontrak atau perjanjian KSO.',title:'Kontrak',
+ fields:[{k:'no',l:'No. kontrak atau No. KSO',t:'text',req:1},{k:'kategori',l:'Kategori',t:'select',o:['Reguler (Non-KSO)','Perjanjian KSO']},{k:'custNama',l:'Customer, pembeli atau mitra KSO',t:'text',req:1},{k:'tipe',l:'Tipe kontrak',t:'select',o:['Penjualan nikel (offtake)','Perjanjian KSO (operasional tambang)','Sewa tongkang (barging freight)','Jasa jetty dan transshipment']},{k:'incoterm',l:'Incoterm',t:'select',o:['FOB (Free on Board jetty)','CIF (Cost, Insurance and Freight)','Franco smelter']},{k:'status',l:'Status kontrak',t:'select',o:['Active (berjalan)','Pending / verifikasi','Completed (selesai)','Cancelled (dibatalkan)']},{k:'tgl',l:'Tanggal kontrak',t:'date'},{k:'mulai',l:'Periode mulai',t:'date'},{k:'akhir',l:'Periode berakhir',t:'date'},{k:'target',l:'Target volume (WMT)',t:'number',min:0},{k:'hpm',l:'HPM dasar (USD / WMT)',t:'number',min:0},{k:'deposit',l:'Deposit atau uang muka (USD)',t:'number',min:0},{k:'sni',l:'Spek Ni minimal (%)',t:'number',min:0},{k:'sfe',l:'Spek Fe minimal (%)',t:'number',min:0},{k:'smc',l:'Spek MC maksimal (%)',t:'number',min:0},{k:'kso',l:'Nama perusahaan pemegang KSO',t:'text'},{k:'ksopic',l:'PIC pemegang KSO',t:'text'},{k:'ksotelp',l:'Kontak PIC KSO',t:'text'},{k:'catatan',l:'Catatan atau ketentuan khusus',t:'area'}],
+ defaults:{kategori:'Reguler (Non-KSO)',tipe:'Penjualan nikel (offtake)',incoterm:'FOB (Free on Board jetty)',status:'Active (berjalan)'},filter:{k:'status',all:'Semua status'},sort:function(a,b){return String(b.tgl||'').localeCompare(String(a.tgl||''))},
+ cols:[{l:'No. kontrak',r:function(r){return r.no}},{l:'Customer atau mitra',r:function(r){return r.custNama||'—'}},{l:'Kategori',r:function(r){return r.kategori||'—'}},{l:'Target (WMT)',r:function(r){return pgN(r.target,0)}},{l:'HPM (US$)',r:function(r){return pgN(r.hpm)}},{l:'Status',r:function(r){return badge((r.status||'—').split(' ')[0],/^Active/.test(r.status||'')?'good':/^Cancel/.test(r.status||'')?'crit':'')}}]};
+CFG.pgsurv.filter=undefined;
+
+/* ---------- blok dokumen: tampilan di layar dan PDF dari struktur yang sama ---------- */
+function pgDocBlocks(k,s){
+  var P=pgProf(),c=pgGet('pgcust',s.custId)||{},kt=pgGet('pgkontrak',s.kontrakId)||{},b=pgGet('pgbarge',s.bargeId)||{},jl=pgGet('pgjetty',s.loadId)||{},jd=pgGet('pgjetty',s.dischId)||{},sv=pgGet('pgsurv',s.survId)||{},sk=pgGet('pgstock',s.stockId)||{};
+  var kota=P.kota||'—',tgl=fmt(s.tglSurat||s.tglMuat),nomor=(s.nomor||[])[k]||'—',ik=pgInv(s),q=pgN(s.wmt,0)+' WMT';
+  var sign={t:'sign',left:{role:'Materai dan stempel',name:'',sub:''},right:{role:kota+', '+tgl,name:(P.direktur||'—').toUpperCase(),sub:(P.jabatan||'')+' '+(P.nama||'')}};
+  var head=function(t){return [{t:'title',text:t,sub:'No. '+nomor+' · '+kota+', '+tgl}]};
+  var who=[['Nama',P.direktur||'—'],['Jabatan',P.jabatan||'—'],['Perusahaan',P.nama||'—'],['Alamat',P.alamat||'—'],['Telp/HP',P.telp||'—'],['Email',P.email||'—']];
+  if(k===0)return head('Surat Pernyataan Kebenaran Dokumen').concat([{t:'p',text:'Yang bertanda tangan di bawah ini:'},{t:'kv',rows:who},
+    {t:'p',text:'Dengan ini menyatakan bahwa semua dokumen pengapalan bijih nikel (nickel ore) dengan kapal '+(b.nama||'—')+' tanggal muat '+fmt(s.tglMuat)+' di '+(jl.nama||'—')+' kepada '+(c.nama||'—')+' adalah benar, sah, dan sesuai dengan keadaan sebenarnya.'},
+    {t:'p',text:'Apabila di kemudian hari ternyata terbukti memberikan informasi palsu dan terdapat pihak yang mengklaim hal tersebut, maka kami bersedia diproses secara hukum.'},
+    {t:'p',text:'Demikian surat pernyataan ini dibuat dalam keadaan sadar dan tanpa paksaan dari pihak manapun.'},sign]);
+  if(k===1)return head('Surat Pernyataan Kualitas (SPK)').concat([{t:'p',text:'Yang bertanda tangan di bawah ini:'},{t:'kv',rows:who},
+    {t:'p',text:'Dengan ini menyatakan bahwa muatan bijih nikel (nickel ore) yang akan dikirim menggunakan kapal '+(b.nama||'—')+' sebanyak '+q+' berasal dari '+(sk.nama||'stockpile')+' dan memiliki spesifikasi sebagai berikut:'},
+    {t:'kv',rows:[['Kadar Ni (nikel)',pgN(s.ni)+' %'],['Kadar Fe (besi)',pgN(s.fe)+' %'],['Kadar MC (moisture content)',pgN(s.mc)+' %'],['Rasio SiO2 / MgO',pgN(s.sio)],['Surveyor pengujian',sv.nama||'—']]},
+    {t:'p',text:'Demikian surat pernyataan kualitas ini dibuat dengan sebenar-benarnya, dalam keadaan sadar dan tanpa paksaan dari pihak manapun, untuk dipergunakan sebagaimana mestinya.'},sign]);
+  if(k===2)return head('Packing List').concat([{t:'kv',rows:[['Penjual / Seller',(P.nama||'—')+(P.alamat?', '+P.alamat:'')],['Penerima / Consignee',(c.nama||'—')+(c.alamat?', '+c.alamat:'')],['Notify party',c.nama||'—'],['Kontrak / contract ref',kt.no||'—'],['Tagihan / invoice ref',(s.nomor||[])[5]||'—'],['Tugboat dan tongkang',b.nama||'—'],['Pelabuhan muat / POL',(jl.nama||'—')+(jl.lokasi?', '+jl.lokasi:'')],['Pelabuhan bongkar / POD',(jd.nama||'—')+(jd.lokasi?', '+jd.lokasi:'')],['Deskripsi barang','Indonesian nickel ore'],['Kuantitas muatan',q],['Tanggal muat',fmt(s.tglMuat)]]},sign]);
+  if(k===3)return head('Surat Permohonan Penerbitan Laporan Hasil Verifikasi (LHV)').concat([{t:'p',text:'Kepada Yth. '+(sv.nama||'Surveyor Ditjen Minerba ESDM')+' di tempat.'},
+    {t:'p',text:'Yang bertanda tangan di bawah ini mengajukan permohonan penerbitan Laporan Hasil Verifikasi (LHV) untuk pengapalan bijih nikel berikut:'},{t:'kv',rows:[['Perusahaan',P.nama||'—'],['Tug boat / barge',b.nama||'—'],['Tanggal muat',fmt(s.tglMuat)],['Pelabuhan muat',jl.nama||'—'],['Kuantitas',q],['Asal stockpile',sk.nama||'—']]},
+    {t:'p',text:'Data tersebut adalah benar sesuai ketentuan perundang-undangan yang berlaku. Apabila terdapat kesalahan yang disengaja, maka kami siap dituntut dan diberi sanksi sesuai ketentuan yang berlaku.'},
+    {t:'p',text:'Demikian permohonan ini dibuat dengan sungguh-sungguh untuk dipergunakan sebagaimana mestinya.'},sign]);
+  if(k===4)return head('Surat Keterangan Asal Barang (SKAB)').concat([{t:'p',text:'Yang bertanda tangan di bawah ini, dalam hal ini bertindak untuk dan atas nama perusahaan:'},{t:'kv',rows:[['Nama',P.direktur||'—'],['Perusahaan',P.nama||'—'],['Alamat',P.alamat||'—']]},
+    {t:'p',text:'Surat keterangan ini diperlukan untuk angkutan:'},{t:'kv',rows:[['Nama kapal',b.nama||'—'],['Muatan','Nickel ore, '+q],['Tujuan',(jd.nama||'—')+(c.nama?' · '+c.nama:'')],['Berlaku',fmt(s.tglMuat)]]},
+    {t:'p',text:'Nickel ore yang dimuat ke kapal atau tongkang tersebut benar-benar berasal dari WIUP '+(P.nama||'perusahaan')+(sk.wiup?' ('+sk.wiup+')':'')+', RKAB tahun '+(s.rkabTahun||'—')+(s.rkabNo?', pengesahan No. '+s.rkabNo:'')+'.'},
+    {t:'note',text:'Apabila nickel ore yang dimuat bukan berasal dari WIUP sesuai dengan RKAB yang telah disahkan, maka yang bertanggung jawab adalah pemilik IUP dan akan dikenakan sanksi sesuai dengan ketentuan peraturan perundang-undangan yang berlaku.'},sign]);
+  var bank=function(n){return {bank:P['b'+n+'_bank'],no:P['b'+n+'_no'],nama:P['b'+n+'_nama'],swift:P['b'+n+'_swift']}},bk=(s.rek==='2'?bank(2):bank(1));
+  return head('Tagihan / Invoice').concat([{t:'kv',rows:[['Kepada / to',(c.nama||'—')+(c.alamat?', '+c.alamat:'')],['Contract No.',kt.no||'—']]},
+    {t:'table',cols:[{h:'No.',w:5},{h:'Deskripsi / description',w:45},{h:'Nilai / amount',w:50,a:'r'}],total:true,rows:[
+      ['1','Deskripsi barang','Indonesian nickel ore'],['2','Pengiriman / delivery',s.delivery||'FOB barge'],['3','Pelabuhan muat',jl.nama||'—'],['4','Kapal / vessel',b.nama||'—'],['5','Kuantitas',pgN(ik.q,0)+' MT / WMT'],
+      ['6','Full payment (USD)',pgUsd(ik.usd)],['7','Fixed rate: USD 1,00',pgRp(ik.kurs)],['8','Sub total (IDR)',pgRp(ik.sub)],['9','PPh (1,5%)',pgRp(ik.pph)],['10','Grand total',pgRp(ik.grand)],['11','Discount / penalti',pgRp(ik.disk)],['12','FINAL PAYMENT',pgRp(ik.final)]]},
+    {t:'note',text:'Terbilang: '+pgTerb(ik.final)},
+    {t:'h',text:'Pembayaran melalui transfer (TT) ke rekening'},{t:'kv',rows:[['Nama bank',bk.bank||'—'],['Nama rekening',bk.nama||'—'],['No. rekening',bk.no||'—'],['Swift code',bk.swift||'—']]},sign]);
+}
+function pgBlocksDom(blocks){
+  var box=h('div',{class:'pg-doc'});
+  blocks.forEach(function(b){
+    if(b.t==='title'){box.append(h('h3',{class:'pg-dt',text:b.text}),b.sub?h('p',{class:'pg-ds',text:b.sub}):null)}
+    else if(b.t==='h')box.append(h('h4',{text:b.text}));
+    else if(b.t==='p')box.append(h('p',{text:b.text}));
+    else if(b.t==='note')box.append(h('div',{class:'note warn'},h('p',{text:b.text})));
+    else if(b.t==='kv')box.append(h('dl',{class:'pg-kv'},b.rows.map(function(r){return [h('dt',{text:r[0]}),h('dd',{text:r[1]})]})));
+    else if(b.t==='table')box.append(h('div',{class:'scroll'},h('table',{class:'tbl'},h('thead',null,h('tr',null,b.cols.map(function(c){return h('th',{text:c.h})}))),h('tbody',null,b.rows.map(function(r,i){return h('tr',{class:b.total&&i===b.rows.length-1?'pg-tot':''},r.map(function(v,j){return h('td',{style:b.cols[j].a==='r'?'text-align:right':null,text:v})}))})))));
+    else if(b.t==='sign')box.append(h('div',{class:'pg-sign'},h('div',null,h('span',{text:b.right.role}),h('b',{text:b.right.name}),h('small',{text:b.right.sub}))));
+  });
+  return box;
+}
+function pgPdf(title,file,blocks){
+  if(typeof pdfBuild!=='function'){toast('PDF tidak tersedia di tampilan ini');return}
+  var P=pgProf(),M=[{t:'kop',name:(P.nama||'').toUpperCase(),sub:(P.alamat||'')+(P.telp?' · '+P.telp:'')+(P.email?' · '+P.email:'')}].concat(blocks);
+  try{var b=pdfBuild(M,{title:title,author:P.nama||'Platform KTT',footer:title});opSave(file,b.bytes)}catch(e){toast('Gagal membuat PDF')}
+}
+function pgPrintDoc(s,k){pgPdf(PG_DOC[k][0],'pengapalan-'+(s.no||'shipment').replace(/[^A-Za-z0-9]+/g,'-')+'-form'+(k+1)+'.pdf',pgDocBlocks(k,s))}
+function pgPrintAll(s){
+  var all=[];for(var k=0;k<6;k++){all.push({t:'pb'});all=all.concat(pgDocBlocks(k,s))}
+  all.shift();pgPdf('Dossier pengapalan '+(s.no||''),'pengapalan-'+(s.no||'shipment').replace(/[^A-Za-z0-9]+/g,'-')+'-6-dokumen.pdf',all);
+}
+/* ---------- kalkulator HPM ---------- */
+function pgHpmCalc(x,hma){
+  var cf,u,fob;
+  if(x.tipe==='saprolit'){cf=30+(x.ni-1.6)*10;u=x.ni/100*(cf/100)*hma.ni;fob=Math.max(0,u*(1-x.mc/100))}
+  else{cf=14;u=x.ni/100*0.14*hma.ni+x.fe/100*0.3*hma.fe+x.co/100*0.17*hma.co;fob=Math.max(0,u*(1-x.mc/100))}
+  var tot=fob*x.wmt;return {cf:cf,dmt:u,fob:fob,tot:tot,roy:tot*0.05,idr:tot*hma.kurs};
+}
+function pgHpmPanel(onApply){
+  var H=PG.hpm,per=pgHma(),box=h('div',{class:'pg-hpm'});
+  if(!H.per||!per.some(function(p){return p.id===H.per}))H.per=per[0].id;
+  function draw(){
+    var hm=per.find(function(p){return p.id===H.per})||per[0],r=pgHpmCalc(H,hm);
+    function fld(l,k,step,hint){var i=opInp('number',H[k],{step:step,class:'inp'});i.addEventListener('input',function(){H[k]=pgNum(i.value);draw2()});return opFld(l+(hint?' ('+hint+')':''),i)}
+    var out=h('div',{class:'pg-out'});
+    function draw2(){
+      var hm2=per.find(function(p){return p.id===H.per})||per[0],q=pgHpmCalc(H,hm2);
+      out.replaceChildren(
+        kpi('Harga satuan FOB',pgUsd(q.fob),'per WMT · CF Ni '+pgN(q.cf,1)+'%'),
+        kpi('Nilai kargo (FOB)',pgUsd(q.tot),pgN(H.wmt,0)+' WMT'),
+        kpi('Estimasi royalti (5%)',pgUsd(q.roy),'Perkiraan, bukan tagihan'),
+        kpi('Nilai dalam rupiah',pgRp(q.idr),'Kurs Rp '+pgN(hm2.kurs,0)));
+    }
+    var sel=opSel(per.map(function(p){return [p.id,p.label+' — US$ '+pgN(p.ni)+'/MT']}),H.per,{onchange:function(e){H.per=e.target.value;draw()}});
+    var tipe=opSel([['saprolit','Saprolit (smelter RKEF)'],['limonit','Limonit (smelter HPAL)']],H.tipe,{onchange:function(e){H.tipe=e.target.value;H.ni=H.tipe==='saprolit'?1.8:1.0;H.fe=H.tipe==='saprolit'?20:42;draw()}});
+    box.replaceChildren(
+      h('div',{class:'form'},opFld('Periode acuan HMA',sel,true),opFld('Tipe bijih nikel',tipe),fld('Kadar Ni (%)','ni',0.01),fld('Kadar Fe (%)','fe',0.1),H.tipe==='limonit'?fld('Kadar Co (%)','co',0.01):null,fld('Kadar air MC (%)','mc',0.1),fld('Kuantitas (WMT)','wmt',100)),
+      out,
+      h('p',{class:'sub',text:'Saprolit: HPM = %Ni × CF × HMA Ni × (1 − MC), dengan CF 30% pada Ni 1,6% dan naik 1 poin tiap 0,1% Ni. Limonit: CF Ni 14%, Fe 30%, Co 17%. Ini simulasi untuk perencanaan. Harga resmi mengikuti Kepmen ESDM dan portal APNI, dan angka HMA tiap periode perlu Anda isi dari sumber resmi.'}),
+      h('div',{class:'acts'},h('a',{class:'btn',href:'https://www.apni.or.id/kalkulator-hpm',target:'_blank',rel:'noopener'},'Buka kalkulator APNI'),
+        pgCan()?h('button',{type:'button',class:'btn',onclick:function(){pgHmaForm()}},'Ubah data HMA periode'):null,
+        onApply?h('button',{type:'button',class:'btn primary',onclick:function(){onApply(Number(pgHpmCalc(H,hm).fob.toFixed(2)),hm.kurs)}},'Pakai harga ini untuk shipment baru'):null));
+    draw2();
+  }
+  draw();return box;
+}
+function pgHmaForm(){
+  var rows=pgHma().map(function(p){return Object.assign({},p)}),box=h('div'),list=h('div');
+  function draw(){
+    list.replaceChildren(h('div',{class:'scroll'},h('table',{class:'tbl'},h('thead',null,h('tr',null,['Periode','HMA Ni US$/MT','HMA Fe','HMA Co','Kurs Rp/US$',''].map(function(t){return h('th',{text:t})}))),
+      h('tbody',null,rows.map(function(p,i){
+        function cell(k,t){var e=opInp(t==='text'?'text':'number',p[k],{step:'any',class:'inp'});e.addEventListener('input',function(){p[k]=t==='text'?e.value:pgNum(e.value)});return h('td',null,e)}
+        return h('tr',null,cell('label','text'),cell('ni'),cell('fe'),cell('co'),cell('kurs'),h('td',null,h('button',{type:'button',class:'btn',onclick:function(){rows.splice(i,1);draw()}},'Hapus')))})))));
+  }
+  draw();
+  box.append(h('p',{class:'sub',text:'Isi angka HMA tiap periode dari sumber resmi (Kepmen ESDM atau portal APNI). Angka bawaan hanya contoh awal.'}),list,
+    h('div',{class:'acts'},h('button',{type:'button',class:'btn',onclick:function(){rows.push({id:opId('h'),label:'Periode baru',ni:0,fe:0,co:0,cr:0,kurs:16000});draw()}},'+ Periode'),h('span',{class:'grow'}),h('button',{type:'button',class:'btn',onclick:closeModal},'Batal'),
+      h('button',{type:'button',class:'btn primary',onclick:async function(){rows.forEach(function(p,i){if(!p.id)p.id='h'+i});await save('pgset','hma',{rows:rows});closeModal();toast('Data HMA tersimpan')}},'Simpan')));
+  openModal('Data HMA per periode',box);
+}
+
+/* ================= DASBOR ================= */
+function pgBars(rows,max){
+  return h('div',{class:'pg-bars'},rows.map(function(r){var w=max?Math.min(100,r.v/max*100):0;
+    return h('div',{class:'pg-bar'},h('span',{class:'l',text:r.l}),h('span',{class:'t'},h('i',{style:'width:'+w+'%;'+(r.c?'background:'+r.c:'')})),h('span',{class:'v',text:r.t}))}));
+}
+function pgDash(){
+  var L=S.pgship||[],root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),hm=pgHma()[0];
+  root.append(opHead('Dasbor Pengapalan','Ringkasan kontrak penjualan nikel, alur 12 tahap tongkang, dokumen resmi, dan penagihan.'));
+  var done=L.filter(function(s){return pgSt(s)[10]==='Selesai'}),act=L.filter(function(s){return pgStatus(s)==='Berjalan'}),
+      inl=L.filter(function(s){var c=pgCur(s);return c>=2&&c<=5||c===9||c===10}),inv=L.reduce(function(a,s){return a+pgInv(s).usd},0),
+      paid=L.filter(function(s){return pgSt(s)[11]==='Selesai'}).reduce(function(a,s){return a+pgInv(s).usd},0),
+      dep=(S.pgkontrak||[]).filter(function(k){return /^Active/.test(k.status||'')}).reduce(function(a,k){return a+pgNum(k.deposit)},0);
+  root.append(h('div',{class:'grid'},
+    kpi('HMA Ni acuan',pgUsd(hm.ni),hm.label+' · /MT'),kpi('Kurs acuan',pgRp(hm.kurs),'Per US$ 1'),
+    kpi('Realisasi terkirim',pgN(done.reduce(function(a,s){return a+pgNum(s.wmt)},0),0)+' WMT','Sudah dibongkar di smelter','good'),
+    kpi('Pengapalan aktif',String(act.length),inl.length+' di loading atau pelayaran'),
+    kpi('Total ditagihkan',pgUsd(inv),L.length+' shipment'),kpi('Sisa piutang',pgUsd(inv-paid),'Belum settlement lunas',inv-paid>0?'warn':'good'),
+    kpi('Pembayaran diterima',pgUsd(paid),'Shipment settlement lunas','good'),kpi('Deposit kontrak aktif',pgUsd(dep),'Jaminan pembeli')));
+  /* pipeline */
+  var cnt=PG_STAGE.map(function(){return 0});L.forEach(function(s){var c=pgCur(s);if(c>=0)cnt[c]++});
+  root.append(panel('Alur 12 tahap pengapalan tongkang','Jumlah shipment yang sedang berada di tiap tahap.',
+    h('div',{class:'pg-pipe'},PG_STAGE.map(function(t,i){return h('button',{type:'button',class:'pg-stage'+(cnt[i]?' on':''),onclick:function(){PG.dtab='tahap';location.hash='pgship'}},h('span',{class:'n',text:String(i+1)}),h('b',{text:t[0]}),h('small',{text:cnt[i]+' shipment'}))}))));
+  /* HPM */
+  root.append(panel('Kalkulator simulasi HPM nikel (APNI dan ESDM)','Hitung perkiraan harga patokan per WMT dari kadar, kadar air, dan HMA periode acuan.',pgHpmPanel(null)));
+  /* realisasi kontrak + escrow */
+  var ks=(S.pgkontrak||[]).filter(function(k){return pgNum(k.target)>0}),mx=Math.max(1,Math.max.apply(null,ks.map(function(k){return pgNum(k.target)}).concat([1])));
+  var g=h('div',{class:'two'});
+  g.append(panel('Realisasi kontrak (target dan terkirim)','Perbandingan komitmen penjualan dan muatan yang sudah dibongkar.',
+    ks.length?pgBars(ks.map(function(k){var kir=done.filter(function(s){return s.kontrakId===k.id}).reduce(function(a,s){return a+pgNum(s.wmt)},0);return {l:k.no,v:kir,t:pgN(kir,0)+' / '+pgN(k.target,0)+' WMT'}}),mx):h('p',{class:'empty',text:'Belum ada kontrak bertarget volume.'})),
+    panel('Status keuangan','Terbayar dibanding sisa piutang.',inv?pgBars([{l:'Terbayar',v:paid,t:pgUsd(paid),c:'var(--good)'},{l:'Piutang',v:inv-paid,t:pgUsd(inv-paid),c:'var(--warn)'}],inv):h('p',{class:'empty',text:'Belum ada tagihan.'})));
+  root.append(g);
+  /* terkini */
+  var rec=L.slice().sort(function(a,b){return String(b.tglMuat||'').localeCompare(String(a.tglMuat||''))}).slice(0,6);
+  root.append(panel('Pengapalan terkini dan status legalitas',null,rec.length?pgShipTable(rec):h('p',{class:'empty',text:'Belum ada data pengapalan.'}),h('div',{class:'acts'},h('a',{class:'btn primary',href:'#pgship'},'Buka Shipment dan Dokumen'))));
+  return root;
+}
+function pgShipTable(rows){
+  return h('div',{class:'scroll'},h('table',{class:'tbl'},h('thead',null,h('tr',null,['No. pengapalan','Armada','Customer','Kadar dan tonase','Surveyor','Alur tahap','Status'].map(function(t){return h('th',{text:t})}))),
+    h('tbody',null,rows.map(function(s){var c=pgGet('pgcust',s.custId)||{},sv=pgGet('pgsurv',s.survId)||{},d=pgDone(s);
+      return h('tr',{class:'click',onclick:function(){PG.sel=s.id;PG.dtab='tahap';if(location.hash==='#pgship')paint();else location.hash='pgship'}},
+        h('td',{data:{label:'No.'},text:s.no||'—'}),h('td',{data:{label:'Armada'},text:pgLabel(s)}),h('td',{data:{label:'Customer'},text:c.nama||'—'}),
+        h('td',{data:{label:'Kadar'},text:pgN(s.wmt,0)+' WMT · Ni '+pgN(s.ni)+' · Fe '+pgN(s.fe)+' · MC '+pgN(s.mc)}),h('td',{data:{label:'Surveyor'},text:sv.nama||'—'}),
+        h('td',{data:{label:'Tahap'}},h('div',{class:'pg-prog',title:d+' dari 12 tahap'},h('i',{style:'width:'+(d/12*100)+'%'})),h('small',{text:d+'/12'+(pgCur(s)>=0?' · '+PG_STAGE[pgCur(s)][0]:'')})),
+        h('td',{data:{label:'Status'}},pgBadge(pgStatus(s))))}))));
+}
+
+/* ================= SHIPMENT DAN DOKUMEN ================= */
+function pgOpts(c,fn,ph){return [['',ph||'Pilih…']].concat(pgSorted(c).map(function(r){return [r.id,fn(r)]}))}
+function pgShipForm(row){
+  var ro=!pgCan(),d=Object.assign({},row||{}),nx=pgNextNo(),f={},err=h('p',{class:'err',hidden:true});
+  if(!row){d.no=nx.no;d.resi=nx.resi;d.delivery='FOB barge';d.kurs=(pgHma()[0]||{}).kurs||'';d.rkabTahun=String(TODAY.getFullYear());d.tglSurat=isoOf(TODAY);d.tglMuat=isoOf(TODAY);d.rek='1'}
+  var form=h('form',{class:'form',novalidate:true});
+  function T(k,l,type,attrs,wide){var e=opInp(type||'text',d[k],Object.assign({disabled:ro},attrs||{}));f[k]=e;form.append(opFld(l,e,wide))}
+  function S2(k,l,opts,wide){var e=opSel(opts,d[k],{disabled:ro});f[k]=e;form.append(opFld(l,e,wide));return e}
+  function H(t){form.append(h('h3',{class:'pg-fh',text:t}))}
+  H('Customer dan kontrak');
+  T('no','Nomor pengapalan');T('resi','Nomor resi pelacakan');
+  var sc=S2('custId','Customer atau smelter pembeli',pgOpts('pgcust',function(r){return r.nama+(r.kode?' ('+r.kode+')':'')},'— Pilih customer —'));
+  var sk=S2('kontrakId','Kontrak atau perjanjian terkait',pgOpts('pgkontrak',function(r){return r.no+' · '+(r.custNama||'')},'— Pilih kontrak —'));
+  H('Armada dan rute pelabuhan');
+  var sb=S2('bargeId','Armada tongkang dan tugboat',pgOpts('pgbarge',function(r){return r.nama+(r.kap?' · '+pgN(r.kap,0)+' WMT':'')},'— Pilih armada —'),true);
+  var jl=pgSorted('pgjetty').filter(function(r){return r.tipe==='Pelabuhan muat'}),jd=pgSorted('pgjetty').filter(function(r){return r.tipe==='Pelabuhan bongkar'});
+  S2('loadId','Pelabuhan muat',[['','— Pilih pelabuhan muat —']].concat(jl.map(function(r){return [r.id,r.nama]})));
+  S2('dischId','Pelabuhan bongkar',[['','— Pilih pelabuhan bongkar —']].concat(jd.map(function(r){return [r.id,r.nama]})));
+  H('Muatan, asal stockpile, dan kualitas (CoA lab)');
+  var ss=S2('stockId','Asal stockpile',pgOpts('pgstock',function(r){return r.nama},'— Pilih stockpile —'),true);
+  T('wmt','Kuantitas muatan (WMT)','number',{step:'any',min:0});T('ni','Kadar Ni (%)','number',{step:'any'});T('fe','Kadar Fe (%)','number',{step:'any'});T('mc','Kadar MC (%)','number',{step:'any'});T('sio','Rasio SiO2 / MgO','number',{step:'any'});
+  H('Surveyor dan legalitas RKAB');
+  S2('survId','Surveyor independen',pgOpts('pgsurv',function(r){return r.nama},'— Pilih surveyor —'));
+  T('tglMuat','Tanggal muat atau ETA','date');T('rkabTahun','Tahun RKAB');T('rkabNo','No. pengesahan RKAB');
+  H('Komersial dan penagihan');
+  T('harga','Harga satuan (US$ / WMT)','number',{step:'any',min:0});T('kurs','Kurs tetap (Rp / US$)','number',{step:'any',min:0});T('diskon','Discount atau penalti (Rp)','number',{step:'any',min:0});
+  T('delivery','Syarat pengiriman');S2('rek','Rekening pembayaran',[['1','Rekening utama'],['2','Rekening cadangan']]);
+  H('Nomor surat dokumen');
+  T('tglSurat','Tanggal surat','date');
+  var nm=(d.nomor||[]).slice(),base=(d.no||nx.no);
+  PG_DOC.forEach(function(x,i){var e=opInp('text',nm[i]||'',{disabled:ro,placeholder:'Otomatis: '+base+'/F'+(i+1)});f['n'+i]=e;form.append(opFld('No. '+(i+1)+'. '+x[0],e,true))});
+  /* isi otomatis dari master */
+  sc.addEventListener('change',function(){});
+  sk.addEventListener('change',function(){var k=pgGet('pgkontrak',sk.value);if(!k)return;if(!f.harga.value&&k.hpm)f.harga.value=k.hpm;var c=(S.pgcust||[]).find(function(x){return x.nama===k.custNama});if(c&&!sc.value)sc.value=c.id});
+  sb.addEventListener('change',function(){var b=pgGet('pgbarge',sb.value);if(b&&b.kap&&!f.wmt.value)f.wmt.value=b.kap});
+  ss.addEventListener('change',function(){var s=pgGet('pgstock',ss.value);if(s&&s.ni!=null&&!f.ni.value)f.ni.value=s.ni});
+  form.append(err);
+  form.addEventListener('submit',async function(e){
+    e.preventDefault();
+    if(!f.no.value.trim()){err.textContent='Nomor pengapalan wajib diisi.';err.hidden=false;return}
+    if(!f.custId.value||!f.bargeId.value){err.textContent='Pilih customer dan armada dari master data.';err.hidden=false;return}
+    var out=Object.assign({},row||{});delete out.id;
+    ['no','resi','custId','kontrakId','bargeId','loadId','dischId','stockId','survId','tglMuat','rkabTahun','rkabNo','delivery','rek','tglSurat'].forEach(function(k){out[k]=f[k].value.trim()});
+    ['wmt','ni','fe','mc','sio','harga','kurs','diskon'].forEach(function(k){out[k]=f[k].value===''?null:pgNum(f[k].value)});
+    out.nomor=PG_DOC.map(function(_,i){return f['n'+i].value.trim()||(out.no+'/F'+(i+1))});
+    if(!out.st)out.st=PG_STAGE.map(function(){return 'Pending'});
+    if(row&&row.demo)out.demo=true;
+    try{await save('pgship',row&&row.id,out);closeModal();toast('Shipment tersimpan');if(!row){var n=(S.pgship||[]).find(function(x){return x.no===out.no});if(n)PG.sel=n.id}paint()}
+    catch(x){err.textContent='Gagal menyimpan. '+(x&&x.message?x.message:'');err.hidden=false}
+  });
+  var acts=h('div',{class:'acts'});
+  if(row&&!ro){var armed=false,del=h('button',{type:'button',class:'btn danger'},'Hapus shipment');del.addEventListener('click',async function(){if(!armed){armed=true;del.textContent='Klik lagi untuk menghapus';setTimeout(function(){armed=false;del.textContent='Hapus shipment'},4000);return}await bkDelFor('pgship',row.id);await remove('pgship',row.id);PG.sel=null;closeModal();toast('Shipment dihapus');paint()});acts.append(del)}
+  acts.append(h('span',{class:'grow'}),h('button',{type:'button',class:'btn',onclick:closeModal},ro?'Tutup':'Batal'));
+  if(!ro)acts.append(h('button',{type:'submit',class:'btn primary'},row?'Simpan perubahan':'Simpan shipment'));
+  form.append(acts);
+  openModal(row?'Ubah shipment':'Shipment baru',form);
+}
+function pgStageEditor(s){
+  var st=pgSt(s),ro=!pgCan(),box=h('div'),grid=h('div',{class:'pg-kan'});
+  var groups=['Pre-Loading','Loading dan dokumen','Clearance dan verifikasi','Pelayaran dan selesai'];
+  groups.forEach(function(g){
+    var col=h('div',{class:'pg-col'},h('h4',{text:g}));
+    PG_STAGE.forEach(function(t,i){if(t[2]!==g)return;
+      var sel=opSel(['Pending','In Progress','Selesai'],st[i],{disabled:ro,onchange:function(e){st[i]=e.target.value;card.className='pg-card '+(st[i]==='Selesai'?'ok':st[i]==='In Progress'?'run':'')}});
+      var card=h('div',{class:'pg-card '+(st[i]==='Selesai'?'ok':st[i]==='In Progress'?'run':'')},h('span',{class:'n',text:'Tahap '+(i+1)}),h('b',{text:t[0]}),h('small',{text:t[1]}),sel);col.append(card)});
+    grid.append(col)});
+  box.append(grid);
+  if(!ro)box.append(h('div',{class:'acts'},h('button',{type:'button',class:'btn',onclick:function(){st=st.map(function(){return 'Selesai'});PG.sel=s.id;save('pgship',s.id,Object.assign({},s,{id:undefined,st:st})).then(function(){toast('Semua tahap ditandai selesai');paint()})}},'Tandai semua selesai'),
+    h('button',{type:'button',class:'btn primary',onclick:function(){save('pgship',s.id,Object.assign({},s,{id:undefined,st:st})).then(function(){toast('Tahapan tersimpan');paint()})}},'Simpan tahapan')));
+  return box;
+}
+function pgShipDetail(s){
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),c=pgGet('pgcust',s.custId)||{},ik=pgInv(s),d=pgDone(s);
+  root.append(h('div',{class:'toolbar'},h('button',{type:'button',class:'btn',onclick:function(){PG.sel=null;paint()}},'← Daftar shipment'),h('span',{class:'grow'}),
+    h('button',{type:'button',class:'btn',onclick:function(){PG.resi=s.resi||s.no;location.hash='pgtrack'}},'Lacak'),h('button',{type:'button',class:'btn',onclick:function(){pgArsipForm(s)}},'Arsip berkas'),
+    pgCan()?h('button',{type:'button',class:'btn',onclick:function(){pgShipForm(s)}},'Ubah data'):null,h('button',{type:'button',class:'btn primary',onclick:function(){pgPrintAll(s)}},'Cetak semua 6 dokumen')));
+  root.append(opHead(s.no||'Shipment',(pgLabel(s))+' · '+(c.nama||'customer belum dipilih')));
+  root.append(h('div',{class:'grid'},kpi('Kuantitas muatan',pgN(s.wmt,0)+' WMT','Muat '+fmt(s.tglMuat)),kpi('Kadar',pgN(s.ni)+' % Ni','Fe '+pgN(s.fe)+' · MC '+pgN(s.mc)),kpi('Nilai invoice',pgUsd(ik.usd),pgRp(ik.final)+' final'),kpi('Tahap',d+' / 12',pgCur(s)>=0?PG_STAGE[pgCur(s)][0]:'Selesai',d===12?'good':''),kpi('Resi',s.resi||'—','Nomor pelacakan')));
+  root.append(panel('Alur operasional pengapalan (12 tahap)','Ubah status tiap tahap lalu simpan.',pgStageEditor(s)));
+  var docs=h('div',{class:'pg-docs'}),prev=h('div');
+  PG_DOC.forEach(function(x,i){
+    docs.append(h('div',{class:'pg-dcard'},h('span',{class:'n',text:String(i+1)}),h('b',{text:x[0]}),h('small',{text:x[1]}),h('small',{class:'no',text:(s.nomor||[])[i]||''}),
+      h('div',{class:'acts'},h('button',{type:'button',class:'btn',onclick:function(){prev.replaceChildren(h('div',{class:'pg-prev'},pgBlocksDom(pgDocBlocks(i,s))));prev.scrollIntoView({behavior:'smooth',block:'nearest'})}},'Lihat'),h('button',{type:'button',class:'btn',onclick:function(){pgPrintDoc(s,i)}},'Cetak PDF'))))});
+  root.append(panel('Enam dokumen resmi pengapalan','Dokumen dibuat otomatis dari data shipment, master data, dan profil perusahaan (menu Pengaturan Pengapalan).',docs,prev));
+  return root;
+}
+function pgShip(){
+  if(PG.sel){var s=pgGet('pgship',PG.sel);if(s)return pgShipDetail(s);PG.sel=null}
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),L=(S.pgship||[]).slice().sort(function(a,b){return String(b.tglMuat||'').localeCompare(String(a.tglMuat||''))});
+  root.append(opHead('Shipment dan Dokumen','Manajemen pengapalan tongkang dan pembuatan enam dokumen resmi.'));
+  var need=['pgcust','pgbarge','pgjetty'].filter(function(c){return !(S[c]||[]).length});
+  if(need.length)root.append(opNote('Isi dulu master data (customer, armada tongkang, dan pelabuhan) agar form shipment dapat memilih dari daftar.','warn'));
+  var body=h('div');
+  function fill(){
+    var q=(PG.q||'').toLowerCase(),rows=L.filter(function(s){var c=pgGet('pgcust',s.custId)||{};return !q||[s.no,s.resi,pgLabel(s),c.nama].join(' ').toLowerCase().indexOf(q)>=0});
+    body.replaceChildren(rows.length?pgShipTable(rows):h('p',{class:'empty',text:L.length?'Tidak ada yang cocok.':'Belum ada shipment.'}));
+  }
+  var qi=h('input',{type:'search',placeholder:'Cari nomor, armada, customer…','aria-label':'Cari shipment',value:PG.q,oninput:function(e){PG.q=e.target.value;fill()}});
+  root.append(panel('Daftar pengapalan',null,h('div',{class:'toolbar'},qi,h('span',{class:'grow'}),pgCan()?h('button',{type:'button',class:'btn primary',onclick:function(){pgShipForm()}},'+ Shipment baru'):null),body));
+  fill();return root;
+}
+
+/* ================= ARSIP PDF ================= */
+function pgArsipForm(s){
+  var ro=!pgCan(),fld=bkField('pgship',s,ro),box=h('div'),err=h('p',{class:'err',hidden:true});
+  box.append(h('p',{class:'sub',text:'Unggah scan atau PDF hasil cetak yang sudah ditandatangani (maks. 6 berkas, foto otomatis dikompres). Pengarsipan memakai penyimpanan berkas perusahaan di platform ini.'}),fld.el,err,
+    h('div',{class:'acts'},h('span',{class:'grow'}),h('button',{type:'button',class:'btn',onclick:closeModal},ro?'Tutup':'Batal'),ro?null:h('button',{type:'button',class:'btn primary',onclick:async function(){try{await fld.commit(s.id);closeModal();toast('Arsip tersimpan');paint()}catch(e){err.textContent='Gagal menyimpan arsip.';err.hidden=false}}},'Simpan arsip')));
+  openModal('Arsip '+(s.no||''),box);
+}
+function pgArsip(){
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),L=S.pgship||[];
+  var lengkap=L.filter(function(s){return bkCount('pgship',s.id)>=6}).length,tot=BERKAS.filter(function(b){return b.kol==='pgship'}).length;
+  root.append(opHead('Arsip PDF','Berkas dokumen pengapalan yang diarsipkan per shipment.'));
+  root.append(h('div',{class:'grid'},kpi('Total pengapalan',String(L.length),'Semua tongkang terdaftar'),kpi('Arsip lengkap (6/6)',String(lengkap),'Enam berkas terunggah',lengkap?'good':''),kpi('Kelengkapan',L.length?Math.round(lengkap/L.length*100)+'%':'—','Rasio arsip lengkap'),kpi('Berkas tersimpan',String(tot),'Di penyimpanan perusahaan')));
+  var body=h('div');
+  function fill(){
+    var q=(PG.q||'').toLowerCase(),rows=L.filter(function(s){var c=pgGet('pgcust',s.custId)||{},n=bkCount('pgship',s.id);
+      return (!PG.af||(PG.af==='lengkap'?n>=6:n<6))&&(!q||[s.no,s.resi,pgLabel(s),c.nama].join(' ').toLowerCase().indexOf(q)>=0)});
+    body.replaceChildren(rows.length?h('div',{class:'scroll'},h('table',{class:'tbl'},h('thead',null,h('tr',null,['No. pengapalan','Tongkang','Customer','Berkas','Aksi'].map(function(t){return h('th',{text:t})}))),
+      h('tbody',null,rows.map(function(s){var c=pgGet('pgcust',s.custId)||{},n=bkCount('pgship',s.id);
+        return h('tr',null,h('td',{data:{label:'No.'},text:s.no||'—'}),h('td',{data:{label:'Tongkang'},text:pgLabel(s)}),h('td',{data:{label:'Customer'},text:c.nama||'—'}),
+          h('td',{data:{label:'Berkas'}},badge(n+' / 6',n>=6?'good':n?'warn':'')),
+          h('td',{data:{label:'Aksi'}},h('button',{type:'button',class:'btn',onclick:function(){pgArsipForm(s)}},n?'Kelola berkas':'Unggah'),' ',h('button',{type:'button',class:'btn',onclick:function(){pgPrintAll(s)}},'Cetak PDF')))})))):h('div',null,h('p',{class:'empty',text:'Tidak ada arsip dokumen yang sesuai.'}),h('p',{class:'sub',text:'Coba ubah kata kunci atau filter status.'})));
+  }
+  var qi=h('input',{type:'search',placeholder:'Cari nomor, tongkang, customer, resi…','aria-label':'Cari arsip',value:PG.q,oninput:function(e){PG.q=e.target.value;fill()}});
+  var fs=opSel([['','Semua ('+L.length+')'],['lengkap','Lengkap ('+lengkap+')'],['proses','Dalam proses ('+(L.length-lengkap)+')']],PG.af,{'aria-label':'Saring status',onchange:function(e){PG.af=e.target.value;fill()}});
+  root.append(panel('Semua berkas pengapalan',null,h('div',{class:'toolbar'},qi,fs),body));
+  fill();return root;
+}
+
+/* ================= MASTER DATA ================= */
+function pgMaster(){
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),T=[['pgbarge','Tongkang (barges)'],['pgjetty','Dermaga dan pelabuhan'],['pgsurv','Surveyor ESDM'],['pgkontrak','Kontrak dan KSO'],['pgcust','Pelanggan'],['pgstock','Stockpile dan WIUP']],HLP={pgbarge:'Objek kapal pengapalan yang tercantum di enam dokumen resmi.',pgjetty:'Pelabuhan muat dan pelabuhan bongkar di Packing List, LHV, dan Invoice.',pgsurv:'Lembaga verifikator yang dituju di Permohonan LHV dan SPK.',pgkontrak:'Rujukan kontrak penjualan dan perjanjian KSO untuk Invoice dan Packing List.',pgcust:'Penerima atau consignee di Packing List, SKAB, dan Invoice.',pgstock:'Asal tumpukan bijih nikel WIUP di SKAB dan SPK.'};
+  root.append(opHead('Master Data','Data referensi: tongkang, dermaga, surveyor, kontrak, pelanggan, dan stockpile.'));
+  root.append(h('div',{class:'op-tabs',role:'tablist','aria-label':'Master data'},T.map(function(t){return h('button',{type:'button',role:'tab',class:'op-tab'+(PG.master===t[0]?' on':''),'aria-selected':PG.master===t[0]?'true':'false',onclick:function(){PG.master=t[0];paint()}},t[1]+' ('+(S[t[0]]||[]).length+')')})));
+  root.append(panel(T.find(function(t){return t[0]===PG.master})[1],HLP[PG.master],listView(PG.master)));
+  return root;
+}
+
+/* ================= PENGATURAN ================= */
+function pgSetting(){
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),P=pgProf(),ro=!pgCan(),f={};
+  root.append(opHead('Pengaturan Pengapalan','Profil dan rekening yang dicetak pada kop surat, invoice, dan enam dokumen pengapalan.'));
+  var form=h('form',{class:'form',novalidate:true});
+  function T(k,l,wide,area){var e=area?h('textarea',{rows:3,disabled:ro}):h('input',{type:'text',disabled:ro});e.value=P[k]||'';f[k]=e;form.append(opFld(l,e,wide||area))}
+  form.append(h('h3',{class:'pg-fh',text:'1. Profil legalitas perusahaan'}));
+  T('nama','Nama perusahaan (kop surat)');T('kode','Kode atau inisial perusahaan');T('bidang','Bidang usaha atau komoditas');T('npwp','NPWP');T('email','Email resmi korespondensi');T('telp','Nomor telepon');T('alamat','Alamat kantor pusat dan operasional tambang',true,true);
+  T('direktur','Nama penandatangan dokumen');T('jabatan','Jabatan penandatangan');T('kota','Kota penandatanganan');
+  form.append(h('h3',{class:'pg-fh',text:'2. Rekening utama'}));T('b1_bank','Nama bank');T('b1_no','No. rekening');T('b1_nama','Nama pemilik akun');T('b1_swift','Swift code');
+  form.append(h('h3',{class:'pg-fh',text:'3. Rekening cadangan'}));T('b2_bank','Nama bank');T('b2_no','No. rekening');T('b2_nama','Nama pemilik akun');T('b2_swift','Swift code');
+  var err=h('p',{class:'err',hidden:true});form.append(err);
+  if(!ro)form.append(h('div',{class:'acts'},h('span',{class:'grow'}),h('button',{type:'submit',class:'btn primary'},'Simpan pengaturan')));
+  form.addEventListener('submit',async function(e){e.preventDefault();var o={};Object.keys(f).forEach(function(k){o[k]=f[k].value.trim()});try{await save('pgset','profil',o);toast('Pengaturan tersimpan');paint()}catch(x){err.textContent='Gagal menyimpan.';err.hidden=false}});
+  root.append(panel('Profil dan rekening',null,form));
+  root.append(panel('Data HMA per periode','Dipakai kalkulator HPM di dasbor.',h('p',{class:'sub',text:pgHma().length+' periode tersimpan.'}),pgCan()?h('button',{type:'button',class:'btn',onclick:pgHmaForm},'Ubah data HMA'):null));
+  root.append(panel('Cadangan data pengapalan','Data tersimpan di database perusahaan. Unduh salinan JSON untuk arsip pribadi (berkas arsip tidak ikut).',h('button',{type:'button',class:'btn',onclick:function(){
+    var o={app:'Platform KTT · Pengapalan',diekspor:new Date().toISOString()};['pgship','pgbarge','pgjetty','pgsurv','pgkontrak','pgcust','pgstock','pgset'].forEach(function(c){o[c]=S[c]||[]});
+    opSave('pengapalan-'+opIso()+'.json','﻿'+JSON.stringify(o,null,1))}},'Unduh cadangan (.json)')));
+  return root;
+}
+
+/* ================= PELACAKAN ================= */
+function pgTrack(){
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),res=h('div');
+  root.append(opHead('Pelacakan Pengapalan','Cari posisi tongkang dan kelengkapan dokumen dengan nomor resi atau nomor pengapalan.'));
+  var qi=h('input',{type:'search',placeholder:'Contoh: TRK-KTT-2026-001 atau SHP/KTT/2026/001','aria-label':'Nomor resi',value:PG.resi});
+  function go(){
+    PG.resi=qi.value.trim();var q=PG.resi.toLowerCase();
+    if(!q){res.replaceChildren(h('p',{class:'empty',text:'Masukkan nomor resi atau nomor pengapalan.'}));return}
+    var s=(S.pgship||[]).find(function(x){return String(x.resi||'').toLowerCase()===q||String(x.no||'').toLowerCase()===q});
+    if(!s){res.replaceChildren(h('p',{class:'empty',text:'Data pelacakan tidak tersedia. Periksa format nomor resi.'}));return}
+    var c=pgGet('pgcust',s.custId)||{},kt=pgGet('pgkontrak',s.kontrakId)||{},sv=pgGet('pgsurv',s.survId)||{},jl=pgGet('pgjetty',s.loadId)||{},jd=pgGet('pgjetty',s.dischId)||{},st=pgSt(s),cur=pgCur(s);
+    var tl=h('ol',{class:'pg-tl'},PG_STAGE.map(function(t,i){var k=st[i]==='Selesai'?'ok':(i===cur?'run':'');return h('li',{class:k},h('b',{text:'Tahap '+(i+1)+' · '+t[0]}),h('small',{text:t[1]}),h('span',{class:'tag',style:'margin:0',text:st[i]==='Selesai'?'Selesai':i===cur?'Sedang berjalan':'Menunggu'}))}));
+    var nb=bkCount('pgship',s.id);
+    res.replaceChildren(
+      h('div',{class:'grid'},kpi('No. resi',s.resi||'—','No. pengapalan '+(s.no||'—')),kpi('Posisi alur',cur>=0?'Tahap '+(cur+1):'Selesai',cur>=0?PG_STAGE[cur][0]:'Settlement lunas',cur<0?'good':''),kpi('Kuantitas',pgN(s.wmt,0)+' WMT','Kontrak '+(kt.no||'—')),kpi('Kadar Ni',pgN(s.ni)+' %','Fe '+pgN(s.fe)+' · MC '+pgN(s.mc)),kpi('Dokumen diarsipkan',nb+' / 6','Berkas terunggah',nb>=6?'good':'')),
+      panel('Rincian kargo',null,h('dl',{class:'pg-kv'},[['Konsumen atau smelter',c.nama||'—'],['Tongkang',pgLabel(s)],['Pelabuhan muat',jl.nama||'—'],['Pelabuhan bongkar',jd.nama||'—'],['Surveyor',sv.nama||'—'],['Tanggal muat',fmt(s.tglMuat)]].map(function(r){return [h('dt',{text:r[0]}),h('dd',{text:r[1]})]})),
+        h('div',{class:'acts'},h('button',{type:'button',class:'btn',onclick:function(){navigator.clipboard&&navigator.clipboard.writeText(s.resi||s.no).then(function(){toast('Nomor resi disalin')}).catch(function(){toast('Salin manual dari kolom di atas')})}},'Salin nomor resi'),h('button',{type:'button',class:'btn',onclick:function(){PG.sel=s.id;location.hash='pgship'}},'Buka shipment'))),
+      panel('Pelacakan alur 12 tahap',null,tl),
+      panel('Kelengkapan enam dokumen resmi',null,h('div',{class:'pg-docs'},PG_DOC.map(function(x,i){var ok=(s.nomor||[])[i]&&st[Math.min(11,[5,4,3,7,5,11][i])]==='Selesai';return h('div',{class:'pg-dcard'},h('span',{class:'n',text:String(i+1)}),h('b',{text:x[0]}),badge(ok?'Terverifikasi sistem':'Dalam proses',ok?'good':''))}))),
+      h('p',{class:'sub',text:'Halaman ini hanya untuk anggota perusahaan yang sudah masuk. Portal pelacakan publik tanpa login belum tersedia.'}));
+  }
+  qi.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();go()}});
+  root.append(h('div',{class:'toolbar'},qi,h('button',{type:'button',class:'btn primary',onclick:go},'Lacak resi')),res);
+  go();return root;
+}
+
+/* ================= data contoh ================= */
+function pgSampleDocs(){
+  var D='demo-pg-',yr=String(TODAY.getFullYear()),out={};
+  out.pgcust=[{id:D+'c1',kode:'CST-01',nama:'PT Smelter Contoh Satu',npwp:'00.000.000.0-000.000',pic:'PIC Contoh',email:'kontak@contoh.test',telp:'+62 000 0000 0000',alamat:'Kawasan Industri Contoh, Kabupaten Contoh',status:'Active',demo:true},{id:D+'c2',kode:'CST-02',nama:'PT Smelter Contoh Dua',npwp:'00.000.000.0-000.001',pic:'PIC Contoh Dua',email:'kontak2@contoh.test',telp:'+62 000 0000 0001',alamat:'Kawasan Industri Contoh Dua',status:'Active',demo:true}];
+  out.pgbarge=[{id:D+'b1',kode:'AR-01',nama:'BG. Contoh 3001 / TB. Contoh Satu',kap:7500,owner:'PT Pelayaran Contoh',demo:true},{id:D+'b2',kode:'AR-02',nama:'BG. Contoh 3002 / TB. Contoh Dua',kap:8000,owner:'PT Pelayaran Contoh',demo:true},{id:D+'b3',kode:'AR-03',nama:'BG. Contoh 3003 / TB. Contoh Tiga',kap:6500,owner:'PT Pelayaran Contoh Dua',demo:true}];
+  out.pgjetty=[{id:D+'j1',kode:'JM-01',tipe:'Pelabuhan muat',nama:'Jetty Contoh (titik muat utama)',lokasi:'Kabupaten Contoh',demo:true},{id:D+'j2',kode:'JB-01',tipe:'Pelabuhan bongkar',nama:'Jetty Smelter Contoh Satu',lokasi:'Kawasan Industri Contoh',demo:true},{id:D+'j3',kode:'JB-02',tipe:'Pelabuhan bongkar',nama:'Jetty Smelter Contoh Dua',lokasi:'Kawasan Industri Contoh Dua',demo:true}];
+  out.pgsurv=[{id:D+'v1',nama:'PT Surveyor Contoh Satu',akred:'ESDM Minerba',pic:'PIC Surveyor Satu',telp:'+62 000 0000 0010',demo:true},{id:D+'v2',nama:'PT Surveyor Contoh Dua',akred:'ESDM Minerba',pic:'PIC Surveyor Dua',telp:'+62 000 0000 0011',demo:true}];
+  out.pgstock=[{id:D+'s1',nama:'Stockpile 01 (kadar tinggi, Pit Contoh A)',wiup:'WIUP Contoh',kap:20000,ni:1.8,demo:true},{id:D+'s2',nama:'Stockpile 02 (kadar menengah, Pit Contoh B)',wiup:'WIUP Contoh',kap:15000,ni:1.4,demo:true}];
+  out.pgkontrak=[{id:D+'k1',no:'CONTOH/KTR/'+yr+'/001',kategori:'Reguler (Non-KSO)',custNama:'PT Smelter Contoh Satu',tipe:'Penjualan nikel (offtake)',incoterm:'FOB (Free on Board jetty)',status:'Active (berjalan)',tgl:yr+'-01-10',mulai:yr+'-01-15',akhir:yr+'-12-31',target:60000,hpm:46.5,deposit:100000,sni:1.6,sfe:20,smc:35,catatan:'Kontrak contoh.',demo:true},
+    {id:D+'k2',no:'CONTOH/KSO/'+yr+'/002',kategori:'Perjanjian KSO',custNama:'PT Smelter Contoh Dua',tipe:'Perjanjian KSO (operasional tambang)',incoterm:'FOB (Free on Board jetty)',status:'Active (berjalan)',tgl:yr+'-03-01',mulai:yr+'-03-05',akhir:yr+'-12-31',target:30000,hpm:44,deposit:50000,sni:1.4,sfe:25,smc:35,kso:'PT Mitra Contoh',ksopic:'PIC KSO Contoh',ksotelp:'+62 000 0000 0020',demo:true}];
+  out.pgset=[{id:'profil',nama:'PT Contoh Tambang Nusantara',kode:'CTN',bidang:'Penambangan dan penjualan bijih nikel',npwp:'00.000.000.0-000.000',email:'admin@contoh.test',telp:'+62 000 0000 0000',alamat:'Jl. Contoh No. 1, Kabupaten Contoh, Provinsi Contoh',direktur:'Contoh Direktur',jabatan:'Direktur Utama',kota:'Kota Contoh',b1_bank:'Bank Contoh',b1_no:'0000000000',b1_nama:'PT Contoh Tambang Nusantara',b1_swift:'CONTIDJA',b2_bank:'Bank Contoh Dua',b2_no:'1111111111',b2_nama:'PT Contoh Tambang Nusantara',b2_swift:'CONTIDJB',demo:true},{id:'hma',rows:PG_HMA0,demo:true}];
+  function st(n,run){return PG_STAGE.map(function(_,i){return i<n?'Selesai':(i===n&&run?'In Progress':'Pending')})}
+  function nm(no){return PG_DOC.map(function(_,i){return no+'/F'+(i+1)})}
+  function shp(i,o){var no='SHP/CTN/'+yr+'/00'+i;return Object.assign({id:D+'h'+i,no:no,resi:'TRK-CTN-'+yr+'-00'+i,delivery:'FOB barge',kurs:16250,rkabTahun:yr,rkabNo:'CONTOH/RKAB/001/'+yr,rek:'1',diskon:0,sio:2.1,nomor:nm(no),demo:true},o)}
+  out.pgship=[
+    shp(1,{custId:D+'c1',kontrakId:D+'k1',bargeId:D+'b1',loadId:D+'j1',dischId:D+'j2',stockId:D+'s1',survId:D+'v1',wmt:7500,ni:1.82,fe:19.5,mc:32,harga:46.5,tglMuat:smpDay(-40),tglSurat:smpDay(-41),st:st(12)}),
+    shp(2,{custId:D+'c1',kontrakId:D+'k1',bargeId:D+'b2',loadId:D+'j1',dischId:D+'j2',stockId:D+'s1',survId:D+'v1',wmt:8000,ni:1.76,fe:21,mc:33,harga:46.5,tglMuat:smpDay(-14),tglSurat:smpDay(-15),st:st(10,true)}),
+    shp(3,{custId:D+'c2',kontrakId:D+'k2',bargeId:D+'b3',loadId:D+'j1',dischId:D+'j3',stockId:D+'s2',survId:D+'v2',wmt:6500,ni:1.45,fe:27,mc:34,harga:44,tglMuat:smpDay(-3),tglSurat:smpDay(-4),st:st(4,true)}),
+    shp(4,{custId:D+'c2',kontrakId:D+'k2',bargeId:D+'b2',loadId:D+'j1',dischId:D+'j3',stockId:D+'s2',survId:D+'v2',wmt:7000,ni:1.5,fe:26,mc:33,harga:44,tglMuat:smpDay(5),tglSurat:smpDay(2),st:st(1,true)})];
+  return out;
+}
 /* ===== Data contoh: isi dan hapus per menu, dengan dua kali konfirmasi ===== */
 var SMP_MENU=[
  {k:'k3',t:'K3 dan Insiden',c:['insiden','jamkerja']},
@@ -11485,6 +11986,7 @@ var SMP_MENU=[
  {k:'temuan',t:'Temuan',c:['temuan']},
  {k:'agenda',t:'Agenda K3 dan Pelatihan',c:['agenda']},
  {k:'inventaris',t:'Inventaris K3',c:['inventaris']},
+ {k:'pengapalan',t:'Pengapalan dan dokumen',c:['pgcust','pgbarge','pgjetty','pgsurv','pgstock','pgkontrak','pgset','pgship']},
  {k:'operasional',t:'Operasional tambang',c:['opmaster','opsm','opeto','opbarge','oplog','opplan','oprkab']},
  {k:'reklamasi',t:'Reklamasi dan pascatambang',c:['reklamasi','revegetasi','jaminan','rkgiat','pucuk','bibit','erosi','pasca','rkdok']},
  {k:'personel',t:'Personel',c:['personel']},
@@ -11513,6 +12015,7 @@ function smpOpDocs(){
 }
 function smpRows(col){
   if(col.indexOf('op')===0)return smpOpDocs()[col]||[];
+  if(col.indexOf('pg')===0)return pgSampleDocs()[col]||[];
   var have={};(S[col]||[]).forEach(function(r){have[r.id]=1});
   return (SEED[col]||[]).filter(function(r){return !have[r.id]}).map(function(r){var x=Object.assign({},r);x.demo=true;return x});
 }
@@ -11762,6 +12265,10 @@ function hostScreen(kind,msg){
 }
 /* ---- mode demo 24 jam: tanpa akun, data contoh lengkap, disimpan di memori peramban ---- */
 function demoExp(){var m=/[?&]demo=(\d{12,14})(?:&|$)/.exec(location.search);return m?Number(m[1]):0}
+function hostDlShim(){return {save:function(o){return new Promise(function(res,rej){
+  try{var b=o.data instanceof Blob?o.data:new Blob([o.data],{type:hostMime(o.filename)});
+    var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=o.filename||'berkas';document.body.append(a);a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},4000);res({})}catch(e){rej(e)}})}}}
 function demoStart(exp){
   var left=exp-Date.now();
   if(left<=0||left>26*3600*1000){hostScreen('err','Link demo ini sudah berakhir. Akun demo hanya berlaku 24 jam. Minta link baru kepada pengelola Platform KTT.');return}
@@ -11774,7 +12281,7 @@ function demoStart(exp){
   var SAN=[['Andy Fadjrun Assiddiqi','Contoh KTT'],['PT Inti Resources Mandiri','Kontraktor Contoh A'],['PT Maleo Berkah Perkasa','Kontraktor Contoh B'],['Tim reklamasi SSU','Tim reklamasi perusahaan'],['Personel SSU','Personel perusahaan'],['Persemaian SSU','Persemaian perusahaan'],['Terminal khusus Mapila','Terminal khusus']];
   function strip(){COLS.forEach(function(c){var j=JSON.stringify(S[c].filter(function(r){return !real[c+':'+r.id]}));SAN.forEach(function(x){j=j.split(x[0]).join(x[1])});S[c]=JSON.parse(j)})}
   try{if(typeof tenantBlank==='function')tenantBlank()}catch(e){}
-  Promise.resolve(init()).then(function(){strip();return typeof demoKon==='function'?demoKon():0}).then(function(){return typeof smpRun==='function'?smpRun('add',SMP_MENU):0}).then(function(){strip();return typeof demoFill==='function'?demoFill():0}).then(function(){schedule()},function(e){if(window.console)console.error(e)});
+  Promise.resolve(init()).then(function(){try{DL=hostDlShim()}catch(e){}strip();return typeof demoKon==='function'?demoKon():0}).then(function(){return typeof smpRun==='function'?smpRun('add',SMP_MENU):0}).then(function(){strip();return typeof demoFill==='function'?demoFill():0}).then(function(){schedule()},function(e){if(window.console)console.error(e)});
 }
 function hostStart(){
   var dx=demoExp();if(dx){demoStart(dx);return}
@@ -12484,6 +12991,7 @@ VIEWS.panduan=function(){return guideView()};
 VIEWS.langganan=function(){return subView()};
 VIEWS.ptw=function(){return ptwView()};
 VIEWS.operasional=function(){return opView()};
+VIEWS.pgdash=function(){return pgDash()};VIEWS.pgship=function(){return pgShip()};VIEWS.pgarsip=function(){return pgArsip()};VIEWS.pgmaster=function(){return pgMaster()};VIEWS.pgset=function(){return pgSetting()};VIEWS.pgtrack=function(){return pgTrack()};
 VIEWS.kredit=function(){return krView()};
 VIEWS.setelan=function(){return setView()};
 VIEWS.kontraktor=function(){
