@@ -1678,6 +1678,13 @@ html.lc-on body>*:not(.lc-pub):not(script):not(style){display:none!important}
 .lc-h{margin:0;font-size:15px}
 .lc-st{font-size:12px;color:var(--muted)}
 .lc-card.pg-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+/* ===== kop surat pengapalan ===== */
+.pg-kop{display:flex;flex-direction:column;gap:2px;border-bottom:2px solid var(--brand);padding-bottom:8px;margin-bottom:12px}
+.pg-kop b{font-family:var(--f-head);font-size:18px;color:var(--brand)}.pg-kop span{font-size:12px;color:var(--muted)}
+.pg-kop-img{padding:0 0 8px;align-items:center}.pg-kop-img img{max-width:100%;max-height:110px;object-fit:contain;display:block}
+.pg-kopbox{border:1px dashed var(--line);border-radius:10px;padding:12px;background:#fff;color:#1b241f;margin-bottom:8px}
+.pg-kopbox img{max-width:100%;max-height:120px;display:block;margin:0 auto}
+.pg-kopbox .pg-kop{margin:0}.pg-kopbox .pg-kop b{color:#215c33}.pg-kopbox .pg-kop span{color:#5f6a63}
 
 .pp-wrap{max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface2)}
 .paper{background:#fff;color:#1b211d;border-radius:4px;padding:26px 28px;box-shadow:0 1px 8px rgba(0,0,0,.18);font-family:var(--f-body);font-size:13px;line-height:1.5}
@@ -2906,9 +2913,14 @@ function pdfBuild(M,meta){
   function ln(x1,y1,x2,y2,w,c){ops.push(col(c||LINE,'RG')+' '+f(w)+' w '+f(x1)+' '+f(PH-y1)+' m '+f(x2)+' '+f(PH-y2)+' l S')}
   function rc(x,yt,w,hh,c){ops.push(col(c,'rg')+' '+f(x)+' '+f(PH-yt-hh)+' '+f(w)+' '+f(hh)+' re f')}
   function ensure(hh){if(y+hh>PH-MB)np()}
+  var IMGS=[];
   np();
   M.forEach(function(b){
-    if(b.t==='kop'){
+    if(b.t==='kop'&&b.img&&b.img.b64){
+      var iw=CW,ih=CW*b.img.h/b.img.w;if(ih>110){ih=110;iw=ih*b.img.w/b.img.h}
+      var ix=ML+(CW-iw)/2,ii=IMGS.indexOf(b.img);if(ii<0){ii=IMGS.length;IMGS.push(b.img)}
+      ops.push('q '+f(iw)+' 0 0 '+f(ih)+' '+f(ix)+' '+f(PH-y-ih)+' cm /Im'+ii+' Do Q');y+=ih+6;ln(ML,y,ML+CW,y,1.4,ACC);y+=14}
+    else if(b.t==='kop'){
       tx(ML,y+14,b.name,15,true,ACC);tx(ML,y+28,b.sub,8.5,false,MUTE);y+=36;ln(ML,y,ML+CW,y,1.4,ACC);y+=14}
     else if(b.t==='title'){
       pdfWrap(b.text,17,true,CW).forEach(function(l){tx(ML,y+17,l,17,true,INK);y+=22});
@@ -2973,7 +2985,7 @@ function pdfBuild(M,meta){
   function add(s){o.push(s)}
   add('<</Type/Catalog/Pages 2 0 R>>');
   var kids=pages.map(function(p,i){return (6+2*i)+' 0 R'}).join(' ');
-  add('<</Type/Pages/Kids['+kids+']/Count '+pages.length+'/MediaBox[0 0 '+f(PW)+' '+f(PH)+']/Resources<</Font<</F1 3 0 R/F2 4 0 R>>>>>>');
+  add('<</Type/Pages/Kids['+kids+']/Count '+pages.length+'/MediaBox[0 0 '+f(PW)+' '+f(PH)+']/Resources<</Font<</F1 3 0 R/F2 4 0 R>>'+(IMGS.length?'/XObject<<'+IMGS.map(function(_,i){return '/Im'+i+' '+(6+2*pages.length+i)+' 0 R'}).join(' ')+'>>':'')+'>>>>');
   add('<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>');
   add('<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>');
   var d=new Date(),z=function(n){return ('0'+n).slice(-2)};
@@ -2982,6 +2994,7 @@ function pdfBuild(M,meta){
     var st=p.join('\n');
     add('<</Type/Page/Parent 2 0 R/Contents '+(7+2*i)+' 0 R>>');
     add('<</Length '+st.length+'>>\nstream\n'+st+'\nendstream')});
+  IMGS.forEach(function(im){var bin=atob(im.b64);add('<</Type/XObject/Subtype/Image/Width '+im.w+'/Height '+im.h+'/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length '+bin.length+'>>\nstream\n'+bin+'\nendstream')});
   o.forEach(function(s,i){offs.push(body.length);body+=(i+1)+' 0 obj\n'+s+'\nendobj\n'});
   var xr=body.length;
   body+='xref\n0 '+(o.length+1)+'\n0000000000 65535 f \n';
@@ -11669,7 +11682,7 @@ function pgDocBlocks(k,s){
     {t:'h',text:'Pembayaran melalui transfer (TT) ke rekening'},{t:'kv',rows:[['Nama bank',bk.bank||'—'],['Nama rekening',bk.nama||'—'],['No. rekening',bk.no||'—'],['Swift code',bk.swift||'—']]},sign]);
 }
 function pgBlocksDom(blocks){
-  var box=h('div',{class:'pg-doc'});
+  var box=h('div',{class:'pg-doc'});box.append(pgKopDom(pgProf()));
   blocks.forEach(function(b){
     if(b.t==='title'){box.append(h('h3',{class:'pg-dt',text:b.text}),b.sub?h('p',{class:'pg-ds',text:b.sub}):null)}
     else if(b.t==='h')box.append(h('h4',{text:b.text}));
@@ -11681,14 +11694,19 @@ function pgBlocksDom(blocks){
   });
   return box;
 }
+function pgKop(P){var k={t:'kop',name:(P.nama||'').toUpperCase(),sub:(P.alamat||'')+(P.telp?' · '+P.telp:'')+(P.email?' · '+P.email:'')};if(P.kopImg&&P.kopW&&P.kopH)k.img={b64:P.kopImg,w:P.kopW,h:P.kopH};return k}
+function pgKopDom(P){
+  if(P.kopImg)return h('div',{class:'pg-kop pg-kop-img'},h('img',{alt:'Kop surat '+(P.nama||''),src:'data:image/jpeg;base64,'+P.kopImg}));
+  return h('div',{class:'pg-kop'},h('b',{text:(P.nama||'').toUpperCase()}),h('span',{text:(P.alamat||'')+(P.telp?' · '+P.telp:'')+(P.email?' · '+P.email:'')}))
+}
 function pgPdf(title,file,blocks){
   if(typeof pdfBuild!=='function'){toast('PDF tidak tersedia di tampilan ini');return}
-  var P=pgProf(),M=[{t:'kop',name:(P.nama||'').toUpperCase(),sub:(P.alamat||'')+(P.telp?' · '+P.telp:'')+(P.email?' · '+P.email:'')}].concat(blocks);
+  var P=pgProf(),M=[pgKop(P)].concat(blocks);
   try{var b=pdfBuild(M,{title:title,author:P.nama||'Platform KTT',footer:title});opSave(file,b.bytes)}catch(e){toast('Gagal membuat PDF')}
 }
 function pgPrintDoc(s,k){pgPdf(PG_DOC[k][0],'pengapalan-'+(s.no||'shipment').replace(/[^A-Za-z0-9]+/g,'-')+'-form'+(k+1)+'.pdf',pgDocBlocks(k,s))}
 function pgPrintAll(s){
-  var all=[];for(var k=0;k<6;k++){all.push({t:'pb'});all=all.concat(pgDocBlocks(k,s))}
+  var all=[],kp=pgKop(pgProf());for(var k=0;k<6;k++){all.push({t:'pb'});if(k)all.push(kp);all=all.concat(pgDocBlocks(k,s))}
   all.shift();pgPdf('Dossier pengapalan '+(s.no||''),'pengapalan-'+(s.no||'shipment').replace(/[^A-Za-z0-9]+/g,'-')+'-6-dokumen.pdf',all);
 }
 /* ---------- kalkulator HPM ---------- */
@@ -11940,9 +11958,26 @@ function pgSetting(){
   T('direktur','Nama penandatangan dokumen');T('jabatan','Jabatan penandatangan');T('kota','Kota penandatanganan');
   form.append(h('h3',{class:'pg-fh',text:'2. Rekening utama'}));T('b1_bank','Nama bank');T('b1_no','No. rekening');T('b1_nama','Nama pemilik akun');T('b1_swift','Swift code');
   form.append(h('h3',{class:'pg-fh',text:'3. Rekening cadangan'}));T('b2_bank','Nama bank');T('b2_no','No. rekening');T('b2_nama','Nama pemilik akun');T('b2_swift','Swift code');
+  form.append(h('h3',{class:'pg-fh',text:'4. Kop surat'}));
+  var kop={b64:P.kopImg||'',w:P.kopW||0,h:P.kopH||0},kp=h('div',{class:'pg-kopbox'}),kinfo=h('p',{class:'sub wide',style:'margin:0'});
+  function kdraw(){
+    kp.replaceChildren(kop.b64?h('img',{alt:'Pratinjau kop surat',src:'data:image/jpeg;base64,'+kop.b64}):pgKopDom(Object.assign({},P,{kopImg:''})));
+    kinfo.textContent=kop.b64?'Kop gambar dipakai di pratinjau dan di semua PDF pengapalan, menggantikan kop teks. Klik Simpan pengaturan untuk menerapkan.':'Belum ada kop gambar. PDF memakai kop teks dari nama, alamat, telepon, dan email di atas.'}
+  async function kfile(file){
+    try{
+      if(!file)return;if(!/^image\/(jpeg|png|webp)$/.test(file.type||'')){toast('Pakai gambar JPG, PNG, atau WebP');return}
+      var url=URL.createObjectURL(file),im=await new Promise(function(res,rej){var i=new Image();i.onload=function(){res(i)};i.onerror=rej;i.src=url});URL.revokeObjectURL(url);
+      var sc=Math.min(1,1600/im.naturalWidth),w=Math.round(im.naturalWidth*sc),hh=Math.round(im.naturalHeight*sc),cv=document.createElement('canvas');cv.width=w;cv.height=hh;
+      var cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,w,hh);cx.drawImage(im,0,0,w,hh);
+      var q=.88,d=cv.toDataURL('image/jpeg',q);while(d.length>420000&&q>.45){q-=.1;d=cv.toDataURL('image/jpeg',q)}
+      if(d.length>600000){toast('Gambar terlalu besar. Kecilkan dulu.');return}
+      kop={b64:d.split(',')[1],w:w,h:hh};kdraw()}catch(e){toast('Gambar tidak bisa dibaca')}}
+  var kfi=h('input',{type:'file',accept:'image/jpeg,image/png,image/webp',hidden:true,'aria-label':'Pilih gambar kop surat',onchange:function(){kfile(kfi.files[0]);kfi.value=''}});
+  form.append(h('div',{class:'wide'},kp,kinfo,ro?null:h('div',{class:'acts',style:'justify-content:flex-start;margin-top:8px'},kfi,h('button',{type:'button',class:'btn',onclick:function(){kfi.click()}},'Unggah gambar kop surat'),h('button',{type:'button',class:'btn',onclick:function(){kop={b64:'',w:0,h:0};kdraw()}},'Hapus kop gambar')),h('p',{class:'sub',style:'margin:6px 0 0',text:'Saran: gambar lebar (rasio sekitar 6:1) berisi logo, nama, dan alamat, format JPG atau PNG. Gambar dikecilkan otomatis ke lebar 1600 px.'})));
+  kdraw();
   var err=h('p',{class:'err',hidden:true});form.append(err);
   if(!ro)form.append(h('div',{class:'acts'},h('span',{class:'grow'}),h('button',{type:'submit',class:'btn primary'},'Simpan pengaturan')));
-  form.addEventListener('submit',async function(e){e.preventDefault();var o={};Object.keys(f).forEach(function(k){o[k]=f[k].value.trim()});try{await save('pgset','profil',o);toast('Pengaturan tersimpan');paint()}catch(x){err.textContent='Gagal menyimpan.';err.hidden=false}});
+  form.addEventListener('submit',async function(e){e.preventDefault();var o={};Object.keys(f).forEach(function(k){o[k]=f[k].value.trim()});if(kop.b64){o.kopImg=kop.b64;o.kopW=kop.w;o.kopH=kop.h}try{await save('pgset','profil',o);toast('Pengaturan tersimpan');paint()}catch(x){err.textContent='Gagal menyimpan.';err.hidden=false}});
   root.append(panel('Profil dan rekening',null,form));
   root.append(panel('Data HMA per periode','Dipakai kalkulator HPM di dasbor.',h('p',{class:'sub',text:pgHma().length+' periode tersimpan.'}),pgCan()?h('button',{type:'button',class:'btn',onclick:pgHmaForm},'Ubah data HMA'):null));
   root.append(panel('Cadangan data pengapalan','Data tersimpan di database perusahaan. Unduh salinan JSON untuk arsip pribadi (berkas arsip tidak ikut).',h('button',{type:'button',class:'btn',onclick:function(){
