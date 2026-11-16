@@ -11973,7 +11973,18 @@ function pgTrack(){
       s.publik?h('div',{class:'acts'},h('button',{type:'button',class:'btn',onclick:function(){var u=lacakUrl(s);navigator.clipboard&&navigator.clipboard.writeText(u).then(function(){toast('Tautan pelacakan publik disalin')}).catch(function(){toast(u)})}},'Salin tautan pelacakan publik'),h('span',{class:'sub',text:'Siapa pun yang memegang tautan atau nomor resi bisa melihat tahap, tongkang, pelabuhan, dan kuantitas, tanpa harga atau kadar.'})):h('p',{class:'sub',text:'Pelacakan publik belum diaktifkan untuk shipment ini. Aktifkan lewat Ubah, pilihan Pelacakan publik tanpa login.'}));
   }
   qi.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();go()}});
-  root.append(h('div',{class:'toolbar'},qi,h('button',{type:'button',class:'btn primary',onclick:go},'Lacak resi')),res);
+  function cpy(u){return navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(u).then(function(){toast('Tautan pelacakan disalin')}).catch(function(){toast(u)}):Promise.resolve(toast(u))}
+  var cb=h('button',{type:'button',class:'btn',onclick:async function(){
+    var q=qi.value.trim().toLowerCase();if(!q){toast('Masukkan nomor resi dulu');return}
+    var s=(S.pgship||[]).find(function(x){return String(x.resi||'').toLowerCase()===q||String(x.no||'').toLowerCase()===q});
+    if(!s){toast('Nomor resi tidak ditemukan');return}
+    if(s.publik){cpy(lacakUrl(s));return}
+    if(!pgCan()){toast('Pelacakan publik belum diaktifkan. Minta KTT mengaktifkannya.');return}
+    if(!cb._arm){cb._arm=true;cb.textContent='Aktifkan publik dan salin?';setTimeout(function(){cb._arm=false;cb.textContent='Salin tautan'},4000);return}
+    cb._arm=false;cb.textContent='Salin tautan';
+    try{var o=Object.assign({},s,{publik:true});delete o.id;await save('pgship',s.id,o);cpy(lacakUrl(s));paint()}catch(e){toast('Gagal mengaktifkan pelacakan publik')}
+  }},'Salin tautan');
+  root.append(h('div',{class:'toolbar'},qi,h('button',{type:'button',class:'btn primary',onclick:go},'Lacak resi'),cb),res);
   go();return root;
 }
 
