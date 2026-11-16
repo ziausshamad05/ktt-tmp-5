@@ -1717,6 +1717,15 @@ html.lc-on body>*:not(.lc-pub):not(script):not(style){display:none!important}
 .kt-logo{display:flex;align-items:center;justify-content:center;height:72px;background:#fff;border-radius:8px;border:1px solid var(--line)}
 .kt-logo img{max-height:64px;max-width:100%;object-fit:contain}.kt-logo small{color:#5f6a63}
 .kt-sbtn{display:flex;gap:6px;flex-wrap:wrap}
+.kt-genrow{display:flex;gap:6px;align-items:center;min-width:0}.kt-genrow input{flex:1;min-width:0}
+.kt-gen{display:flex;flex-direction:column;gap:2px;margin-top:6px;border:1px solid var(--line);border-radius:10px;padding:4px;background:var(--surface);box-shadow:var(--shadow)}
+.kt-genopt{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:0;background:transparent;color:var(--ink);padding:6px 8px;border-radius:7px;cursor:pointer;font:inherit}
+.kt-genopt:hover,.kt-genopt:focus-visible{background:var(--brand-soft)}.kt-genopt small{color:var(--muted);font-size:12px}
+.kt-fotobox{display:flex;gap:12px;align-items:center;border:1px dashed var(--line);border-radius:10px;padding:10px;grid-column:1/-1}
+.kt-foto{width:66px;height:88px;flex:none;border-radius:6px;background:var(--mute-soft);display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--line)}
+.kt-foto img{width:100%;height:100%;object-fit:cover}.kt-foto small{font-size:11px;color:var(--muted);text-align:center}
+.kt-fotoact{display:flex;flex-direction:column;gap:4px;min-width:0}.kt-fotoact small{color:var(--muted)}
+.kt-mini{width:24px;height:32px;border-radius:3px;object-fit:cover;display:block;border:1px solid var(--line)}.kt-mini0{background:var(--mute-soft)}
 
 .pp-wrap{max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface2)}
 .paper{background:#fff;color:#1b211d;border-radius:4px;padding:26px 28px;box-shadow:0 1px 8px rgba(0,0,0,.18);font-family:var(--f-body);font-size:13px;line-height:1.5}
@@ -12507,7 +12516,7 @@ function prSuratKtt(){return aksKtt()}
 /* ---------- persetujuan perubahan ---------- */
 function prUbah(){return (S.ubah||[]).slice().sort(function(a,b){return String(b.ts||'').localeCompare(String(a.ts||''))})}
 function prFieldLabel(c,k){var C=CFG[c],f=C&&C.fields?C.fields.find(function(x){return x.k===k}):null;return f?f.l.replace(/\s*\(.*\)$/,''):k}
-function prVal(v){if(v==null||v==='')return '—';if(typeof v==='object'){var s=JSON.stringify(v);return s.length>140?s.slice(0,138)+'…':s}return String(v)}
+function prVal(v){if(v==null||v==='')return '—';if(v&&v.b64)return 'Foto';if(typeof v==='object'){var s=JSON.stringify(v);return s.length>140?s.slice(0,138)+'…':s}return String(v)}
 function prDiff(u){
   var a=u.lama||{},b=u.baru||{},skip={id:1,demo:1,log:1,updated_at:1,kontraktor:1},keys={};
   Object.keys(a).concat(Object.keys(b)).forEach(function(k){if(!skip[k])keys[k]=1});
@@ -12746,7 +12755,7 @@ function ktInisial(){var w=String(coName()).replace(/^(PT|CV|UD)\.?\s+/i,'').spl
 /* ---------- pembuat PDF ---------- */
 function kartuPdf(jenis,rows,opt){
   opt=opt||{};
-  var W=144,H=288,pages=[],ops=null,IMGS=[];
+  var W=55/25.4*72,H=85/25.4*72,pages=[],ops=null,IMGS=[];
   var CH=[0.11,0.12,0.13],ST=[0.24,0.26,0.28],YL=[0.98,0.76,0.06],BK=[0.08,0.08,0.08],WH=[1,1,1],MU=[0.45,0.48,0.5],LG=[0.86,0.87,0.88],RD=[0.82,0.16,0.14],GN=[0.1,0.55,0.28];
   var TIPE={ins:{c:[0.42,0.74,0.95],t:BK,n:'INSTRUCTOR',w:'BIRU MUDA'},res:{c:[0.84,0.17,0.15],t:WH,n:'RESTRICTED',w:'MERAH'},pro:{c:[0.98,0.8,0.1],t:BK,n:'PROBATION',w:'KUNING'},ful:{c:[0.12,0.58,0.3],t:WH,n:'FULL',w:'HIJAU'}};
   function f(n){return String(Math.round(n*100)/100)}
@@ -12783,82 +12792,85 @@ function kartuPdf(jenis,rows,opt){
     rect(cx-r*0.18,cy-r*0.62,r*0.36,r*1.24,WH);rect(cx-r*0.62,cy-r*0.18,r*1.24,r*0.36,WH);
     ctext(cx,y+s-3.2,'K3',5.2,true,GN,0.4);
   }
-  function kop(tinggi){
-    rect(0,0,W,tinggi,CH);
-    logoKiri(7,8,30);logoKanan(W-37,8,30);
-    var nm=coName().toUpperCase(),z=6.4,ls=pdfWrap(nm,z,true,62);while(ls.length>3&&z>4.6){z-=0.2;ls=pdfWrap(nm,z,true,62)}
-    ls=ls.slice(0,3);var yy=12+(3-ls.length)*3.2;
-    ls.forEach(function(l){ctext(W/2,yy+z,l,z,true,WH);yy+=z+1.6});
-    var iup=(PROF.izin_jenis||'IUP Operasi Produksi').toUpperCase();ctext(W/2,yy+5.4,iup,fit(iup,4.6,true,64,3.4),true,YL,0.2);
+  function kop(){
+    rect(0,0,W,46,CH);
+    logoKiri(6,9,27);logoKanan(W-33,9,27);
+    var cw=W-74,nm=coName().toUpperCase(),z=6.2,ls=pdfWrap(nm,z,true,cw);while(ls.length>3&&z>4.4){z-=0.2;ls=pdfWrap(nm,z,true,cw)}
+    ls=ls.slice(0,3);var yy=9+(3-ls.length)*3;
+    ls.forEach(function(l){ctext(W/2,yy+z,l,z,true,WH);yy+=z+1.4});
+    var iup=(PROF.izin_jenis||'IUP Operasi Produksi').toUpperCase();ctext(W/2,yy+5,iup,fit(iup,4.4,true,cw,3.2),true,YL,0.2);
     var sk=PROF.no_sk?'SK '+PROF.no_sk:[PROF.kab?'Kab. '+PROF.kab:'',PROF.prov||''].filter(Boolean).join(', ');
-    if(sk)ctext(W/2,yy+11.4,sk,fit(sk,4.2,false,64,3.2),false,LG);
+    if(sk)ctext(W/2,yy+10.6,sk,fit(sk,4,false,cw,3),false,LG);
   }
-  function label(x,y,s){text(x,y,String(s).toUpperCase(),4.3,true,MU,0.35)}
-  function nilai(x,y,s,maxW,size){var z=fit(s||'—',size||6.8,true,maxW,4.6);text(x,y,s||'—',z,true,BK);return z}
+  function label(x,y,s){text(x,y,String(s).toUpperCase(),4,true,MU,0.3)}
+  function nilai(x,y,s,maxW,size){var z=fit(s||'—',size||6.4,true,maxW,4.2);text(x,y,s||'—',z,true,BK);return z}
+  function sel(x,yy,l,v,w){label(x,yy,l);nilai(x,yy+7.4,v,w)}
   function depan(r){
     np();var sp=jenis==='simper',T=sp?TIPE[spKode(r.jenis)]||TIPE.pro:{c:YL,t:BK,n:'MINE PERMIT',w:''};
-    rect(0,0,W,H,WH);kop(54);hazard(54,6);
-    rect(0,60,W,30,T.c);
-    if(sp){ctext(W/2,75,'SIMPER',12.5,true,T.t,1.2);ctext(W/2,85,T.n+'  ·  KARTU '+T.w,5.2,true,T.t,0.6)}
-    else{ctext(W/2,77,'MINE PERMIT',12,true,T.t,1);ctext(W/2,86,'IZIN MASUK AREA TAMBANG',4.6,true,T.t,0.5)}
-    rect(0,90,W,2,CH);
-    var padat=sp&&!!r.area,ph=padat?42:58,pw=padat?34:46,fx=W/2-pw/2,fy=98;rect(fx,fy,pw,ph,[0.95,0.95,0.94]);box(fx,fy,pw,ph,ST,0.6,'2 1.6');
-    ctext(W/2,fy+ph/2-2,'FOTO',6,true,MU,0.8);ctext(W/2,fy+ph/2+6,'3 x 4 cm',4.6,false,MU);
-    rect(fx-4,fy-1,4,4,YL);rect(fx+pw,fy+ph-3,4,4,YL);
-    var step=padat?17.5:19,y=fy+ph+8,nm=String(r.nama||'—').toUpperCase(),z=9.4,ls=pdfWrap(nm,z,true,W-16);while(ls.length>2&&z>6.4){z-=0.3;ls=pdfWrap(nm,z,true,W-16)}
-    ls.slice(0,2).forEach(function(l){ctext(W/2,y+z,l,z,true,BK,0.2);y+=z+2});
-    y+=3;line(8,y,W-8,y,LG,0.6);y+=8;
-    var kn=r.kontraktor||'Karyawan '+coName(),cw=(W-20)/2;
-    function sel(x,yy,l,v,w){label(x,yy,l);nilai(x,yy+8,v,w)}
+    rect(0,0,W,H,WH);kop();hazard(46,5);
+    rect(0,51,W,24,T.c);
+    if(sp){ctext(W/2,64.5,'SIMPER',11,true,T.t,1.1);ctext(W/2,72,T.n+'  ·  KARTU '+T.w,4.6,true,T.t,0.5)}
+    else{ctext(W/2,65.5,'MINE PERMIT',10.6,true,T.t,0.9);ctext(W/2,72.2,'IZIN MASUK AREA TAMBANG',4.3,true,T.t,0.45)}
+    rect(0,75,W,1.8,CH);
+    var fx=8,fy=83,pw=39,ph=52;
+    if(r.foto&&r.foto.b64){rect(fx,fy,pw,ph,LG);img(r.foto,fx,fy,pw,ph);box(fx,fy,pw,ph,ST,0.6)}
+    else{rect(fx,fy,pw,ph,[0.95,0.95,0.94]);box(fx,fy,pw,ph,ST,0.6,'2 1.6');ctext(fx+pw/2,fy+ph/2-1,'FOTO',5.4,true,MU,0.7);ctext(fx+pw/2,fy+ph/2+6,'3 x 4 cm',4.2,false,MU)}
+    rect(fx-3,fy-3,4,4,YL);rect(fx+pw-1,fy+ph-1,4,4,YL);
+    var rx=53,rw=W-rx-7,y=fy+1,nm=String(r.nama||'—').toUpperCase(),z=8,ls=pdfWrap(nm,z,true,rw);
+    while(ls.length>3&&z>5.6){z-=0.2;ls=pdfWrap(nm,z,true,rw)}
+    ls.slice(0,3).forEach(function(l){text(rx,y+z,l,z,true,BK,0.1);y+=z+1.6});
+    y+=2;rect(rx,y,18,1.6,YL);y+=7;
+    if(sp){sel(rx,y,'No ID',r.noid,rw);y+=16;sel(rx,y,'No lisensi',r.nolisensi,rw);y+=16}
+    else{sel(rx,y,'ID pekerja',r.idpekerja,rw);y+=16;sel(rx,y,'No ID permit',r.noid,rw);y+=16}
+    y=Math.max(fy+ph+7,y+2);line(8,y,W-8,y,LG,0.6);y+=7;
+    var cw=(W-20)/2,step=16.5;
     if(sp){
-      sel(8,y,'No ID',r.noid,cw);sel(12+cw,y,'No lisensi',r.nolisensi,cw);y+=step;
       sel(8,y,'Departemen',r.departemen,cw);sel(12+cw,y,r.kontraktor?'Kontraktor':'Perusahaan',r.kontraktor||coName(),cw);y+=step;
-      var al=r.alat?(r.alat==='Alat berat'&&r.alatberat?'Alat berat · '+r.alatberat:r.alat):(spKode(r.jenis)==='ful'?'Sesuai alat yang dioperasikan':'—');
-      if(al!=='—'){sel(8,y,'Jenis alat',al,W-16);y+=step}
-      if(r.area){sel(8,y,'Area atau kegiatan',r.area,W-16);y+=19}
+      var al=r.alat?(r.alat==='Alat berat'&&r.alatberat?'Alat berat · '+r.alatberat:r.alat):(spKode(r.jenis)==='ful'?'Sesuai alat yang dioperasikan':'');
+      if(al){sel(8,y,'Jenis alat',al,W-16);y+=step}
+      if(r.area&&y<H-50){sel(8,y,'Area atau kegiatan',r.area,W-16);y+=step}
     }else{
-      sel(8,y,'ID pekerja',r.idpekerja,cw);sel(12+cw,y,'No ID',r.noid,cw);y+=step;
-      sel(8,y,r.kontraktor?'Kontraktor':'Status',kn,W-16);y+=step;
+      sel(8,y,r.kontraktor?'Kontraktor':'Status',r.kontraktor||'Karyawan '+coName(),W-16);y+=step;
     }
     var d=daysTo(r.berlaku),mati=d!=null&&d<0;
-    rect(0,H-38,W,24,CH);
-    text(8,H-28,'BERLAKU S/D',4.4,true,LG,0.5);
-    var tg=r.berlaku?fmt(r.berlaku).toUpperCase():'BELUM DIISI';text(8,H-18.5,tg,fit(tg,8.6,true,80,5),true,mati?RD:YL,0.3);
-    var kode=sp?(r.nolisensi||''):(r.noid||'');if(kode){var kz=fit(kode,5.4,true,52,3.6);text(W-8-tw(kode,kz,true),H-18.5,kode,kz,true,WH)}
-    if(mati){var mt='KEDALUWARSA';text(W-8-tw(mt,4.6,true,0.4),H-28,mt,4.6,true,RD,0.4)}
-    hazard(H-14,14);
+    rect(0,H-32,W,20,CH);
+    text(8,H-24.6,'BERLAKU S/D',4,true,LG,0.45);
+    var tg=r.berlaku?fmt(r.berlaku).toUpperCase():'BELUM DIISI';text(8,H-15.6,tg,fit(tg,7.8,true,82,5),true,mati?RD:YL,0.3);
+    var kode=sp?(r.nolisensi||''):(r.noid||'');if(kode){var kz=fit(kode,5,true,58,3.4);text(W-8-tw(kode,kz,true),H-15.6,kode,kz,true,WH)}
+    if(mati){var mt='KEDALUWARSA';text(W-8-tw(mt,4.2,true,0.4),H-24.6,mt,4.2,true,RD,0.4)}
+    hazard(H-12,12);
   }
   function belakang(r){
     np();var sp=jenis==='simper';
-    rect(0,0,W,H,WH);rect(0,0,W,30,CH);
-    ctext(W/2,14,'KETENTUAN DAN ATURAN',7.8,true,YL,0.6);
-    var sub=(sp?'SIMPER':'MINE PERMIT')+' · '+coName().toUpperCase();ctext(W/2,23.5,sub,fit(sub,4.6,true,W-16,3.4),true,WH,0.2);
-    hazard(30,5);
-    var aturan=ktAturan(jenis),bawah=sp?232-44:232,sz=5.8,lead,blok;
-    function ukur(z){var n=0;aturan.forEach(function(a){n+=pdfWrap(a,z,false,W-26).length});return n*z*1.32+aturan.length*2.4}
-    while(sz>4.4&&ukur(sz)>bawah-44)sz-=0.2;lead=sz*1.32;
-    var y=44;
+    rect(0,0,W,H,WH);rect(0,0,W,26,CH);
+    ctext(W/2,12.5,'KETENTUAN DAN ATURAN',7.2,true,YL,0.55);
+    var sub=(sp?'SIMPER':'MINE PERMIT')+' · '+coName().toUpperCase();ctext(W/2,20.5,sub,fit(sub,4.3,true,W-14,3.2),true,WH,0.2);
+    hazard(26,4);
+    var aturan=ktAturan(jenis),sy=H-50,batas=sp?sy-46:sy-8,sz=5.6,lead,y0=38;
+    function ukur(z){var n=0;aturan.forEach(function(a){n+=pdfWrap(a,z,false,W-25).length});return n*z*1.3+aturan.length*2}
+    while(sz>4&&y0+ukur(sz)>batas)sz-=0.2;lead=sz*1.3;
+    var y=y0;
     aturan.forEach(function(a,i){
-      rect(8,y-sz+0.6,8,sz+1.8,i%2?ST:CH);ctext(12,y+0.6,String(i+1),sz-0.8,true,YL);
-      pdfWrap(a,sz,false,W-26).forEach(function(l){text(20,y,l,sz,false,BK);y+=lead});y+=2.4;
+      rect(7,y-sz+0.6,8,sz+1.6,i%2?ST:CH);ctext(11,y+0.4,String(i+1),sz-0.8,true,YL);
+      pdfWrap(a,sz,false,W-25).forEach(function(l){text(19,y,l,sz,false,BK);y+=lead});y+=2;
     });
     if(sp){
-      y=Math.max(y+2,bawah);line(8,y,W-8,y,LG,0.6);y+=8;label(8,y,'Jenis SIMPER');y+=5;
+      var ly=Math.max(y+1,sy-42);line(7,ly,W-7,ly,LG,0.5);ly+=6;label(7,ly,'Jenis SIMPER');ly+=4;
       [['ins','Instruktur atau trainer'],['res','Area dan kegiatan terbatas'],['pro','Masa percobaan / sementara'],['ful','Akses penuh alat']].forEach(function(t,i){
-        var T=TIPE[t[0]],xx=8+(i%2)*((W-16)/2),yy=y+Math.floor(i/2)*10;
-        rect(xx,yy,6,6,T.c);box(xx,yy,6,6,ST,0.3);text(xx+8.5,yy+3.2,T.n,4.4,true,BK,0.2);text(xx+8.5,yy+7.6,t[1],3.8,false,MU);
+        var T=TIPE[t[0]],xx=7+(i%2)*((W-14)/2),yy=ly+Math.floor(i/2)*9;
+        rect(xx,yy,5.5,5.5,T.c);box(xx,yy,5.5,5.5,ST,0.3);text(xx+7.5,yy+3,T.n,4,true,BK,0.2);text(xx+7.5,yy+7,t[1],3.5,false,MU);
       });
     }
-    var sy=H-56,kota=PROF.kota||PROF.kab||'';
-    text(8,sy,(kota?kota+', ':'')+fmt(isoOf(TODAY)),4.8,false,MU);
-    text(8,sy+7,'Diterbitkan oleh,',4.8,false,MU);
-    line(8,sy+22,72,sy+22,ST,0.5);
-    text(8,sy+28.5,PROF.ktt_nama||'..............................',fit(PROF.ktt_nama||'',6,true,64,4.2),true,BK);
-    text(8,sy+34,kttIsPjs()?'Pjs. Kepala Teknik Tambang':'Kepala Teknik Tambang',4.4,false,MU);
-    rect(W-48,sy-4,40,40,[0.95,0.95,0.94]);box(W-48,sy-4,40,40,LG,0.5,'1.5 1.5');ctext(W-28,sy+15,'STEMPEL',4.4,true,MU,0.5);ctext(W-28,sy+21,'PERUSAHAAN',3.8,false,MU,0.3);
-    rect(0,H-18,W,18,CH);
-    var tl='Bila menemukan kartu ini, hubungi '+(PROF.telp||coName());ctext(W/2,H-10.5,tl,fit(tl,4.4,false,W-12,3.2),false,WH);
-    var nb=(sp?r.nolisensi:r.noid)||'';if(nb)ctext(W/2,H-4.5,nb,3.8,true,YL,0.4);
+    var kota=PROF.kota||PROF.kab||'';
+    text(7,sy,(kota?kota+', ':'')+fmt(isoOf(TODAY)),4.4,false,MU);
+    text(7,sy+6,'Diterbitkan oleh,',4.4,false,MU);
+    line(7,sy+20,78,sy+20,ST,0.5);
+    text(7,sy+26,PROF.ktt_nama||'..............................',fit(PROF.ktt_nama||'',5.6,true,70,4),true,BK);
+    text(7,sy+31,kttIsPjs()?'Pjs. Kepala Teknik Tambang':'Kepala Teknik Tambang',4,false,MU);
+    rect(W-45,sy-4,37,34,[0.95,0.95,0.94]);box(W-45,sy-4,37,34,LG,0.5,'1.5 1.5');ctext(W-26.5,sy+12,'STEMPEL',4.2,true,MU,0.45);ctext(W-26.5,sy+17.5,'PERUSAHAAN',3.6,false,MU,0.3);
+    rect(0,H-14,W,14,CH);
+    var tl='Bila menemukan kartu ini, hubungi '+(PROF.telp||coName());ctext(W/2,H-7.8,tl,fit(tl,4.2,false,W-12,3),false,WH);
+    var nb=(sp?r.nolisensi:r.noid)||'';if(nb)ctext(W/2,H-2.8,nb,3.4,true,YL,0.4);
   }
   rows.forEach(function(r){depan(r);if(opt.belakang!==false)belakang(r)});
   var o=[],body='%PDF-1.4\n%\xE2\xE3\xCF\xD3\n',offs=[];
@@ -12913,7 +12925,7 @@ function kartuDialog(jenis0){
       h('div',{class:'kt-bar'},h('label',{class:'kt-all'},semua,h('span',{text:'Pilih semua ('+vis.length+')'})),cari),
       list,
       h('label',{class:'kt-opt'},blk,h('span',{text:'Sertakan sisi belakang (ketentuan dan aturan)'})),
-      h('p',{class:'sub',style:'margin:0',text:'Ukuran kartu 2 × 4 inci (5,08 × 10,16 cm) portrait. Tiap kartu menjadi halaman depan lalu belakang, jadi cetak bolak-balik dengan balik pada sisi panjang dan skala 100%.'}),
+      h('p',{class:'sub',style:'margin:0',text:'Ukuran kartu B1 55 × 85 mm portrait (setara kartu ID 85 × 55 mm). Tiap kartu menjadi halaman depan lalu belakang, jadi cetak bolak-balik dengan balik pada sisi panjang dan skala 100%.'}),
       ktSetelan(),err,
       h('div',{class:'acts'},h('span',{class:'grow'}),h('button',{type:'button',class:'btn',onclick:closeModal},'Tutup'),buat));
   }
@@ -12947,10 +12959,108 @@ permitView=function(){
   ktLoad();
   var r=KT_PVIEW();
   var bar=h('div',{class:'kt-head'},h('button',{type:'button',class:'btn primary',onclick:function(){kartuDialog('minepermit')}},'Cetak kartu PDF'),
-    h('span',{class:'sub',text:'Pilih semua atau beberapa pekerja, ukuran 2 × 4 inci, dua sisi.'}));
+    h('span',{class:'sub',text:'Pilih semua atau beberapa pekerja, ukuran B1 55 × 85 mm, dua sisi.'}));
   var hd=r.querySelector('.pagehead');if(hd&&hd.nextSibling)r.insertBefore(bar,hd.nextSibling);else r.prepend(bar);
   return r;
 };
+
+/* ---------- nomor otomatis (Generate) dan foto 3x4 pada form permit ---------- */
+var KT_FOTO=null;
+function ktValid(r){var d=daysTo(r.berlaku);return d==null||d>=0}
+function ktPola(v){var m=/^(.*?)(\d+)$/.exec(String(v||'').trim());return m?{p:m[1],n:parseInt(m[2],10),w:m[2].length}:null}
+function ktItems(kind){
+  var o=[];
+  if(kind==='pekerja'){(S.minepermit||[]).forEach(function(r){if(r.idpekerja)o.push({v:r.idpekerja,r:r,c:'minepermit'})});(S.simper||[]).forEach(function(r){if(r.noid)o.push({v:r.noid,r:r,c:'simper'})})}
+  else if(kind==='permit')(S.minepermit||[]).forEach(function(r){if(r.noid)o.push({v:r.noid,r:r,c:'minepermit'})});
+  else (S.simper||[]).forEach(function(r){if(r.nolisensi)o.push({v:r.nolisensi,r:r,c:'simper'})});
+  return o;
+}
+function ktSaran(kind,ctx){
+  var kode=spKode(ctx.jenis),tahun=new Date(TODAY).getFullYear();
+  var all=ktItems(kind).filter(function(x){return !(x.c===ctx.col&&x.r.id===ctx.rid)});
+  var grup=all.filter(function(x){return kind==='lisensi'?spKode(x.r.jenis)===kode:(x.r.kontraktor||'')===(ctx.kon||'')});
+  var pola=null,hit={};
+  grup.forEach(function(x){var q=ktPola(x.v);if(!q)return;var k=q.p+'|'+q.w;hit[k]=(hit[k]||0)+1});
+  var top=Object.keys(hit).sort(function(a,b){return hit[b]-hit[a]})[0];
+  if(top){var s=top.split('|');pola={p:s[0],w:Number(s[1])}}
+  else pola=kind==='pekerja'?{p:ctx.kon?'KTR-':'EMP-',w:4}:kind==='permit'?{p:'MP-'+tahun+'-',w:4}:{p:'SMP-'+({ins:'INS',res:'RES',pro:'PRO',ful:'FUL'}[kode]||'SMP')+'-',w:3};
+  function fmtN(n){var s=String(n);while(s.length<pola.w)s='0'+s;return pola.p+s}
+  var dipakai={};all.forEach(function(x){dipakai[String(x.v).toLowerCase()]=1});
+  var nums=grup.map(function(x){var q=ktPola(x.v);return q&&q.p===pola.p?q.n:null}).filter(function(n){return n!=null}).sort(function(a,b){return a-b});
+  if(!nums.length)all.forEach(function(x){var q=ktPola(x.v);if(q&&q.p===pola.p)nums.push(q.n)});
+  nums.sort(function(a,b){return a-b});
+  var out=[];
+  if(kind==='pekerja'&&ctx.nama){var sm=all.find(function(x){return String(x.r.nama||'').trim().toLowerCase()===ctx.nama.trim().toLowerCase()});if(sm)out.push({v:sm.v,t:'ID yang sudah dipakai '+sm.r.nama})}
+  if(nums.length>1){for(var n=nums[0]+1;n<nums[nums.length-1];n++){var v=fmtN(n);if(!dipakai[v.toLowerCase()]){out.push({v:v,t:'Nomor kosong di urutan'});break}}}
+  var nx=(nums.length?nums[nums.length-1]:0)+1;while(dipakai[fmtN(nx).toLowerCase()])nx++;
+  out.push({v:fmtN(nx),t:'Nomor berikutnya'});
+  var aktif={};all.forEach(function(x){if(ktValid(x.r))aktif[String(x.v).toLowerCase()]=1});
+  var bekas={};grup.forEach(function(x){var k=String(x.v).toLowerCase();if(!ktValid(x.r)&&!aktif[k]&&!bekas[k]){bekas[k]=1;out.push({v:x.v,t:'Nomor tidak berlaku lagi, bekas '+(x.r.nama||'—')+' (berakhir '+fmt(x.r.berlaku)+')'})}});
+  var seen={};return out.filter(function(o){var k=o.t.slice(0,3)+o.v;if(seen[k])return false;seen[k]=1;return true});
+}
+function ktGenBtn(form,key,fid,kind,row){
+  var inp=form.querySelector('#m-'+fid);if(!inp||inp.disabled)return;
+  var lab=inp.closest('label'),wrap=h('span',{class:'kt-genrow'}),menu=h('div',{class:'kt-gen',hidden:true,role:'menu'});
+  inp.replaceWith(wrap);wrap.append(inp);
+  var b=h('button',{type:'button',class:'btn sm',title:'Isi otomatis: nomor kosong, nomor berikutnya, atau nomor yang sudah tidak berlaku',onclick:function(e){
+    e.preventDefault();
+    if(!menu.hidden){menu.hidden=true;return}
+    var g=function(id){var x=form.querySelector('#m-'+id);return x?x.value:''};
+    var ops=ktSaran(kind,{col:key,rid:row&&row.id,kon:g('kontraktor'),jenis:g('jenis'),nama:g('nama')});
+    menu.replaceChildren.apply(menu,ops.map(function(o){return h('button',{type:'button',role:'menuitem',class:'kt-genopt',onclick:function(ev){ev.preventDefault();inp.value=o.v;inp.dispatchEvent(new Event('input',{bubbles:true}));menu.hidden=true;inp.focus()}},h('b',{class:'mono',text:o.v}),h('small',{text:o.t}))}));
+    menu.hidden=false;
+  }},'Generate');
+  wrap.append(b);lab.append(menu);
+}
+function ktCropFoto(file){
+  return new Promise(function(res,rej){
+    if(!file||!/^image\//.test(file.type||'')){rej(new Error('Pilih file gambar (JPG, PNG, atau WebP)'));return}
+    var url=URL.createObjectURL(file),im=new Image();
+    im.onload=function(){URL.revokeObjectURL(url);var iw=im.naturalWidth,ih=im.naturalHeight,sx=0,sy=0,sw=iw,sh=ih;
+      if(iw/ih>0.75){sw=ih*0.75;sx=(iw-sw)/2}else{sh=iw/0.75;sy=(ih-sh)*0.35}
+      var cv=document.createElement('canvas');cv.width=300;cv.height=400;var cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,300,400);cx.drawImage(im,sx,sy,sw,sh,0,0,300,400);
+      var q=.86,d=cv.toDataURL('image/jpeg',q);while(d.length>70000&&q>.5){q-=.08;d=cv.toDataURL('image/jpeg',q)}
+      res({b64:d.split(',')[1],w:300,h:400})};
+    im.onerror=function(){URL.revokeObjectURL(url);rej(new Error('Gambar tidak bisa dibaca'))};im.src=url;
+  });
+}
+function ktFotoWidget(form,key,row){
+  var ro=!!form.querySelector('#m-nama')&&form.querySelector('#m-nama').disabled;
+  KT_FOTO={key:key,ubah:false,val:row&&row.foto||null};
+  var th=h('span',{class:'kt-foto'});
+  function draw(){th.replaceChildren(KT_FOTO.val&&KT_FOTO.val.b64?h('img',{alt:'Foto '+((row&&row.nama)||'pekerja'),src:'data:image/jpeg;base64,'+KT_FOTO.val.b64}):h('small',{text:'Foto 3 × 4'}))}
+  draw();
+  var fi=h('input',{type:'file',accept:'image/*',hidden:true,'aria-label':'Pilih foto 3 x 4',onchange:async function(){try{KT_FOTO.val=await ktCropFoto(fi.files[0]);KT_FOTO.ubah=true;draw()}catch(e){toast(e.message)}fi.value=''}});
+  var blok=h('div',{class:'kt-fotobox wide'},th,h('div',{class:'kt-fotoact'},h('b',{text:'Foto 3 × 4'}),
+    h('small',{text:'Dipotong otomatis ke rasio 3:4 dan tercetak di kartu. Gunakan foto wajah tegak dengan latar polos.'}),
+    ro?null:h('div',{class:'kt-sbtn'},fi,h('button',{type:'button',class:'btn sm',onclick:function(){fi.click()}},KT_FOTO.val?'Ganti foto':'Unggah foto 3 × 4'),
+      h('button',{type:'button',class:'btn sm',onclick:function(){KT_FOTO.val=null;KT_FOTO.ubah=true;draw()}},'Hapus foto'))));
+  var first=form.querySelector('.fsec');form.insertBefore(blok,first?first.nextSibling:form.firstChild);
+}
+var KT_FORM=openForm;
+openForm=function(key,row,pre){
+  var res=KT_FORM.apply(this,arguments);
+  if(key==='minepermit'||key==='simper'){
+    try{var form=document.querySelector('#ov .dlg form');if(form){
+      ktFotoWidget(form,key,row);
+      if(key==='minepermit'){ktGenBtn(form,key,'idpekerja','pekerja',row);ktGenBtn(form,key,'noid','permit',row)}
+      else{ktGenBtn(form,key,'noid','pekerja',row);ktGenBtn(form,key,'nolisensi','lisensi',row)}
+    }}catch(e){if(window.console)console.error(e)}
+  }
+  return res;
+};
+var KT_SAVE=save;
+save=async function(c,id,data){
+  if(c==='minepermit'||c==='simper'){
+    data=Object.assign({},data||{});var lama=id?(S[c]||[]).find(function(r){return r.id===id}):null;
+    if(KT_FOTO&&KT_FOTO.key===c&&KT_FOTO.ubah){if(KT_FOTO.val)data.foto=KT_FOTO.val;else delete data.foto}
+    else if(lama&&lama.foto&&!data.foto)data.foto=lama.foto;
+  }
+  return KT_SAVE(c,id,data);
+};
+var KT_CLOSE=closeModal;
+closeModal=function(){KT_FOTO=null;return KT_CLOSE.apply(this,arguments)};
+['minepermit','simper'].forEach(function(c){var C=CFG[c];if(C&&C.cols)C.cols.unshift({l:'Foto',r:function(r){return r.foto&&r.foto.b64?h('img',{class:'kt-mini',alt:'Foto '+(r.nama||''),src:'data:image/jpeg;base64,'+r.foto.b64}):h('span',{class:'kt-mini kt-mini0','aria-label':'Belum ada foto'})}})});
 
 /* ---------- hosting mandiri: Supabase (aktif hanya di luar claude.ai) ---------- */
 var HOST={sb:null,role:null,member:null,booted:false,rt:'',cache:{}};
