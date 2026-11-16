@@ -1700,6 +1700,23 @@ html.lc-on body>*:not(.lc-pub):not(script):not(style){display:none!important}
 .sp-n{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}.sp-head b{min-width:0}.sp-card small{color:var(--muted);font-size:12px}
 .sp-chip{display:inline-flex;align-items:center;gap:6px;padding:2px 9px 2px 6px;border-radius:99px;background:var(--sps);color:var(--ink);font-size:12px;font-weight:600;white-space:nowrap}
 .sp-ins{--sp:var(--info);--sps:var(--info-soft)}.sp-res{--sp:var(--crit);--sps:var(--crit-soft)}.sp-pro{--sp:var(--warn);--sps:var(--warn-soft)}.sp-ful{--sp:var(--good);--sps:var(--good-soft)}
+/* ===== cetak kartu Mine Permit dan SIMPER ===== */
+.kt-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.kt-dlg{display:flex;flex-direction:column;gap:12px;min-width:0}
+.kt-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.kt-bar input[type=search]{flex:1 1 220px;min-width:0}
+.kt-all,.kt-opt{display:inline-flex;align-items:center;gap:8px;font-weight:600}
+.kt-list{display:flex;flex-direction:column;gap:6px;max-height:44vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px}
+.kt-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;flex-wrap:wrap}
+.kt-row:hover{background:var(--brand-soft)}.kt-row.on{background:var(--brand-soft);box-shadow:inset 3px 0 0 var(--brand)}
+.kt-who{display:flex;flex-direction:column;flex:1 1 160px;min-width:0}.kt-who small{color:var(--muted)}
+.kt-set{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+.kt-set[open]{gap:12px}.kt-set summary{cursor:pointer;font-weight:600}
+.kt-set>*+*{margin-top:10px}
+.kt-slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.kt-slot{display:flex;flex-direction:column;gap:8px;border:1px dashed var(--line);border-radius:10px;padding:10px}
+.kt-logo{display:flex;align-items:center;justify-content:center;height:72px;background:#fff;border-radius:8px;border:1px solid var(--line)}
+.kt-logo img{max-height:64px;max-width:100%;object-fit:contain}.kt-logo small{color:#5f6a63}
+.kt-sbtn{display:flex;gap:6px;flex-wrap:wrap}
 
 .pp-wrap{max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface2)}
 .paper{background:#fff;color:#1b211d;border-radius:4px;padding:26px 28px;box-shadow:0 1px 8px rgba(0,0,0,.18);font-family:var(--f-body);font-size:13px;line-height:1.5}
@@ -12687,6 +12704,252 @@ attention=function(m){
     if(y)a.push({tone:'warn',t:y+' Mine Permit atau SIMPER berakhir dalam 30 hari.',to:'permit'});
   }catch(e){}
   return a;
+};
+/* ===== Kartu Mine Permit dan SIMPER: PDF 2 x 4 inci (portrait), dua sisi, desain industrial ===== */
+var KT_SET={},KT_SUB=false;
+var KT_ATURAN_MP=[
+  'Kartu wajib dipakai dan terlihat selama berada di wilayah IUP.',
+  'Kartu hanya berlaku untuk pemegang yang namanya tercantum dan tidak dapat dipindahtangankan.',
+  'Wajib mematuhi peraturan K3 pertambangan serta memakai APD sesuai area kerja.',
+  'Wajib melapor kepada pengawas sebelum memasuki area kerja aktif.',
+  'Kartu dicabut bila pemegang melanggar peraturan K3 atau masa berlaku berakhir.',
+  'Kehilangan kartu wajib segera dilaporkan ke Departemen K3 atau HSE.'];
+var KT_ATURAN_SP=[
+  'SIMPER hanya berlaku untuk jenis alat dan area kerja yang tercantum.',
+  'Wajib dibawa saat mengoperasikan unit dan ditunjukkan bila diminta pengawas.',
+  'Lakukan pemeriksaan unit (P2H) sebelum operasi dan laporkan kerusakan.',
+  'Dilarang mengoperasikan unit dalam keadaan lelah, sakit, atau di bawah pengaruh alkohol dan obat.',
+  'Patuhi batas kecepatan, rambu, jarak aman, dan komunikasi radio di area tambang.',
+  'Pelanggaran dapat berakibat pembekuan atau pencabutan SIMPER.'];
+function ktLoad(){
+  if(KT_SUB||MODE!=='live'||!DB)return;KT_SUB=true;
+  try{DB.collection('profil').doc('kartu').onSnapshot(function(sn){KT_SET=sn.exists?(sn.data()||{}):{};schedule()},function(){})}catch(e){}
+}
+async function ktSimpan(d){
+  if(MODE==='live'){await DB.collection('profil').doc('kartu').set(clean(d))}
+  KT_SET=Object.assign({},d);schedule();
+}
+function ktAturan(j){var s=KT_SET[j==='simper'?'aturan_sp':'aturan_mp'];var a=s?String(s).split('\n').map(function(x){return x.trim()}).filter(Boolean):null;return a&&a.length?a:(j==='simper'?KT_ATURAN_SP:KT_ATURAN_MP)}
+function ktImg(file,maxW){
+  return new Promise(function(res,rej){
+    if(!file||!/^image\/(jpeg|png|webp)$/.test(file.type||'')){rej(new Error('Pakai gambar JPG, PNG, atau WebP'));return}
+    var url=URL.createObjectURL(file),im=new Image();
+    im.onload=function(){URL.revokeObjectURL(url);var sc=Math.min(1,maxW/Math.max(im.naturalWidth,im.naturalHeight)),w=Math.max(1,Math.round(im.naturalWidth*sc)),hh=Math.max(1,Math.round(im.naturalHeight*sc));
+      var cv=document.createElement('canvas');cv.width=w;cv.height=hh;var cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,w,hh);cx.drawImage(im,0,0,w,hh);
+      var q=.9,d=cv.toDataURL('image/jpeg',q);while(d.length>160000&&q>.5){q-=.1;d=cv.toDataURL('image/jpeg',q)}
+      res({b64:d.split(',')[1],w:w,h:hh})};
+    im.onerror=function(){URL.revokeObjectURL(url);rej(new Error('Gambar tidak bisa dibaca'))};im.src=url;
+  });
+}
+function ktInisial(){var w=String(coName()).replace(/^(PT|CV|UD)\.?\s+/i,'').split(/\s+/).filter(Boolean);return (w.length>1?w.slice(0,3).map(function(x){return x[0]}).join(''):String(w[0]||'K').slice(0,3)).toUpperCase()}
+
+/* ---------- pembuat PDF ---------- */
+function kartuPdf(jenis,rows,opt){
+  opt=opt||{};
+  var W=144,H=288,pages=[],ops=null,IMGS=[];
+  var CH=[0.11,0.12,0.13],ST=[0.24,0.26,0.28],YL=[0.98,0.76,0.06],BK=[0.08,0.08,0.08],WH=[1,1,1],MU=[0.45,0.48,0.5],LG=[0.86,0.87,0.88],RD=[0.82,0.16,0.14],GN=[0.1,0.55,0.28];
+  var TIPE={ins:{c:[0.42,0.74,0.95],t:BK,n:'INSTRUCTOR',w:'BIRU MUDA'},res:{c:[0.84,0.17,0.15],t:WH,n:'RESTRICTED',w:'MERAH'},pro:{c:[0.98,0.8,0.1],t:BK,n:'PROBATION',w:'KUNING'},ful:{c:[0.12,0.58,0.3],t:WH,n:'FULL',w:'HIJAU'}};
+  function f(n){return String(Math.round(n*100)/100)}
+  function C(c){return f(c[0])+' '+f(c[1])+' '+f(c[2])}
+  function esc(s){var b=pdfEnc(s),o='';for(var i=0;i<b.length;i++){var c=b[i];if(c===40||c===41||c===92)o+='\\'+String.fromCharCode(c);else if(c>126)o+='\\'+('00'+c.toString(8)).slice(-3);else o+=String.fromCharCode(c)}return o}
+  function np(){ops=[];pages.push(ops)}
+  function rect(x,y,w,h,c){ops.push(C(c)+' rg '+f(x)+' '+f(H-y-h)+' '+f(w)+' '+f(h)+' re f')}
+  function box(x,y,w,h,c,lw,dash){ops.push((dash?'['+dash+'] 0 d ':'')+C(c)+' RG '+f(lw)+' w '+f(x)+' '+f(H-y-h)+' '+f(w)+' '+f(h)+' re S'+(dash?' [] 0 d':''))}
+  function line(x1,y1,x2,y2,c,lw){ops.push(C(c)+' RG '+f(lw)+' w '+f(x1)+' '+f(H-y1)+' m '+f(x2)+' '+f(H-y2)+' l S')}
+  function tw(s,size,bold,cs){s=String(s==null?'':s);return pdfW(s,bold,size)+(cs?Math.max(0,s.length-1)*cs:0)}
+  function text(x,y,s,size,bold,c,cs){s=String(s==null?'':s);if(!s)return;ops.push('BT /F'+(bold?2:1)+' '+f(size)+' Tf '+f(cs||0)+' Tc '+C(c||BK)+' rg '+f(x)+' '+f(H-y)+' Td ('+esc(s)+') Tj ET')}
+  function ctext(cx,y,s,size,bold,c,cs){text(cx-tw(s,size,bold,cs)/2,y,s,size,bold,c,cs)}
+  function fit(s,size,bold,maxW,min){var z=size;while(z>(min||4)&&tw(s,z,bold)>maxW)z-=0.2;return z}
+  function hazard(y,h){
+    ops.push('q 0 '+f(H-y-h)+' '+f(W)+' '+f(h)+' re W n');rect(0,y,W,h,YL);
+    for(var x=-h;x<W+h;x+=8)ops.push(C(BK)+' rg '+f(x)+' '+f(H-y-h)+' m '+f(x+4)+' '+f(H-y-h)+' l '+f(x+4+h)+' '+f(H-y)+' l '+f(x+h)+' '+f(H-y)+' l f');
+    ops.push('Q');
+  }
+  function img(im,x,y,w,h){
+    var i=IMGS.indexOf(im);if(i<0){i=IMGS.length;IMGS.push(im)}
+    var sc=Math.min(w/im.w,h/im.h),dw=im.w*sc,dh=im.h*sc,dx=x+(w-dw)/2,dy=y+(h-dh)/2;
+    ops.push('q '+f(dw)+' 0 0 '+f(dh)+' '+f(dx)+' '+f(H-dy-dh)+' cm /Im'+i+' Do Q');
+  }
+  function lingkaran(cx,cy,r,c){var k=0.5523*r,Y=H-cy;ops.push(C(c)+' rg '+f(cx+r)+' '+f(Y)+' m '+f(cx+r)+' '+f(Y+k)+' '+f(cx+k)+' '+f(Y+r)+' '+f(cx)+' '+f(Y+r)+' c '+f(cx-k)+' '+f(Y+r)+' '+f(cx-r)+' '+f(Y+k)+' '+f(cx-r)+' '+f(Y)+' c '+f(cx-r)+' '+f(Y-k)+' '+f(cx-k)+' '+f(Y-r)+' '+f(cx)+' '+f(Y-r)+' c '+f(cx+k)+' '+f(Y-r)+' '+f(cx+r)+' '+f(Y-k)+' '+f(cx+r)+' '+f(Y)+' c f')}
+  function logoKiri(x,y,s){
+    rect(x,y,s,s,WH);
+    if(KT_SET.logo&&KT_SET.logo.b64)img(KT_SET.logo,x+2,y+2,s-4,s-4);
+    else{var t=ktInisial(),z=fit(t,10,true,s-6,5);rect(x+2,y+2,s-4,s-4,ST);ctext(x+s/2,y+s/2+z*0.36,t,z,true,YL)}
+  }
+  function logoKanan(x,y,s){
+    rect(x,y,s,s,WH);
+    if(KT_SET.k3&&KT_SET.k3.b64){img(KT_SET.k3,x+2,y+2,s-4,s-4);return}
+    var cx=x+s/2,cy=y+s/2-3,r=s*0.3;lingkaran(cx,cy,r,GN);
+    rect(cx-r*0.18,cy-r*0.62,r*0.36,r*1.24,WH);rect(cx-r*0.62,cy-r*0.18,r*1.24,r*0.36,WH);
+    ctext(cx,y+s-3.2,'K3',5.2,true,GN,0.4);
+  }
+  function kop(tinggi){
+    rect(0,0,W,tinggi,CH);
+    logoKiri(7,8,30);logoKanan(W-37,8,30);
+    var nm=coName().toUpperCase(),z=6.4,ls=pdfWrap(nm,z,true,62);while(ls.length>3&&z>4.6){z-=0.2;ls=pdfWrap(nm,z,true,62)}
+    ls=ls.slice(0,3);var yy=12+(3-ls.length)*3.2;
+    ls.forEach(function(l){ctext(W/2,yy+z,l,z,true,WH);yy+=z+1.6});
+    var iup=(PROF.izin_jenis||'IUP Operasi Produksi').toUpperCase();ctext(W/2,yy+5.4,iup,fit(iup,4.6,true,64,3.4),true,YL,0.2);
+    var sk=PROF.no_sk?'SK '+PROF.no_sk:[PROF.kab?'Kab. '+PROF.kab:'',PROF.prov||''].filter(Boolean).join(', ');
+    if(sk)ctext(W/2,yy+11.4,sk,fit(sk,4.2,false,64,3.2),false,LG);
+  }
+  function label(x,y,s){text(x,y,String(s).toUpperCase(),4.3,true,MU,0.35)}
+  function nilai(x,y,s,maxW,size){var z=fit(s||'—',size||6.8,true,maxW,4.6);text(x,y,s||'—',z,true,BK);return z}
+  function depan(r){
+    np();var sp=jenis==='simper',T=sp?TIPE[spKode(r.jenis)]||TIPE.pro:{c:YL,t:BK,n:'MINE PERMIT',w:''};
+    rect(0,0,W,H,WH);kop(54);hazard(54,6);
+    rect(0,60,W,30,T.c);
+    if(sp){ctext(W/2,75,'SIMPER',12.5,true,T.t,1.2);ctext(W/2,85,T.n+'  ·  KARTU '+T.w,5.2,true,T.t,0.6)}
+    else{ctext(W/2,77,'MINE PERMIT',12,true,T.t,1);ctext(W/2,86,'IZIN MASUK AREA TAMBANG',4.6,true,T.t,0.5)}
+    rect(0,90,W,2,CH);
+    var padat=sp&&!!r.area,ph=padat?42:58,pw=padat?34:46,fx=W/2-pw/2,fy=98;rect(fx,fy,pw,ph,[0.95,0.95,0.94]);box(fx,fy,pw,ph,ST,0.6,'2 1.6');
+    ctext(W/2,fy+ph/2-2,'FOTO',6,true,MU,0.8);ctext(W/2,fy+ph/2+6,'3 x 4 cm',4.6,false,MU);
+    rect(fx-4,fy-1,4,4,YL);rect(fx+pw,fy+ph-3,4,4,YL);
+    var step=padat?17.5:19,y=fy+ph+8,nm=String(r.nama||'—').toUpperCase(),z=9.4,ls=pdfWrap(nm,z,true,W-16);while(ls.length>2&&z>6.4){z-=0.3;ls=pdfWrap(nm,z,true,W-16)}
+    ls.slice(0,2).forEach(function(l){ctext(W/2,y+z,l,z,true,BK,0.2);y+=z+2});
+    y+=3;line(8,y,W-8,y,LG,0.6);y+=8;
+    var kn=r.kontraktor||'Karyawan '+coName(),cw=(W-20)/2;
+    function sel(x,yy,l,v,w){label(x,yy,l);nilai(x,yy+8,v,w)}
+    if(sp){
+      sel(8,y,'No ID',r.noid,cw);sel(12+cw,y,'No lisensi',r.nolisensi,cw);y+=step;
+      sel(8,y,'Departemen',r.departemen,cw);sel(12+cw,y,r.kontraktor?'Kontraktor':'Perusahaan',r.kontraktor||coName(),cw);y+=step;
+      var al=r.alat?(r.alat==='Alat berat'&&r.alatberat?'Alat berat · '+r.alatberat:r.alat):(spKode(r.jenis)==='ful'?'Sesuai alat yang dioperasikan':'—');
+      if(al!=='—'){sel(8,y,'Jenis alat',al,W-16);y+=step}
+      if(r.area){sel(8,y,'Area atau kegiatan',r.area,W-16);y+=19}
+    }else{
+      sel(8,y,'ID pekerja',r.idpekerja,cw);sel(12+cw,y,'No ID',r.noid,cw);y+=step;
+      sel(8,y,r.kontraktor?'Kontraktor':'Status',kn,W-16);y+=step;
+    }
+    var d=daysTo(r.berlaku),mati=d!=null&&d<0;
+    rect(0,H-38,W,24,CH);
+    text(8,H-28,'BERLAKU S/D',4.4,true,LG,0.5);
+    var tg=r.berlaku?fmt(r.berlaku).toUpperCase():'BELUM DIISI';text(8,H-18.5,tg,fit(tg,8.6,true,80,5),true,mati?RD:YL,0.3);
+    var kode=sp?(r.nolisensi||''):(r.noid||'');if(kode){var kz=fit(kode,5.4,true,52,3.6);text(W-8-tw(kode,kz,true),H-18.5,kode,kz,true,WH)}
+    if(mati){var mt='KEDALUWARSA';text(W-8-tw(mt,4.6,true,0.4),H-28,mt,4.6,true,RD,0.4)}
+    hazard(H-14,14);
+  }
+  function belakang(r){
+    np();var sp=jenis==='simper';
+    rect(0,0,W,H,WH);rect(0,0,W,30,CH);
+    ctext(W/2,14,'KETENTUAN DAN ATURAN',7.8,true,YL,0.6);
+    var sub=(sp?'SIMPER':'MINE PERMIT')+' · '+coName().toUpperCase();ctext(W/2,23.5,sub,fit(sub,4.6,true,W-16,3.4),true,WH,0.2);
+    hazard(30,5);
+    var aturan=ktAturan(jenis),bawah=sp?232-44:232,sz=5.8,lead,blok;
+    function ukur(z){var n=0;aturan.forEach(function(a){n+=pdfWrap(a,z,false,W-26).length});return n*z*1.32+aturan.length*2.4}
+    while(sz>4.4&&ukur(sz)>bawah-44)sz-=0.2;lead=sz*1.32;
+    var y=44;
+    aturan.forEach(function(a,i){
+      rect(8,y-sz+0.6,8,sz+1.8,i%2?ST:CH);ctext(12,y+0.6,String(i+1),sz-0.8,true,YL);
+      pdfWrap(a,sz,false,W-26).forEach(function(l){text(20,y,l,sz,false,BK);y+=lead});y+=2.4;
+    });
+    if(sp){
+      y=Math.max(y+2,bawah);line(8,y,W-8,y,LG,0.6);y+=8;label(8,y,'Jenis SIMPER');y+=5;
+      [['ins','Instruktur atau trainer'],['res','Area dan kegiatan terbatas'],['pro','Masa percobaan / sementara'],['ful','Akses penuh alat']].forEach(function(t,i){
+        var T=TIPE[t[0]],xx=8+(i%2)*((W-16)/2),yy=y+Math.floor(i/2)*10;
+        rect(xx,yy,6,6,T.c);box(xx,yy,6,6,ST,0.3);text(xx+8.5,yy+3.2,T.n,4.4,true,BK,0.2);text(xx+8.5,yy+7.6,t[1],3.8,false,MU);
+      });
+    }
+    var sy=H-56,kota=PROF.kota||PROF.kab||'';
+    text(8,sy,(kota?kota+', ':'')+fmt(isoOf(TODAY)),4.8,false,MU);
+    text(8,sy+7,'Diterbitkan oleh,',4.8,false,MU);
+    line(8,sy+22,72,sy+22,ST,0.5);
+    text(8,sy+28.5,PROF.ktt_nama||'..............................',fit(PROF.ktt_nama||'',6,true,64,4.2),true,BK);
+    text(8,sy+34,kttIsPjs()?'Pjs. Kepala Teknik Tambang':'Kepala Teknik Tambang',4.4,false,MU);
+    rect(W-48,sy-4,40,40,[0.95,0.95,0.94]);box(W-48,sy-4,40,40,LG,0.5,'1.5 1.5');ctext(W-28,sy+15,'STEMPEL',4.4,true,MU,0.5);ctext(W-28,sy+21,'PERUSAHAAN',3.8,false,MU,0.3);
+    rect(0,H-18,W,18,CH);
+    var tl='Bila menemukan kartu ini, hubungi '+(PROF.telp||coName());ctext(W/2,H-10.5,tl,fit(tl,4.4,false,W-12,3.2),false,WH);
+    var nb=(sp?r.nolisensi:r.noid)||'';if(nb)ctext(W/2,H-4.5,nb,3.8,true,YL,0.4);
+  }
+  rows.forEach(function(r){depan(r);if(opt.belakang!==false)belakang(r)});
+  var o=[],body='%PDF-1.4\n%\xE2\xE3\xCF\xD3\n',offs=[];
+  function add(s){o.push(s)}
+  add('<</Type/Catalog/Pages 2 0 R>>');
+  add('<</Type/Pages/Kids['+pages.map(function(p,i){return (6+2*i)+' 0 R'}).join(' ')+']/Count '+pages.length+'/MediaBox[0 0 '+f(W)+' '+f(H)+']/Resources<</Font<</F1 3 0 R/F2 4 0 R>>'+(IMGS.length?'/XObject<<'+IMGS.map(function(_,i){return '/Im'+i+' '+(6+2*pages.length+i)+' 0 R'}).join(' ')+'>>':'')+'>>>>');
+  add('<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>');
+  add('<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>');
+  add('<</Title ('+esc((jenis==='simper'?'Kartu SIMPER':'Kartu Mine Permit')+' '+coName())+')/Author ('+esc(coName())+')/Creator (Platform KTT)>>');
+  pages.forEach(function(p,i){var st=p.join('\n');add('<</Type/Page/Parent 2 0 R/Contents '+(7+2*i)+' 0 R>>');add('<</Length '+st.length+'>>\nstream\n'+st+'\nendstream')});
+  IMGS.forEach(function(im){var bin=atob(im.b64);add('<</Type/XObject/Subtype/Image/Width '+im.w+'/Height '+im.h+'/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length '+bin.length+'>>\nstream\n'+bin+'\nendstream')});
+  o.forEach(function(s,i){offs.push(body.length);body+=(i+1)+' 0 obj\n'+s+'\nendobj\n'});
+  var xr=body.length;body+='xref\n0 '+(o.length+1)+'\n0000000000 65535 f \n';
+  offs.forEach(function(x){body+=('0000000000'+x).slice(-10)+' 00000 n \n'});
+  body+='trailer\n<</Size '+(o.length+1)+'/Root 1 0 R/Info 5 0 R>>\nstartxref\n'+xr+'\n%%EOF';
+  var u=new Uint8Array(body.length);for(var k=0;k<body.length;k++)u[k]=body.charCodeAt(k)&255;
+  return {bytes:u,pages:pages.length};
+}
+
+/* ---------- jendela pilih kartu ---------- */
+function kartuDialog(jenis0){
+  ktLoad();
+  var jenis=jenis0||'minepermit',pilih={},q='',bel=true;
+  var box=h('div',{class:'kt-dlg'}),err=h('p',{class:'err',hidden:true});
+  function data(){return (S[jenis]||[]).slice().sort(CFG[jenis].sort)}
+  function cocok(r){if(!q)return true;var s=[r.nama,r.idpekerja,r.noid,r.nolisensi,r.kontraktor,r.departemen,r.jenis].join(' ').toLowerCase();return s.indexOf(q)>=0}
+  function draw(){
+    var all=data(),vis=all.filter(cocok),n=all.filter(function(r){return pilih[r.id]}).length;
+    var tabs=h('div',{class:'op-tabs',role:'tablist','aria-label':'Jenis kartu'},[['minepermit','Mine Permit'],['simper','SIMPER']].map(function(t){
+      return h('button',{type:'button',role:'tab',class:'op-tab'+(jenis===t[0]?' on':''),'aria-selected':jenis===t[0]?'true':'false',onclick:function(){if(jenis!==t[0]){jenis=t[0];pilih={};q='';draw()}}},t[1]+' ('+(S[t[0]]||[]).length+')')}));
+    var cari=h('input',{type:'search',placeholder:'Cari nama, ID, kontraktor…','aria-label':'Cari kartu',value:q,oninput:function(e){q=e.target.value.toLowerCase();var p=e.target.selectionStart;draw();var c=box.querySelector('input[type=search]');c.focus();try{c.setSelectionRange(p,p)}catch(x){}}});
+    var semua=h('input',{type:'checkbox','aria-label':'Pilih semua yang tampil'});semua.checked=vis.length>0&&vis.every(function(r){return pilih[r.id]});semua.indeterminate=!semua.checked&&vis.some(function(r){return pilih[r.id]});
+    semua.addEventListener('change',function(){vis.forEach(function(r){if(semua.checked)pilih[r.id]=1;else delete pilih[r.id]});draw()});
+    var list=h('div',{class:'kt-list',role:'group','aria-label':'Daftar kartu'});
+    if(!vis.length)list.append(h('p',{class:'empty',text:all.length?'Tidak ada yang cocok dengan pencarian.':'Belum ada data '+(jenis==='simper'?'SIMPER':'Mine Permit')+'.'}));
+    vis.forEach(function(r){
+      var cb=h('input',{type:'checkbox'});cb.checked=!!pilih[r.id];cb.addEventListener('change',function(){if(cb.checked)pilih[r.id]=1;else delete pilih[r.id];draw()});
+      var st=pmStatus(r);
+      list.append(h('label',{class:'kt-row'+(pilih[r.id]?' on':'')},cb,
+        h('span',{class:'kt-who'},h('b',{text:r.nama||'—'}),h('small',{text:[jenis==='simper'?r.nolisensi:r.noid,r.kontraktor||'Perusahaan'].filter(Boolean).join(' · ')})),
+        jenis==='simper'?spChip(r.jenis):null,badge(st[0],st[1])));
+    });
+    var blk=h('input',{type:'checkbox'});blk.checked=bel;blk.addEventListener('change',function(){bel=blk.checked;draw()});
+    var buat=h('button',{type:'button',class:'btn primary',disabled:!n,onclick:function(){
+      var rows=all.filter(function(r){return pilih[r.id]});if(!rows.length)return;
+      var lewat=rows.filter(function(r){return pmStatus(r)[1]==='crit'}).length;
+      try{var b=kartuPdf(jenis,rows,{belakang:bel});opSave('kartu-'+(jenis==='simper'?'simper':'mine-permit')+'-'+rows.length+'-orang.pdf',b.bytes);
+        if(lewat)toast(lewat+' kartu yang dicetak sudah kedaluwarsa dan ditandai merah')}
+      catch(e){err.textContent='Gagal membuat PDF: '+(e&&e.message?e.message:'kesalahan tak dikenal');err.hidden=false}
+    }},n?'Buat PDF ('+n+' kartu, '+(bel?n*2:n)+' halaman)':'Pilih kartu dahulu');
+    box.replaceChildren(tabs,
+      h('div',{class:'kt-bar'},h('label',{class:'kt-all'},semua,h('span',{text:'Pilih semua ('+vis.length+')'})),cari),
+      list,
+      h('label',{class:'kt-opt'},blk,h('span',{text:'Sertakan sisi belakang (ketentuan dan aturan)'})),
+      h('p',{class:'sub',style:'margin:0',text:'Ukuran kartu 2 × 4 inci (5,08 × 10,16 cm) portrait. Tiap kartu menjadi halaman depan lalu belakang, jadi cetak bolak-balik dengan balik pada sisi panjang dan skala 100%.'}),
+      ktSetelan(),err,
+      h('div',{class:'acts'},h('span',{class:'grow'}),h('button',{type:'button',class:'btn',onclick:closeModal},'Tutup'),buat));
+  }
+  draw();
+  openModal('Cetak kartu Mine Permit dan SIMPER',box);
+}
+function ktSetelan(){
+  var bisa=aksKtt()&&canWrite,d=h('details',{class:'kt-set'}),err=h('p',{class:'err',hidden:true});
+  var st={logo:KT_SET.logo||null,k3:KT_SET.k3||null};
+  function prev(k){var im=st[k];return h('span',{class:'kt-logo'},im&&im.b64?h('img',{alt:k==='logo'?'Logo perusahaan':'Logo K3',src:'data:image/jpeg;base64,'+im.b64}):h('small',{text:k==='logo'?'Inisial '+ktInisial():'Tanda K3 bawaan'}))}
+  var pl=prev('logo'),pk=prev('k3');
+  function slot(k,label,holder){
+    var fi=h('input',{type:'file',accept:'image/jpeg,image/png,image/webp',hidden:true,'aria-label':'Pilih '+label,onchange:async function(){try{st[k]=await ktImg(fi.files[0],420);wrap.replaceChild(prev(k),wrap.children[1])}catch(e){toast(e.message)}fi.value=''}});
+    var wrap=h('div',{class:'kt-slot'},h('b',{text:label}),holder,bisa?h('div',{class:'kt-sbtn'},fi,h('button',{type:'button',class:'btn sm',onclick:function(){fi.click()}},'Unggah'),h('button',{type:'button',class:'btn sm',onclick:function(){st[k]=null;var n=prev(k);wrap.replaceChild(n,wrap.children[1])}},'Pakai bawaan')):null);
+    return wrap;
+  }
+  var tmp=h('textarea',{rows:6,'aria-label':'Aturan Mine Permit',disabled:!bisa});tmp.value=ktAturan('minepermit').join('\n');
+  var tsp=h('textarea',{rows:6,'aria-label':'Aturan SIMPER',disabled:!bisa});tsp.value=ktAturan('simper').join('\n');
+  d.append(h('summary',{text:'Logo dan aturan pada kartu'}),
+    h('p',{class:'sub',style:'margin:0',text:bisa?'Logo perusahaan tampil di kiri kop, logo K3 di kanan. Aturan ditulis satu baris per butir dan tercetak di sisi belakang.':'Logo dan aturan kartu diatur oleh KTT atau Direktur Utama.'}),
+    h('div',{class:'kt-slots'},slot('logo','Logo perusahaan (kiri)',pl),slot('k3','Logo K3 (kanan)',pk)),
+    h('label',{class:'fld wide'},h('span',{text:'Aturan Mine Permit (satu baris per butir)'}),tmp),
+    h('label',{class:'fld wide'},h('span',{text:'Aturan SIMPER (satu baris per butir)'}),tsp),err,
+    bisa?h('div',{class:'acts'},h('span',{class:'grow'}),h('button',{type:'button',class:'btn',onclick:async function(){
+      var x={aturan_mp:tmp.value.trim(),aturan_sp:tsp.value.trim()};if(st.logo)x.logo=st.logo;if(st.k3)x.k3=st.k3;
+      try{await ktSimpan(x);PR_TOAST('Logo dan aturan kartu tersimpan')}catch(e){err.textContent='Gagal menyimpan: '+(e&&e.message?e.message:'periksa akses Anda');err.hidden=false}}},'Simpan logo dan aturan')):null);
+  return d;
+}
+var KT_PVIEW=permitView;
+permitView=function(){
+  ktLoad();
+  var r=KT_PVIEW();
+  var bar=h('div',{class:'kt-head'},h('button',{type:'button',class:'btn primary',onclick:function(){kartuDialog('minepermit')}},'Cetak kartu PDF'),
+    h('span',{class:'sub',text:'Pilih semua atau beberapa pekerja, ukuran 2 × 4 inci, dua sisi.'}));
+  var hd=r.querySelector('.pagehead');if(hd&&hd.nextSibling)r.insertBefore(bar,hd.nextSibling);else r.prepend(bar);
+  return r;
 };
 
 /* ---------- hosting mandiri: Supabase (aktif hanya di luar claude.ai) ---------- */
