@@ -2005,7 +2005,7 @@ SEED.rkdok=[
 SEED.jamkerja=[{id:'jk01',periode:'2026-01',jam:3080,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk02',periode:'2026-02',jam:2800,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk03',periode:'2026-03',jam:3220,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk04',periode:'2026-04',jam:3150,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk05',periode:'2026-05',jam:3300,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk06',periode:'2026-06',jam:3080,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk07',periode:'2026-07',jam:3260,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk08',periode:'2026-08',jam:3320,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk09',periode:'2026-09',jam:3150,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk10',periode:'2026-10',jam:3400,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk11',periode:'2026-11',jam:1800,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true}];
 SEED.ubah=[];SEED.minepermit=[];SEED.simper=[];SEED.pgship=[];SEED.pgbarge=[];SEED.pgjetty=[];SEED.pgsurv=[];SEED.pgkontrak=[];SEED.pgcust=[];SEED.pgstock=[];SEED.pgset=[];
 SEED.kdok=[];SEED.rkthn=[];SEED.opsm=[];SEED.opcat=[];SEED.opeto=[];SEED.opbarge=[];SEED.opform=[];SEED.oplog=[];SEED.opset=[];SEED.opmaster=[];SEED.opplan=[];SEED.oprkab=[];SEED.opkon=[];
-var __PD=prdDemo();SEED.opalat=__PD.opalat;SEED.opunit=__PD.opunit;SEED.opfuel=__PD.opfuel;SEED.optank=__PD.optank;SEED.opbd=__PD.opbd;var __WD=wdDemo();SEED.whitem=__WD.whitem;SEED.whin=__WD.whin;SEED.whout=__WD.whout;SEED.invpakai=[];
+var __PD=prdDemo();SEED.opalat=__PD.opalat;SEED.opunit=__PD.opunit;SEED.opfuel=__PD.opfuel;SEED.optank=__PD.optank;SEED.opbd=__PD.opbd;var __WD=wdDemo();SEED.whitem=__WD.whitem;SEED.whin=__WD.whin;SEED.whout=__WD.whout;var __SD=spDemo();SEED.spond=__SD.spond;SEED.sppantau=__SD.sppantau;SEED.spkeruk=__SD.spkeruk;SEED.invpakai=[];
 SEED.asetsite=[];
 SEED.asetmut=[];
 SEED.asetserah=[];
@@ -3021,6 +3021,12 @@ function pdfBuild(M,meta){
         ln(x,y+78,x+half-50,y+78,0.6,INK);
         tx(x,y+90,s.name,9.5,true,INK);if(s.sub)tx(x,y+102,s.sub,8.5,false,MUTE)});
       y+=112}
+    else if(b.t==='pb'){np()}
+    else if(b.t==='draw'){var ds=CW/400,dh=277*ds;ensure(dh+4);var dox=ML-10*ds;
+      b.ents.forEach(function(e){var cc=(b.col&&b.col[e.ly])||INK;
+        if(e.t==='L')ln(dox+e.x1*ds,y+(287-e.y1)*ds,dox+e.x2*ds,y+(287-e.y2)*ds,e.ly==='BORDER_TITLE'?0.8:0.45,cc);
+        else tx(dox+e.x*ds,y+(287-e.y)*ds,e.s,Math.max(4,e.h*ds*1.3),false,cc)});
+      y+=dh+6}
     else if(b.t==='gap'){y+=b.n}
     else if(b.t==='pb'){np()}
   });
@@ -15476,6 +15482,510 @@ function flBar(g){
     L.map(function(F){return h('button',{type:'button',class:'btn',title:F.sub,onclick:function(){flPdf(F.id)}},F.nm)}),
     h('button',{type:'button',class:'btn primary',onclick:function(){flPdfAll(g)}},'Semua ('+L.length+' lembar)'));
 }
+/* ---------- Settling Pond (Reklamasi dan lingkungan) ----------
+   Koleksi: spond (parameter desain per kolam), sppantau (logsheet pH, TSS, debit), spkeruk (catatan pengerukan).
+   Rumus mengikuti Template Excel Desain Kompartemen Settling Pond (7 modul): hidrologi rasional + Kirpich + Mononobe,
+   regulasi inflow, hukum Stokes, geometri 4 kompartemen (HRT, SOR, Vh, pelimpah), dosis PAC/PAM/kapur, USLE + siklus pengerukan.
+   Hasil adalah pra-desain: wajib dikaji ulang oleh tenaga ahli sebelum konstruksi. */
+var SP={tab:'dash',id:''};
+var SP_PUH={2:85,5:115,10:142,25:175,50:210};
+var SP_TEMP={15:[999.1,0.001139],20:[998.2,0.001002],25:[997,0.000891],28:[996.3,0.000833],30:[995.7,0.000798],35:[994,0.000719]};
+var SP_ZONA=['Pit','Disposal','Hauling','Stockpile','Buffer'];
+var SP_TITIK=['Inlet','Kompartemen 1','Kompartemen 2','Kompartemen 3','Kompartemen 4','Outlet'];
+var SP_BM={
+  Nikel:{tss:200,fe:5,ket:'Penambangan bijih nikel (acuan template: pH 6–9, TSS 200, Ni 0,5, Cr 0,5, Fe 5, Co 0,4 mg/L)',tab:[['pH','-','6,0 – 9,0'],['TSS','mg/L','200'],['Nikel total (Ni)','mg/L','0,5'],['Krom total (Cr)','mg/L','0,5'],['Besi total (Fe)','mg/L','5'],['Kobalt (Co)','mg/L','0,4']]},
+  Batubara:{tss:300,fe:7,ket:'Penambangan batubara (acuan template: pH 6–9, TSS 300, Fe 7, Mn 4 mg/L)',tab:[['pH','-','6,0 – 9,0'],['TSS','mg/L','300 (ketat 200)'],['Besi total (Fe)','mg/L','7'],['Mangan total (Mn)','mg/L','4']]}};
+var SP_KRIT=[['HRT total','minimal 2 jam'],['SOR ≤ Vs Stokes','laju limpahan tidak melebihi kecepatan endap'],['Kecepatan horizontal Vh','maksimal 0,05 m/detik'],['Rasio panjang/lebar','minimal 3 pada tiap kompartemen'],['Tinggi jagaan','minimal 0,5 m'],['Penyisihan TSS','minimal 85%'],['pH keluaran','6 sampai 9'],['Siklus pengerukan','minimal 3 bulan']];
+
+function spNum(r,k,d){var v=r&&r[k];if(v===''||v==null)return d;v=Number(v);return isFinite(v)?v:d}
+function spP(r){
+  r=r||{};var g=function(k,d){return spNum(r,k,d)};
+  var puh=String(r.puh||'10').replace(/\D/g,'')||'10',bm=r.baku==='Batubara'?'Batubara':'Nikel';
+  var p={nama:r.nama||'Settling Pond',lokasi:r.lokasi||'',baku:bm,id:r.id||'',
+    A:[g('a1',2.8),g('a2',2.2),g('a3',0.75),g('a4',0.55),g('a5',1.2)],C:[g('c1',0.8),g('c2',0.7),g('c3',0.85),g('c4',0.75),g('c5',0.35)],
+    L:g('panjang',950),H:g('beda',47),puh:Number(puh),tdr:g('tdrain',10),
+    suhu:Number(String(r.suhu||'28').replace(/\D/g,''))||28,gs:g('gs',2.65),dp:g('dp',20),ft:g('fturb',1.25),
+    lt:[g('lt1',55),g('lt2',45),g('lt3',40),g('lt4',35)],wt:[g('wt1',18),g('wt2',15),g('wt3',14),g('wt4',13)],
+    hw:g('hw',2),hm:g('hm',1),fb:g('fb',0.8),z:g('talud',1.5),bw:g('bweir',3),
+    tssIn:g('tssIn',2500),tssOut:g('tssOut',150),phIn:g('phIn',5.2),phOut:g('phOut',7.2),
+    pac:g('pac',35),pam:g('pam',1.5),lime:g('kapur',45),kpac:g('kpac',10),kpam:g('kpam',0.15),hpac:g('hpac',12500),hpam:g('hpam',58000),hlime:g('hkapur',2800),
+    R:g('uR',1850),K:g('uK',0.28),LS:g('uLS',3.85),Cv:g('uC',0.48),Pk:g('uP',0.75),sdr:g('sdr',0.28),rho:g('rhoSed',1.35),trig:g('trigger',60),
+    prod:g('prodExc',45),jam:g('jamExc',8),hk:g('hargaKeruk',38000)};
+  p.r24=g('r24',0)>0?g('r24',0):(SP_PUH[p.puh]||142);
+  p.top=g('jamDosing',0)>0?g('jamDosing',0):p.tdr;
+  p.bmTss=g('bmTss',0)>0?g('bmTss',0):SP_BM[bm].tss;
+  return p;
+}
+function spCalc(P){
+  var c={},A=0,CA=0,i;
+  P.A.forEach(function(a,k){A+=a;CA+=a*P.C[k]});c.A=A;c.Cc=A>0?CA/A:0;
+  c.Tc=Math.pow(0.87*Math.pow(P.L/1000,3)/Math.max(P.H,0.01),0.385);
+  c.I=P.r24/24*Math.pow(24/Math.max(c.Tc,0.001),2/3);
+  c.Qpuncak=0.278*c.Cc*c.I*(A/100);
+  c.Vrun=10*c.Cc*P.r24*A;c.Qin=c.Vrun/Math.max(P.tdr,0.1);c.QinS=c.Qin/3600;
+  var t=SP_TEMP[P.suhu]||SP_TEMP[28],rw=t[0],mu=t[1],d=P.dp*1e-6,rs=P.gs*1000;
+  c.rw=rw;c.mu=mu;c.nu=mu/rw;c.rs=rs;
+  c.Vs=9.81*(rs-rw)*d*d/(18*mu);c.VsH=c.Vs*3600;c.Re=c.Vs*d/c.nu;c.VsD=c.Vs/P.ft;c.VsDH=c.VsD*3600;c.tEndap=P.hw/c.Vs/3600;
+  c.Htot=P.fb+P.hw+P.hm;
+  c.k=[];var sW=0,sM=0,sT=0,sA=0,sL=0,sWt=0,bad=false;
+  for(i=0;i<4;i++){
+    var Lb=P.lt[i]-2*P.z*c.Htot,Wb=P.wt[i]-2*P.z*c.Htot,at=P.lt[i]*P.wt[i];if(Lb<=0||Wb<=0)bad=true;
+    var vw=(at+Lb*Wb)/2*P.hw,vm=Lb*Wb*P.hm,vt=vw+vm+at*P.fb;
+    c.k.push({Lt:P.lt[i],Wt:P.wt[i],Lb:Lb,Wb:Wb,lw:P.lt[i]/P.wt[i],at:at,vw:vw,vm:vm,vt:vt});sW+=vw;sM+=vm;sT+=vt;sA+=at;sL+=P.lt[i];sWt+=P.wt[i]}
+  c.bad=bad;c.Vw=sW;c.Vm=sM;c.Vt=sT;c.At=sA;c.Lsum=sL;c.Wavg=sWt/4;
+  c.HRT=c.Qin>0?sW/c.Qin:0;c.SOR=sA>0?c.Qin/sA:0;c.Vh=c.Wavg*P.hw>0?c.QinS/(c.Wavg*P.hw):0;c.Hweir=Math.pow(c.QinS/(1.7*Math.max(P.bw,0.01)),2/3);
+  c.lwMin=Math.min.apply(null,c.k.map(function(x){return x.lw}));
+  c.rem=P.tssIn>0?(P.tssIn-P.tssOut)/P.tssIn:0;
+  c.pacH=c.Qin*P.pac/1000;c.pamH=c.Qin*P.pam/1000;c.limeH=c.Qin*P.lime/1000;
+  c.pacD=c.pacH*P.top;c.pamD=c.pamH*P.top;c.limeD=c.limeH*P.top;
+  c.pumpPac=c.pacH*1000/(P.kpac*10);c.pumpPam=c.pamH*1000/(P.kpam*10);c.tankPac=c.pumpPac*12;c.tankPam=c.pumpPam*12;
+  c.rpPac=c.pacD*P.hpac;c.rpPam=c.pamD*P.hpam;c.rpLime=c.limeD*P.hlime;c.rpDay=c.rpPac+c.rpPam+c.rpLime;c.rpMon=c.rpDay*30;c.rpM3=c.Qin*P.top>0?c.rpDay/(c.Qin*P.top):0;c.Vtreat=c.Qin*P.top;
+  c.erosi=P.R*P.K*P.LS*P.Cv*P.Pk;c.gross=c.erosi*A;c.yield=c.gross*P.sdr;c.volY=c.yield/P.rho;c.volM=c.volY/12;c.volD=c.volM/30;
+  c.Vkrit=sM*P.trig/100;c.siklus=c.volM>0?c.Vkrit/c.volM:0;c.siklusH=c.siklus*30;
+  c.capD=P.prod*P.jam;c.durasi=c.capD>0?c.Vkrit/c.capD:0;c.rpSiklus=c.Vkrit*P.hk;c.rpTahun=c.siklus>0?12/c.siklus*c.rpSiklus:0;
+  c.cek=[
+    {l:'HRT total',v:c.HRT,t:opNf(c.HRT,2)+' jam',k:'≥ 2 jam',ok:c.HRT>=2},
+    {l:'SOR terhadap Vs Stokes',v:c.SOR,t:opNf(c.SOR,3)+' ≤ '+opNf(c.VsH,3)+' m/jam',k:'SOR ≤ Vs',ok:c.SOR<=c.VsH},
+    {l:'Kecepatan horizontal Vh',v:c.Vh,t:opNf(c.Vh,4)+' m/detik',k:'≤ 0,05 m/detik',ok:c.Vh<=0.05},
+    {l:'Rasio panjang/lebar terkecil',v:c.lwMin,t:opNf(c.lwMin,2),k:'≥ 3',ok:c.lwMin>=3},
+    {l:'Tinggi jagaan',v:P.fb,t:opNf(P.fb,2)+' m',k:'≥ 0,5 m',ok:P.fb>=0.5},
+    {l:'Penyisihan TSS',v:c.rem,t:opNf(c.rem*100,1)+'%',k:'≥ 85%',ok:c.rem>=0.85},
+    {l:'TSS keluaran',v:P.tssOut,t:opNf(P.tssOut,0)+' mg/L',k:'≤ '+opNf(P.bmTss,0)+' mg/L',ok:P.tssOut<=P.bmTss},
+    {l:'pH keluaran',v:P.phOut,t:opNf(P.phOut,1),k:'6 – 9',ok:P.phOut>=6&&P.phOut<=9},
+    {l:'Siklus pengerukan',v:c.siklus,t:opNf(c.siklus,1)+' bulan',k:'≥ 3 bulan',ok:c.siklus>=3}];
+  c.lulus=c.cek.filter(function(x){return x.ok}).length;
+  return c;
+}
+function spRp(v){return typeof wdRp==='function'?wdRp(v):'Rp '+opNf(v,0)}
+function spPonds(){return (S.spond||[]).slice().sort(function(a,b){return String(a.nama||'').localeCompare(String(b.nama||''))})}
+function spCur(){var L=spPonds();return L.find(function(x){return x.id===SP.id})||L[0]||null}
+
+/* ---------- konfigurasi form ---------- */
+function spF(k,l,d,t){return {k:k,l:l,t:t||'number',min:0}}
+CFG.spond={key:'spond',add:'Kolam',empty:'Belum ada kolam. Tambahkan kolam, atau muat data contoh untuk melihat cara kerjanya.',title:'Kolam pengendap (settling pond)',
+  fields:[
+    {k:'nama',l:'Nama kolam (misalnya SP-01 Pit Utara)',t:'text',req:1,sec:'Identitas'},
+    {k:'lokasi',l:'Lokasi atau pit',t:'text'},
+    {k:'baku',l:'Baku mutu air limbah yang dipakai',t:'select',o:['Nikel','Batubara']},
+    {k:'bmTss',l:'Batas TSS izin (mg/L). Kosong = bawaan baku mutu',t:'number',min:0},
+    {k:'a1',l:'Luas zona Pit (Ha)',t:'number',min:0,sec:'Catchment dan koefisien limpasan'},{k:'c1',l:'C zona Pit',t:'number',min:0},
+    {k:'a2',l:'Luas zona Disposal (Ha)',t:'number',min:0},{k:'c2',l:'C zona Disposal',t:'number',min:0},
+    {k:'a3',l:'Luas zona Hauling (Ha)',t:'number',min:0},{k:'c3',l:'C zona Hauling',t:'number',min:0},
+    {k:'a4',l:'Luas zona Stockpile (Ha)',t:'number',min:0},{k:'c4',l:'C zona Stockpile',t:'number',min:0},
+    {k:'a5',l:'Luas zona Buffer (Ha)',t:'number',min:0},{k:'c5',l:'C zona Buffer',t:'number',min:0},
+    {k:'panjang',l:'Panjang aliran terjauh L (m)',t:'number',min:0,sec:'Hidrologi'},{k:'beda',l:'Beda tinggi H (m)',t:'number',min:0},
+    {k:'puh',l:'Periode ulang hujan (tahun)',t:'select',o:['2','5','10','25','50']},
+    {k:'r24',l:'Curah hujan harian R24 (mm). Kosong = bawaan tabel PUH',t:'number',min:0},
+    {k:'tdrain',l:'Waktu pengosongan inflow (jam, 8 sampai 12)',t:'number',min:0},
+    {k:'suhu',l:'Suhu air tambang (°C)',t:'select',o:['15','20','25','28','30','35'],sec:'Partikel dan hukum Stokes'},
+    {k:'gs',l:'Specific gravity sedimen (Gs)',t:'number',min:0},{k:'dp',l:'Diameter partikel kritis (mikron)',t:'number',min:0},
+    {k:'fturb',l:'Faktor koreksi turbulensi',t:'number',min:0},
+    {k:'lt1',l:'Panjang atas kompartemen 1 (m)',t:'number',min:0,sec:'Geometri 4 kompartemen'},{k:'wt1',l:'Lebar atas kompartemen 1 (m)',t:'number',min:0},
+    {k:'lt2',l:'Panjang atas kompartemen 2 (m)',t:'number',min:0},{k:'wt2',l:'Lebar atas kompartemen 2 (m)',t:'number',min:0},
+    {k:'lt3',l:'Panjang atas kompartemen 3 (m)',t:'number',min:0},{k:'wt3',l:'Lebar atas kompartemen 3 (m)',t:'number',min:0},
+    {k:'lt4',l:'Panjang atas kompartemen 4 (m)',t:'number',min:0},{k:'wt4',l:'Lebar atas kompartemen 4 (m)',t:'number',min:0},
+    {k:'hw',l:'Kedalaman air efektif (m)',t:'number',min:0},{k:'hm',l:'Kedalaman ruang lumpur (m)',t:'number',min:0},
+    {k:'fb',l:'Tinggi jagaan (m)',t:'number',min:0},{k:'talud',l:'Talud z (horizontal : 1 vertikal)',t:'number',min:0},
+    {k:'bweir',l:'Lebar bukaan pelimpah antar kompartemen (m)',t:'number',min:0},
+    {k:'tssIn',l:'TSS masuk (mg/L)',t:'number',min:0,sec:'Kualitas air dan bahan kimia'},{k:'tssOut',l:'TSS target keluar (mg/L)',t:'number',min:0},
+    {k:'phIn',l:'pH masuk',t:'number',min:0},{k:'phOut',l:'pH target keluar',t:'number',min:0},
+    {k:'jamDosing',l:'Jam dosing per hari. Kosong = sama dengan waktu pengosongan',t:'number',min:0},
+    {k:'pac',l:'Dosis PAC (ppm)',t:'number',min:0},{k:'pam',l:'Dosis PAM (ppm)',t:'number',min:0},{k:'kapur',l:'Dosis kapur tohor (ppm)',t:'number',min:0},
+    {k:'kpac',l:'Konsentrasi larutan PAC (%)',t:'number',min:0},{k:'kpam',l:'Konsentrasi larutan PAM (%)',t:'number',min:0},
+    {k:'hpac',l:'Harga PAC (Rp/kg)',t:'number',min:0},{k:'hpam',l:'Harga PAM (Rp/kg)',t:'number',min:0},{k:'hkapur',l:'Harga kapur (Rp/kg)',t:'number',min:0},
+    {k:'uR',l:'Erosivitas hujan R',t:'number',min:0,sec:'Sedimentasi dan pengerukan'},{k:'uK',l:'Erodibilitas tanah K',t:'number',min:0},
+    {k:'uLS',l:'Faktor lereng LS',t:'number',min:0},{k:'uC',l:'Faktor vegetasi C',t:'number',min:0},{k:'uP',l:'Faktor konservasi P',t:'number',min:0},
+    {k:'sdr',l:'Sediment delivery ratio (SDR)',t:'number',min:0},{k:'rhoSed',l:'Bulk density lumpur (ton/m³)',t:'number',min:0},
+    {k:'trigger',l:'Batas kritis pengerukan (% kapasitas lumpur)',t:'number',min:0},
+    {k:'prodExc',l:'Produktivitas excavator (m³/jam)',t:'number',min:0},{k:'jamExc',l:'Jam kerja efektif per hari',t:'number',min:0},
+    {k:'hargaKeruk',l:'Biaya pengerukan (Rp/m³)',t:'number',min:0},
+    {k:'catatan',l:'Catatan',t:'area'}],
+  defaults:{baku:'Nikel',a1:2.8,c1:0.8,a2:2.2,c2:0.7,a3:0.75,c3:0.85,a4:0.55,c4:0.75,a5:1.2,c5:0.35,panjang:950,beda:47,puh:'10',tdrain:10,suhu:'28',gs:2.65,dp:20,fturb:1.25,
+    lt1:55,wt1:18,lt2:45,wt2:15,lt3:40,wt3:14,lt4:35,wt4:13,hw:2,hm:1,fb:0.8,talud:1.5,bweir:3,tssIn:2500,tssOut:150,phIn:5.2,phOut:7.2,pac:35,pam:1.5,kapur:45,kpac:10,kpam:0.15,hpac:12500,hpam:58000,hkapur:2800,
+    uR:1850,uK:0.28,uLS:3.85,uC:0.48,uP:0.75,sdr:0.28,rhoSed:1.35,trigger:60,prodExc:45,jamExc:8,hargaKeruk:38000},
+  sort:function(a,b){return String(a.nama||'').localeCompare(String(b.nama||''))},
+  cols:[
+    {l:'Kolam',r:function(r){return (r.nama||'—')+(r.lokasi?' · '+r.lokasi:'')}},
+    {l:'Catchment',r:function(r){var c=spCalc(spP(r));return opNf(c.A,2)+' Ha · C '+opNf(c.Cc,3)}},
+    {l:'Debit desain',r:function(r){return opNf(spCalc(spP(r)).Qin,0)+' m³/jam'}},
+    {l:'HRT',r:function(r){var c=spCalc(spP(r));return badge(opNf(c.HRT,2)+' jam',c.HRT>=2?'good':'crit')}},
+    {l:'Syarat desain',r:function(r){var c=spCalc(spP(r));return badge(c.lulus+' / '+c.cek.length,c.lulus===c.cek.length?'good':c.lulus>=c.cek.length-2?'warn':'crit')}}]};
+CFG.sppantau={key:'sppantau',add:'Catatan pemantauan',empty:'Belum ada catatan pemantauan. Catat pH, TSS, dan debit per titik sampling.',title:'Pemantauan harian settling pond',
+  fields:[
+    {k:'tanggal',l:'Tanggal',t:'date',req:1,sec:'Sampling'},
+    {k:'pond',l:'Kolam',t:'select',req:1,o:function(){return spPonds().map(function(x){return x.nama})}},
+    {k:'titik',l:'Titik sampling',t:'select',req:1,o:SP_TITIK},
+    {k:'ph',l:'pH',t:'number',min:0},{k:'tss',l:'TSS (mg/L)',t:'number',min:0},{k:'debit',l:'Debit (m³/jam)',t:'number',min:0},
+    {k:'hujan',l:'Curah hujan hari itu (mm)',t:'number',min:0},
+    {k:'lumpur',l:'Tebal lumpur terukur di kompartemen (m)',t:'number',min:0},
+    {k:'petugas',l:'Petugas',t:'text'},{k:'catatan',l:'Catatan',t:'area'}],
+  defaults:{titik:'Outlet'},
+  sort:function(a,b){return String(b.tanggal||'').localeCompare(String(a.tanggal||''))},
+  filter:{k:'titik',all:'Semua titik'},
+  cols:[
+    {l:'Tanggal',r:function(r){return r.tanggal||'—'}},{l:'Kolam',r:function(r){return r.pond||'—'}},{l:'Titik',r:function(r){return r.titik||'—'}},
+    {l:'pH',r:function(r){if(r.ph===''||r.ph==null)return '—';var v=Number(r.ph);return badge(opNf(v,1),v>=6&&v<=9?'good':'crit')}},
+    {l:'TSS',r:function(r){if(r.tss===''||r.tss==null)return '—';var v=Number(r.tss),lim=spLimit(r.pond);return r.titik==='Outlet'?badge(opNf(v,0)+' mg/L',v<=lim?'good':'crit'):opNf(v,0)+' mg/L'}},
+    {l:'Debit',r:function(r){return r.debit===''||r.debit==null?'—':opNf(r.debit,0)+' m³/jam'}},
+    {l:'Hujan',r:function(r){return r.hujan===''||r.hujan==null?'—':opNf(r.hujan,0)+' mm'}}]};
+CFG.spkeruk={key:'spkeruk',add:'Catatan pengerukan',empty:'Belum ada catatan pengerukan lumpur.',title:'Pengerukan lumpur settling pond',
+  fields:[
+    {k:'tanggal',l:'Tanggal pengerukan',t:'date',req:1,sec:'Pengerukan'},
+    {k:'pond',l:'Kolam',t:'select',req:1,o:function(){return spPonds().map(function(x){return x.nama})}},
+    {k:'komp',l:'Kompartemen',t:'select',o:['Kompartemen 1','Kompartemen 2','Kompartemen 3','Kompartemen 4','Semua kompartemen']},
+    {k:'vol',l:'Volume lumpur dikeruk (m³)',t:'number',min:0,req:1},
+    {k:'alat',l:'Alat (misalnya Excavator long arm PC200)',t:'text'},{k:'jam',l:'Jam kerja alat',t:'number',min:0},
+    {k:'biaya',l:'Biaya (Rp). Kosong = volume × biaya per m³ pada kolam',t:'number',min:0},
+    {k:'lokasiBuang',l:'Lokasi pembuangan lumpur',t:'text'},{k:'catatan',l:'Catatan',t:'area'}],
+  defaults:{komp:'Kompartemen 1'},
+  sort:function(a,b){return String(b.tanggal||'').localeCompare(String(a.tanggal||''))},
+  cols:[
+    {l:'Tanggal',r:function(r){return r.tanggal||'—'}},{l:'Kolam',r:function(r){return r.pond||'—'}},{l:'Kompartemen',r:function(r){return r.komp||'—'}},
+    {l:'Volume',r:function(r){return opNf(r.vol,0)+' m³'}},{l:'Alat',r:function(r){return r.alat||'—'}},
+    {l:'Biaya',r:function(r){var b=spBiayaKeruk(r);return b?invRp(b):'—'}}]};
+function spBiayaKeruk(r){var b=Number(r.biaya)||0;if(b)return b;var p=spPonds().find(function(x){return x.nama===r.pond});return (Number(r.vol)||0)*(p?spP(p).hk:38000)}
+function spLimit(nama){var p=spPonds().find(function(x){return x.nama===nama});return p?spP(p).bmTss:200}
+(function(){
+  var S0=save;
+  save=async function(key,id,data){
+    if(key==='spond'&&data){
+      if(!String(data.nama||'').trim())throw new Error('Isi nama kolam.');
+      if((S.spond||[]).some(function(x){return x.nama===data.nama&&x.id!==id}))throw new Error('Nama kolam sudah dipakai.');
+      var P=spP(data),c=spCalc(P);
+      if(c.bad)throw new Error('Dimensi dasar kolam bernilai nol atau negatif. Perbesar ukuran atas, kurangi kedalaman atau perlandai talud.');
+      if(!(c.Qin>0))throw new Error('Debit desain nol. Isi luas catchment, koefisien C, dan curah hujan.');
+    }
+    if(key==='sppantau'&&data){
+      var ph=data.ph;if(ph!==''&&ph!=null&&(Number(ph)<0||Number(ph)>14))throw new Error('pH harus antara 0 dan 14.');
+      if((data.ph===''||data.ph==null)&&(data.tss===''||data.tss==null)&&(data.debit===''||data.debit==null))throw new Error('Isi minimal satu hasil ukur: pH, TSS, atau debit.');
+    }
+    if(key==='spkeruk'&&data&&!(Number(data.vol)>0))throw new Error('Volume harus lebih dari 0.');
+    return S0.apply(this,arguments);
+  };
+})();
+
+/* ---------- gambar teknik (satu sumber untuk layar, PDF, dan DXF) ---------- */
+var SP_LY=['BORDER_TITLE','POND_STRUCTURE','WATER_LEVEL','SEDIMENT_ZONE','DRAINAGE_CHANNEL','DIM_ANNOTATION'];
+var SP_ACI={BORDER_TITLE:7,POND_STRUCTURE:7,WATER_LEVEL:5,SEDIMENT_ZONE:30,DRAINAGE_CHANNEL:3,DIM_ANNOTATION:8};
+function spSheets(P,C){
+  var out=[],ASCII=function(s){return String(s).replace(/[^\x20-\x7e]/g,function(ch){return ({'³':'3','²':'2','≤':'<=','≥':'>=','°':'deg','×':'x','·':'-','–':'-'})[ch]||'?'})};
+  function sheet(no,judul,skala){
+    var e=[],s={no:no,judul:judul,e:e};
+    s.L=function(x1,y1,x2,y2,ly){e.push({t:'L',x1:x1,y1:y1,x2:x2,y2:y2,ly:ly||'POND_STRUCTURE'})};
+    s.T=function(x,y,hh,str,ly){e.push({t:'T',x:x,y:y,h:hh,s:ASCII(str),ly:ly||'DIM_ANNOTATION'})};
+    s.R=function(x,y,w,hh,ly){s.L(x,y,x+w,y,ly);s.L(x+w,y,x+w,y+hh,ly);s.L(x+w,y+hh,x,y+hh,ly);s.L(x,y+hh,x,y,ly)};
+    s.R(10,10,400,277,'BORDER_TITLE');s.R(250,10,160,38,'BORDER_TITLE');s.L(250,30,410,30,'BORDER_TITLE');
+    s.T(254,40,4,no+'  '+judul,'BORDER_TITLE');s.T(254,34,3,P.nama+(P.lokasi?' - '+P.lokasi:''),'BORDER_TITLE');
+    s.T(254,24,3,skala,'BORDER_TITLE');s.T(254,18,2.4,'Pra-desain dari Platform KTT. Kaji ulang oleh tenaga ahli.','BORDER_TITLE');s.T(254,13.5,2.4,'Satuan gambar: mm kertas, dimensi lapangan: m.','BORDER_TITLE');
+    out.push(s);return s;
+  }
+  var n=function(v,d){return opNf(v,d==null?1:d)};
+  /* 1. layout umum (skematik) */
+  var s1=sheet('DED-SP-01','LAYOUT UMUM DAN CATCHMENT','Skematik, tidak sesuai skala');
+  var yTop=270,avail=190,tot=Math.max(C.A,0.01),hs=P.A.map(function(a){return Math.max(18,avail*a/tot)}),sh=hs.reduce(function(a,b){return a+b},0),sc=sh>avail?avail/sh:1,y=yTop;
+  var chX=100,ys=[];
+  P.A.forEach(function(a,k){var hh=hs[k]*sc;y-=hh;s1.R(20,y,70,hh-1.5,'POND_STRUCTURE');s1.T(23,y+hh/2+2,3.2,SP_ZONA[k]+'  '+n(a,2)+' Ha','POND_STRUCTURE');s1.T(23,y+hh/2-3,2.8,'C = '+n(P.C[k],2),'DIM_ANNOTATION');ys.push(y+hh/2-0.75);s1.L(90,y+hh/2-0.75,chX,y+hh/2-0.75,'DRAINAGE_CHANNEL')});
+  s1.L(chX,ys[0],chX,ys[ys.length-1],'DRAINAGE_CHANNEL');var ym=(ys[0]+ys[ys.length-1])/2;
+  s1.L(chX,ym,150,ym,'DRAINAGE_CHANNEL');s1.T(102,ym+3,2.8,'Saluran drainase','DRAINAGE_CHANNEL');
+  s1.R(150,ym-22,110,44,'POND_STRUCTURE');s1.T(155,ym+8,3.6,'SETTLING POND','POND_STRUCTURE');s1.T(155,ym+2,3,'4 kompartemen seri','DIM_ANNOTATION');
+  s1.T(155,ym-4,2.8,'Q desain '+n(C.Qin,0)+' m3/jam','WATER_LEVEL');s1.T(155,ym-9,2.8,'V air '+n(C.Vw,0)+' m3  HRT '+n(C.HRT,2)+' jam','WATER_LEVEL');s1.T(155,ym-14,2.8,'V lumpur '+n(C.Vm,0)+' m3','SEDIMENT_ZONE');
+  s1.L(260,ym,320,ym,'DRAINAGE_CHANNEL');s1.R(320,ym-14,80,28,'POND_STRUCTURE');s1.T(324,ym+3,3.2,'Badan air penerima','POND_STRUCTURE');s1.T(324,ym-4,2.6,'TSS keluar '+n(P.tssOut,0)+' mg/L','WATER_LEVEL');
+  s1.T(150,ym+34,3,'Catchment total '+n(C.A,2)+' Ha, C komposit '+n(C.Cc,3),'DIM_ANNOTATION');s1.T(150,ym+39,3,'PUH '+P.puh+' tahun, R24 '+n(P.r24,0)+' mm, Tc '+n(C.Tc,3)+' jam','DIM_ANNOTATION');
+  s1.T(150,ym+44,3,'Q puncak rasional '+n(C.Qpuncak,2)+' m3/detik (tanpa regulasi)','DIM_ANNOTATION');
+  /* 2. denah */
+  var s2=sheet('DED-SP-02','DENAH 4 KOMPARTEMEN','1 mm kertas = '+n(1/Math.min(1.9,380/(C.Lsum+24)),2)+' m');
+  var gap=8,total=C.Lsum+3*gap,sx=Math.min(380/total,2.4),x0=15+(380-total*sx)/2,cy=165,xx=x0,wMax=Math.max.apply(null,P.wt);
+  s2.L(x0-12,cy,x0,cy,'DRAINAGE_CHANNEL');s2.T(x0-12,cy+4,3,'INLET','DRAINAGE_CHANNEL');s2.T(x0-12,cy-6,2.6,n(C.Qin,0)+' m3/jam','WATER_LEVEL');
+  C.k.forEach(function(k,i){
+    var w=k.Wt*sx,l=k.Lt*sx,top=cy-w/2,ins=P.z*C.Htot*sx,inw=P.z*P.fb*sx;
+    s2.R(xx,cy-w/2,l,w,'POND_STRUCTURE');
+    if(l>2*ins&&w>2*ins)s2.R(xx+ins,cy-w/2+ins,l-2*ins,w-2*ins,'SEDIMENT_ZONE');
+    if(l>2*inw&&w>2*inw)s2.R(xx+inw,cy-w/2+inw,l-2*inw,w-2*inw,'WATER_LEVEL');
+    s2.T(xx+l/2-8,cy+2,4,'K-'+(i+1),'POND_STRUCTURE');
+    s2.T(xx,top-6,2.8,k.Lt+' x '+k.Wt+' m (atas)','DIM_ANNOTATION');s2.T(xx,top-11,2.6,'dasar '+n(k.Lb,1)+' x '+n(k.Wb,1)+' m','DIM_ANNOTATION');
+    s2.T(xx,top-16,2.6,'V air '+n(k.vw,0)+' m3','WATER_LEVEL');s2.T(xx,top-21,2.6,'V lumpur '+n(k.vm,0)+' m3','SEDIMENT_ZONE');s2.T(xx,top-26,2.6,'L/W '+n(k.lw,2),'DIM_ANNOTATION');
+    if(i<3){var gx=xx+l,gw=gap*sx;s2.L(gx,cy-w/2,gx+gw,cy-w/2,'POND_STRUCTURE');s2.L(gx,cy+w/2,gx+gw,cy+w/2,'POND_STRUCTURE');
+      s2.L(gx+gw*0.35,cy-P.bw*sx/2,gx+gw*0.35,cy+P.bw*sx/2,'DRAINAGE_CHANNEL');s2.L(gx+gw*0.65,cy-P.bw*sx/2,gx+gw*0.65,cy+P.bw*sx/2,'DRAINAGE_CHANNEL');s2.T(gx-4,cy+P.bw*sx/2+5,2.4,'Pelimpah b='+n(P.bw,1)+' m','DRAINAGE_CHANNEL')}
+    xx+=l+gap*sx});
+  s2.L(xx-gap*sx,cy,xx-gap*sx+14,cy,'DRAINAGE_CHANNEL');s2.T(xx-gap*sx+1,cy+4,3,'OUTLET','DRAINAGE_CHANNEL');
+  var yd=cy-wMax*sx/2-38;s2.L(x0,yd,x0+total*sx,yd,'DIM_ANNOTATION');s2.L(x0,yd-2,x0,yd+2,'DIM_ANNOTATION');s2.L(x0+total*sx,yd-2,x0+total*sx,yd+2,'DIM_ANNOTATION');s2.T(x0+total*sx/2-22,yd+3,3,'Panjang total '+n(total,0)+' m (termasuk 3 sekat '+gap+' m)','DIM_ANNOTATION');
+  s2.T(20,100,3,'HRT '+n(C.HRT,2)+' jam   SOR '+n(C.SOR,3)+' m/jam   Vh '+n(C.Vh,4)+' m/detik','DIM_ANNOTATION');
+  s2.L(20,88,40,88,'POND_STRUCTURE');s2.T(43,87,2.6,'Tepi atas (crest)','DIM_ANNOTATION');s2.L(20,83,40,83,'WATER_LEVEL');s2.T(43,82,2.6,'Muka air normal','DIM_ANNOTATION');s2.L(20,78,40,78,'SEDIMENT_ZONE');s2.T(43,77,2.6,'Dasar kolam / zona lumpur','DIM_ANNOTATION');s2.L(20,73,40,73,'DRAINAGE_CHANNEL');s2.T(43,72,2.6,'Aliran dan pelimpah','DIM_ANNOTATION');
+  /* 3. potongan */
+  var s3=sheet('DED-SP-03','POTONGAN MEMANJANG DAN MELINTANG','Memanjang: vertikal diperbesar 4x');
+  var sx3=Math.min(380/total,2.4),sy=sx3*4,x3=15+(380-total*sx3)/2,yc=262,xp=x3;
+  s3.T(15,277,3.4,'POTONGAN MEMANJANG (arah aliran)','POND_STRUCTURE');
+  C.k.forEach(function(k,i){
+    var l=k.Lt*sx3,off=P.z*C.Htot*sx3,offw=P.z*P.fb*sx3,yw=yc-P.fb*sy,yf=yc-C.Htot*sy,ym2=yc-(P.fb+P.hw)*sy;
+    s3.L(xp,yc,xp+off,yf,'POND_STRUCTURE');s3.L(xp+off,yf,xp+l-off,yf,'SEDIMENT_ZONE');s3.L(xp+l-off,yf,xp+l,yc,'POND_STRUCTURE');
+    s3.L(xp+offw,yw,xp+l-offw,yw,'WATER_LEVEL');s3.L(xp+off+(P.z*P.hm*sx3),ym2,xp+l-off-(P.z*P.hm*sx3),ym2,'SEDIMENT_ZONE');
+    s3.T(xp+l/2-6,yf-5,3,'K-'+(i+1),'POND_STRUCTURE');
+    if(i<3){s3.L(xp+l,yc,xp+l+gap*sx3,yc,'POND_STRUCTURE')}else{s3.L(xp+l,yc,xp+l+8,yc,'POND_STRUCTURE')}
+    xp+=l+gap*sx3});
+  s3.L(x3-8,yc,x3,yc,'POND_STRUCTURE');
+  s3.T(x3,yc+4,2.6,'Crest +0,00','DIM_ANNOTATION');s3.T(x3+off0(),yc-P.fb*sy+1.2,2.4,'MAB -'+n(P.fb,2)+' m','WATER_LEVEL');
+  function off0(){return 2}
+  s3.T(x3+60,yc-C.Htot*sy-4,2.4,'Dasar -'+n(C.Htot,2)+' m, batas lumpur -'+n(P.fb+P.hw,2)+' m','SEDIMENT_ZONE');
+  /* melintang kompartemen 1 */
+  var k1=C.k[0],sc3=Math.min(8,150/Math.max(k1.Wt,1)),cx=120,yt=165,hh=C.Htot*sc3,hf=P.fb*sc3,ofs=P.z*C.Htot*sc3,wt=k1.Wt*sc3;
+  s3.T(15,205,3.4,'POTONGAN MELINTANG KOMPARTEMEN 1 (skala sama 1:1)','POND_STRUCTURE');
+  s3.L(cx-wt/2-14,yt,cx-wt/2,yt,'POND_STRUCTURE');s3.L(cx+wt/2,yt,cx+wt/2+14,yt,'POND_STRUCTURE');
+  s3.L(cx-wt/2,yt,cx-wt/2+ofs,yt-hh,'POND_STRUCTURE');s3.L(cx-wt/2+ofs,yt-hh,cx+wt/2-ofs,yt-hh,'SEDIMENT_ZONE');s3.L(cx+wt/2-ofs,yt-hh,cx+wt/2,yt,'POND_STRUCTURE');
+  s3.L(cx-wt/2+P.z*P.fb*sc3,yt-hf,cx+wt/2-P.z*P.fb*sc3,yt-hf,'WATER_LEVEL');
+  s3.L(cx-wt/2+P.z*(P.fb+P.hw)*sc3,yt-(P.fb+P.hw)*sc3,cx+wt/2-P.z*(P.fb+P.hw)*sc3,yt-(P.fb+P.hw)*sc3,'SEDIMENT_ZONE');
+  s3.L(cx-wt/2,yt+6,cx+wt/2,yt+6,'DIM_ANNOTATION');s3.T(cx-14,yt+9,3,'W atas '+n(k1.Wt,1)+' m','DIM_ANNOTATION');
+  s3.T(cx-ofs-6+wt/2-18,yt-hh-5,3,'W dasar '+n(k1.Wb,1)+' m','DIM_ANNOTATION');
+  s3.T(cx+wt/2+16,yt-hf+1,2.8,'Muka air  -'+n(P.fb,2)+' m (jagaan '+n(P.fb,2)+' m)','WATER_LEVEL');s3.T(cx+wt/2+16,yt-(P.fb+P.hw)*sc3+1,2.8,'Batas lumpur -'+n(P.fb+P.hw,2)+' m (air efektif '+n(P.hw,2)+' m)','SEDIMENT_ZONE');
+  s3.T(cx+wt/2+16,yt-hh+1,2.8,'Dasar -'+n(C.Htot,2)+' m (ruang lumpur '+n(P.hm,2)+' m)','SEDIMENT_ZONE');s3.T(cx+wt/2+16,yt+1,2.8,'Crest +0,00   talud 1 : '+n(P.z,1)+' (V:H = 1:'+n(P.z,1)+')','DIM_ANNOTATION');
+  /* 4. detail pelimpah dan dosing */
+  var s4=sheet('DED-SP-04','DETAIL PELIMPAH, OUTFALL DAN DOSING','Pelimpah: horizontal 25 mm/m, vertikal 200 mm/m');
+  var bx=15,by=170,bw=Math.min(P.bw*25,120),hx=Math.max(C.Hweir*200,6);
+  s4.T(15,277,3.4,'DETAIL PELIMPAH ANTAR KOMPARTEMEN (tampak depan)','POND_STRUCTURE');
+  s4.R(bx,by-40,bw+40,40,'POND_STRUCTURE');s4.L(bx+20,by,bx+20+bw,by,'DRAINAGE_CHANNEL');s4.L(bx+20,by-40,bx+20,by,'POND_STRUCTURE');s4.L(bx+20+bw,by-40,bx+20+bw,by,'POND_STRUCTURE');
+  s4.L(bx+20,by+hx,bx+20+bw,by+hx,'WATER_LEVEL');s4.T(bx+bw+24,by+hx-1,2.8,'Muka air H = '+n(C.Hweir,3)+' m','WATER_LEVEL');
+  s4.L(bx+20,by-8,bx+20+bw,by-8,'DIM_ANNOTATION');s4.T(bx+20+bw/2-14,by-12,3,'b = '+n(P.bw,2)+' m','DIM_ANNOTATION');
+  s4.T(bx,by+hx+8,2.8,'H = (Q / (1,7 x b))^(2/3), Q = '+n(C.QinS,3)+' m3/detik','DIM_ANNOTATION');s4.T(bx,by+hx+13,2.8,'Mercu ambang lebar; lantai pelimpah di muka air kompartemen.','DIM_ANNOTATION');
+  var dx=190,dy=235;s4.T(dx,277,3.4,'SKEMA SISTEM DOSING','POND_STRUCTURE');
+  s4.R(dx,dy,60,24,'POND_STRUCTURE');s4.T(dx+3,dy+15,3,'Tangki PAC '+n(C.tankPac,0)+' L','POND_STRUCTURE');s4.T(dx+3,dy+9,2.6,'larutan '+n(P.kpac,1)+'%  pompa '+n(C.pumpPac,0)+' L/jam','DIM_ANNOTATION');
+  s4.R(dx,dy-34,60,24,'POND_STRUCTURE');s4.T(dx+3,dy-19,3,'Tangki PAM '+n(C.tankPam,0)+' L','POND_STRUCTURE');s4.T(dx+3,dy-25,2.6,'larutan '+n(P.kpam,2)+'%  pompa '+n(C.pumpPam,1)+' L/jam','DIM_ANNOTATION');
+  s4.R(dx,dy-68,60,24,'POND_STRUCTURE');s4.T(dx+3,dy-53,3,'Kapur tohor','POND_STRUCTURE');s4.T(dx+3,dy-59,2.6,n(C.limeD,0)+' kg/hari','DIM_ANNOTATION');
+  s4.L(dx+60,dy+12,dx+90,dy+12,'DRAINAGE_CHANNEL');s4.L(dx+60,dy-22,dx+90,dy-22,'DRAINAGE_CHANNEL');s4.L(dx+60,dy-56,dx+90,dy-56,'DRAINAGE_CHANNEL');s4.L(dx+90,dy+12,dx+90,dy-56,'DRAINAGE_CHANNEL');
+  s4.L(dx+90,dy-22,dx+104,dy-22,'DRAINAGE_CHANNEL');s4.R(dx+104,dy-34,56,24,'POND_STRUCTURE');s4.T(dx+107,dy-19,2.8,'Flash mixer','POND_STRUCTURE');s4.T(dx+107,dy-25,2.4,'masuk inlet K-1','DIM_ANNOTATION');
+  s4.T(dx,dy-80,2.8,'Biaya kimia '+spRp(C.rpDay)+' per hari ('+n(C.rpM3,0)+' Rp/m3)','DIM_ANNOTATION');
+  s4.T(15,100,3.4,'OUTFALL','POND_STRUCTURE');s4.T(15,93,2.8,'Titik penaatan keluaran: pH 6-9, TSS maks '+n(P.bmTss,0)+' mg/L.','DIM_ANNOTATION');s4.T(15,88,2.8,'Pasang V-notch atau pengukur debit, titik sampling dan papan nama titik penaatan.','DIM_ANNOTATION');
+  return out;
+}
+function spDxf(sheets,ofs){
+  var o=['  0','SECTION','  2','HEADER','  9','$ACADVER','  1','AC1009','  0','ENDSEC','  0','SECTION','  2','TABLES','  0','TABLE','  2','LTYPE',' 70','1','  0','LTYPE','  2','CONTINUOUS',' 70','0','  3','Solid line',' 72','65',' 73','0',' 40','0.0','  0','ENDTAB','  0','TABLE','  2','LAYER',' 70',String(SP_LY.length+1),'  0','LAYER','  2','0',' 70','0',' 62','7','  6','CONTINUOUS'];
+  SP_LY.forEach(function(l){o.push('  0','LAYER','  2',l,' 70','0',' 62',String(SP_ACI[l]),'  6','CONTINUOUS')});
+  o.push('  0','ENDTAB','  0','ENDSEC','  0','SECTION','  2','ENTITIES');
+  var f=function(v){return (Math.round(v*1000)/1000).toFixed(3)};
+  sheets.forEach(function(s,i){var dx=(ofs?i*450:0);s.e.forEach(function(e){
+    if(e.t==='L')o.push('  0','LINE','  8',e.ly,' 10',f(e.x1+dx),' 20',f(e.y1),' 30','0.0',' 11',f(e.x2+dx),' 21',f(e.y2),' 31','0.0');
+    else o.push('  0','TEXT','  8',e.ly,' 10',f(e.x+dx),' 20',f(e.y),' 30','0.0',' 40',f(e.h),'  1',e.s)})});
+  o.push('  0','ENDSEC','  0','EOF');return o.join('\n')+'\n';
+}
+var SP_COL={BORDER_TITLE:[0.1,0.13,0.11],POND_STRUCTURE:[0.1,0.13,0.11],WATER_LEVEL:[0.17,0.48,0.82],SEDIMENT_ZONE:[0.6,0.42,0.24],DRAINAGE_CHANNEL:[0.18,0.55,0.34],DIM_ANNOTATION:[0.4,0.44,0.41]};
+var SP_CSS={BORDER_TITLE:'var(--muted)',POND_STRUCTURE:'currentColor',WATER_LEVEL:'#2b7bd1',SEDIMENT_ZONE:'#a8764a',DRAINAGE_CHANNEL:'#2e9a62',DIM_ANNOTATION:'var(--muted)'};
+function spSvg(s){
+  var g=[];s.e.forEach(function(e){
+    if(e.t==='L')g.push(sv('line',{x1:e.x1,y1:297-e.y1,x2:e.x2,y2:297-e.y2,stroke:SP_CSS[e.ly],'stroke-width':e.ly==='BORDER_TITLE'?'0.5':'0.35'}));
+    else g.push(sv('text',{x:e.x,y:297-e.y,style:'font-size:'+(e.h*1.2)+'px;font-family:Helvetica,Arial,sans-serif',fill:SP_CSS[e.ly]},[document.createTextNode(e.s)]))});
+  return sv('svg',{viewBox:'0 0 420 297',class:'chart',style:'width:100%;height:auto;background:var(--bg);border:1px solid var(--line);border-radius:6px',role:'img','aria-label':s.no+' '+s.judul},g);
+}
+
+/* ---------- ekspor: PDF, DXF, Excel ---------- */
+function spSlug(P){return String(P.nama||'settling-pond').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'settling-pond'}
+function spDrawBlocks(sheets){var B=[];sheets.forEach(function(s){B.push({t:'pb'});B.push({t:'title',text:s.no+'  '+s.judul,sub:'Gambar pra-desain, kertas A3 diperkecil'});B.push({t:'draw',ents:s.e,col:SP_COL})});return B}
+function spReport(P,C,sheets){
+  var n=function(v,d){return opNf(v,d==null?2:d)},B=[];
+  B.push({t:'title',text:'Laporan desain settling pond',sub:P.nama+(P.lokasi?' · '+P.lokasi:'')+' · dibuat '+isoOf(new Date())});
+  B.push({t:'note',text:'Pra-desain berdasarkan metode Template Desain Kompartemen Settling Pond. Seluruh angka bergantung pada masukan yang diisi dan wajib dikaji ulang oleh tenaga ahli (hidrologi, geoteknik, lingkungan) sebelum konstruksi atau permohonan persetujuan teknis.'});
+  B.push({t:'h',text:'Ringkasan pemeriksaan kriteria desain'});
+  B.push({t:'table',cols:[{h:'Parameter',w:3},{h:'Hasil',w:3},{h:'Syarat',w:2},{h:'Status',w:2}],rows:C.cek.map(function(x){return [x.l,x.t,x.k,x.ok?'Memenuhi':'Tidak memenuhi']})});
+  B.push({t:'h',text:'1. Hidrologi catchment'});
+  B.push({t:'table',cols:[{h:'Zona',w:3},{h:'Luas (Ha)',w:2,a:'r'},{h:'C',w:1,a:'r'},{h:'C × A',w:2,a:'r'}],rows:P.A.map(function(a,k){return [SP_ZONA[k],n(a),n(P.C[k]),n(a*P.C[k])]}).concat([['Total / komposit',n(C.A),n(C.Cc,3),n(C.A*C.Cc)]]),total:true});
+  B.push({t:'kv',rows:[['Panjang aliran L, beda tinggi H',n(P.L,0)+' m, '+n(P.H,0)+' m'],['Waktu konsentrasi Tc (Kirpich)',n(C.Tc,3)+' jam'],['PUH dan R24',P.puh+' tahun, '+n(P.r24,0)+' mm'],['Intensitas hujan I (Mononobe)',n(C.I,1)+' mm/jam'],['Debit puncak rasional (0,278 C I A)',n(C.Qpuncak,3)+' m³/detik'],['Volume limpasan harian (10 C R24 A)',n(C.Vrun,0)+' m³'],['Debit desain teregulasi (÷ '+n(P.tdr,0)+' jam)',n(C.Qin,1)+' m³/jam = '+n(C.QinS,3)+' m³/detik']]});
+  B.push({t:'h',text:'2. Pengendapan partikel (hukum Stokes)'});
+  B.push({t:'kv',rows:[['Suhu, densitas air, viskositas',P.suhu+' °C, '+n(C.rw,1)+' kg/m³, '+C.mu+' Pa.s'],['Gs dan diameter partikel',n(P.gs)+' dan '+n(P.dp,0)+' mikron'],['Kecepatan endap Vs',n(C.VsH,3)+' m/jam ('+C.Vs.toExponential(2)+' m/detik)'],['Bilangan Reynolds partikel',C.Re.toExponential(2)+(C.Re<1?' (valid, Re < 1)':' (tidak valid)')],['Vs desain (÷ '+n(P.ft)+')',n(C.VsDH,3)+' m/jam'],['Waktu endap pada kedalaman '+n(P.hw)+' m',n(C.tEndap,2)+' jam']]});
+  B.push({t:'h',text:'3. Geometri dan hidrolika kompartemen'});
+  B.push({t:'table',cols:[{h:'Kompartemen',w:2},{h:'L atas × W atas (m)',w:3},{h:'L dasar × W dasar (m)',w:3},{h:'L/W',w:1,a:'r'},{h:'V air (m³)',w:2,a:'r'},{h:'V lumpur (m³)',w:2,a:'r'}],
+    rows:C.k.map(function(k,i){return ['K-'+(i+1),n(k.Lt,1)+' × '+n(k.Wt,1),n(k.Lb,1)+' × '+n(k.Wb,1),n(k.lw),n(k.vw,0),n(k.vm,0)]}).concat([['Total','','','',n(C.Vw,0),n(C.Vm,0)]]),total:true});
+  B.push({t:'kv',rows:[['Kedalaman: jagaan, air, lumpur',n(P.fb)+' m, '+n(P.hw)+' m, '+n(P.hm)+' m (total '+n(C.Htot)+' m), talud 1:'+n(P.z,1)],['HRT total',n(C.HRT)+' jam'],['SOR total',n(C.SOR,4)+' m/jam'],['Kecepatan horizontal Vh',n(C.Vh,4)+' m/detik'],['Tinggi air di atas pelimpah (b = '+n(P.bw,1)+' m)',n(C.Hweir,3)+' m']]});
+  B.push({t:'h',text:'4. Bahan kimia (koagulan dan flokulan)'});
+  B.push({t:'table',cols:[{h:'Bahan',w:3},{h:'Dosis (ppm)',w:2,a:'r'},{h:'kg/jam',w:2,a:'r'},{h:'kg/hari',w:2,a:'r'},{h:'Harga (Rp/kg)',w:2,a:'r'},{h:'Rp/hari',w:3,a:'r'}],
+    rows:[['PAC',n(P.pac,1),n(C.pacH),n(C.pacD,1),n(P.hpac,0),n(C.rpPac,0)],['PAM',n(P.pam,2),n(C.pamH,3),n(C.pamD,2),n(P.hpam,0),n(C.rpPam,0)],['Kapur tohor',n(P.lime,1),n(C.limeH),n(C.limeD,1),n(P.hlime,0),n(C.rpLime,0)],['Total','','','','',n(C.rpDay,0)]],total:true});
+  B.push({t:'kv',rows:[['TSS masuk → keluar',n(P.tssIn,0)+' → '+n(P.tssOut,0)+' mg/L (penyisihan '+n(C.rem*100,1)+'%)'],['pH masuk → keluar',n(P.phIn,1)+' → '+n(P.phOut,1)],['Pompa dosing PAC dan PAM',n(C.pumpPac,0)+' L/jam dan '+n(C.pumpPam,1)+' L/jam'],['Tangki pelarut stok 12 jam',n(C.tankPac,0)+' L (PAC) dan '+n(C.tankPam,0)+' L (PAM)'],['Biaya kimia bulanan (30 hari)',spRp(C.rpMon)],['Biaya kimia per m³ air olahan','Rp '+n(C.rpM3,0)]]});
+  B.push({t:'h',text:'5. Sedimentasi dan siklus pengerukan'});
+  B.push({t:'kv',rows:[['Laju erosi USLE (R·K·LS·C·P)',n(C.erosi,1)+' ton/ha/tahun'],['Erosi kotor catchment',n(C.gross,0)+' ton/tahun'],['Hasil sedimen ke kolam (SDR '+n(P.sdr)+')',n(C.yield,0)+' ton/tahun'],['Volume sedimen',n(C.volY,0)+' m³/tahun, '+n(C.volM,1)+' m³/bulan'],['Kapasitas ruang lumpur, batas kritis '+n(P.trig,0)+'%',n(C.Vm,0)+' m³, '+n(C.Vkrit,0)+' m³'],['Siklus pengerukan',n(C.siklus,1)+' bulan ('+n(C.siklusH,0)+' hari)'],['Kapasitas alat dan durasi per siklus',n(C.capD,0)+' m³/hari, '+n(C.durasi,1)+' hari'],['Biaya per siklus dan per tahun',spRp(C.rpSiklus)+' dan '+spRp(C.rpTahun)]]});
+  B.push({t:'h',text:'Baku mutu acuan ('+P.baku+')'});
+  B.push({t:'table',cols:[{h:'Parameter',w:4},{h:'Satuan',w:2},{h:'Kadar maksimum',w:3}],rows:SP_BM[P.baku].tab});
+  B.push({t:'p',text:SP_BM[P.baku].ket+'. Sesuaikan dengan baku mutu pada persetujuan lingkungan atau izin pembuangan air limbah Anda.',mute:true,size:8});
+  if(sheets)B=B.concat(spDrawBlocks(sheets));
+  return B;
+}
+function spPdfLapor(){var r=spCur();if(!r)return;var P=spP(r),C=spCalc(P),sh=spSheets(P,C);pgPdf('Desain settling pond '+P.nama,'desain-'+spSlug(P)+'.pdf',spReport(P,C,sh))}
+function spPdfGambar(){var r=spCur();if(!r)return;var P=spP(r),C=spCalc(P),sh=spSheets(P,C),B=spDrawBlocks(sh);B.shift();pgPdf('Gambar desain '+P.nama,'gambar-desain-'+spSlug(P)+'.pdf',B)}
+function spDxfSave(i){var r=spCur();if(!r)return;var P=spP(r),C=spCalc(P),sh=spSheets(P,C);
+  if(i==null)opSave('DED-'+spSlug(P)+'-lengkap.dxf',spDxf(sh,true));
+  else opSave(sh[i].no+'-'+spSlug(P)+'.dxf',spDxf([sh[i]],false))}
+function spCrc(b){var t=spCrc.t;if(!t){t=spCrc.t=[];for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}}var c2=0xFFFFFFFF;for(var i=0;i<b.length;i++)c2=t[(c2^b[i])&255]^(c2>>>8);return (c2^0xFFFFFFFF)>>>0}
+function spZip(files){
+  var enc=new TextEncoder(),parts=[],cen=[],off=0;
+  files.forEach(function(f){var nm=enc.encode(f.n),crc=spCrc(f.b),sz=f.b.length,lh=new Uint8Array(30+nm.length),dv=new DataView(lh.buffer);
+    dv.setUint32(0,0x04034b50,true);dv.setUint16(4,20,true);dv.setUint16(6,0x0800,true);dv.setUint16(12,0x21,true);dv.setUint32(14,crc,true);dv.setUint32(18,sz,true);dv.setUint32(22,sz,true);dv.setUint16(26,nm.length,true);lh.set(nm,30);parts.push(lh,f.b);
+    var ch=new Uint8Array(46+nm.length),cv=new DataView(ch.buffer);cv.setUint32(0,0x02014b50,true);cv.setUint16(4,20,true);cv.setUint16(6,20,true);cv.setUint16(8,0x0800,true);cv.setUint16(14,0x21,true);cv.setUint32(16,crc,true);cv.setUint32(20,sz,true);cv.setUint32(24,sz,true);cv.setUint16(28,nm.length,true);cv.setUint32(42,off,true);ch.set(nm,46);cen.push(ch);off+=lh.length+sz});
+  var cs=0;cen.forEach(function(c){cs+=c.length});var end=new Uint8Array(22),ev=new DataView(end.buffer);ev.setUint32(0,0x06054b50,true);ev.setUint16(8,files.length,true);ev.setUint16(10,files.length,true);ev.setUint32(12,cs,true);ev.setUint32(16,off,true);
+  var all=parts.concat(cen,[end]),len=0;all.forEach(function(p){len+=p.length});var o=new Uint8Array(len),q=0;all.forEach(function(x){o.set(x,q);q+=x.length});return o;
+}
+function spXlsx(sheets){
+  var enc=new TextEncoder(),esc=function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g,'')};
+  var col=function(i){var s='';i++;while(i>0){var m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26)}return s};
+  var F=[{n:'[Content_Types].xml',b:enc.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+sheets.map(function(_,i){return '<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'}).join('')+'</Types>')},
+    {n:'_rels/.rels',b:enc.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>')},
+    {n:'xl/workbook.xml',b:enc.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+sheets.map(function(s,i){return '<sheet name="'+esc(s.n)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>'}).join('')+'</sheets></workbook>')},
+    {n:'xl/_rels/workbook.xml.rels',b:enc.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map(function(_,i){return '<Relationship Id="rId'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>'}).join('')+'</Relationships>')}];
+  sheets.forEach(function(s,i){
+    var x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols><col min="1" max="1" width="44" customWidth="1"/><col min="2" max="8" width="18" customWidth="1"/></cols><sheetData>';
+    s.rows.forEach(function(r,ri){x+='<row r="'+(ri+1)+'">';r.forEach(function(v,ci){if(v===''||v==null)return;var ref=col(ci)+(ri+1);x+=typeof v==='number'&&isFinite(v)?'<c r="'+ref+'"><v>'+v+'</v></c>':'<c r="'+ref+'" t="inlineStr"><is><t xml:space="preserve">'+esc(v)+'</t></is></c>'});x+='</row>'});
+    F.push({n:'xl/worksheets/sheet'+(i+1)+'.xml',b:enc.encode(x+'</sheetData></worksheet>')})});
+  return spZip(F);
+}
+function spXlsxSave(){
+  var r=spCur();if(!r)return;var P=spP(r),C=spCalc(P),R=function(v,d){return Math.round(v*Math.pow(10,d))/Math.pow(10,d)};
+  var mon=(S.sppantau||[]).filter(function(x){return x.pond===P.nama}).sort(function(a,b){return String(a.tanggal).localeCompare(String(b.tanggal))});
+  var keruk=(S.spkeruk||[]).filter(function(x){return x.pond===P.nama});
+  var sh=[
+    {n:'Ringkasan',rows:[['Desain settling pond',P.nama],['Lokasi',P.lokasi],['Tanggal',isoOf(new Date())],[],['Pemeriksaan kriteria','Hasil','Syarat','Status']].concat(C.cek.map(function(x){return [x.l,x.t,x.k,x.ok?'Memenuhi':'Tidak memenuhi']}))},
+    {n:'Hidrologi',rows:[['Zona','Luas (Ha)','C','C x A']].concat(P.A.map(function(a,k){return [SP_ZONA[k],a,P.C[k],R(a*P.C[k],4)]})).concat([['Total / komposit',R(C.A,3),R(C.Cc,4),R(C.A*C.Cc,4)],[],['Panjang aliran L (m)',P.L],['Beda tinggi H (m)',P.H],['Tc Kirpich (jam)',R(C.Tc,4)],['PUH (tahun)',P.puh],['R24 (mm)',P.r24],['Intensitas I (mm/jam)',R(C.I,2)],['Debit puncak rasional (m3/detik)',R(C.Qpuncak,4)],['Volume limpasan harian (m3)',R(C.Vrun,1)],['Waktu pengosongan (jam)',P.tdr],['Debit desain (m3/jam)',R(C.Qin,2)],['Debit desain (m3/detik)',R(C.QinS,5)]])},
+    {n:'Stokes',rows:[['Suhu (C)',P.suhu],['Densitas air (kg/m3)',C.rw],['Viskositas dinamik (Pa.s)',C.mu],['Gs',P.gs],['Diameter partikel (mikron)',P.dp],['Vs (m/detik)',C.Vs],['Vs (m/jam)',R(C.VsH,4)],['Re partikel',C.Re],['Faktor turbulensi',P.ft],['Vs desain (m/jam)',R(C.VsDH,4)],['Waktu endap (jam)',R(C.tEndap,3)]]},
+    {n:'Kompartemen',rows:[['Parameter','K-1','K-2','K-3','K-4','Total']].concat([['L atas (m)','Lt'],['W atas (m)','Wt'],['L dasar (m)','Lb'],['W dasar (m)','Wb'],['L/W','lw'],['A atas (m2)','at'],['V air (m3)','vw'],['V lumpur (m3)','vm'],['V total galian (m3)','vt']].map(function(p){var s=0;C.k.forEach(function(k){s+=(p[1]==='at'||p[1]==='vw'||p[1]==='vm'||p[1]==='vt')?k[p[1]]:0});return [p[0]].concat(C.k.map(function(k){return R(k[p[1]],3)})).concat([(p[1]==='at'||p[1]==='vw'||p[1]==='vm'||p[1]==='vt')?R(s,2):''])})).concat([[],['Tinggi jagaan (m)',P.fb],['Kedalaman air (m)',P.hw],['Kedalaman lumpur (m)',P.hm],['Talud (H:V)',P.z],['HRT (jam)',R(C.HRT,3)],['SOR (m/jam)',R(C.SOR,5)],['Vh (m/detik)',R(C.Vh,5)],['Lebar pelimpah (m)',P.bw],['H di atas pelimpah (m)',R(C.Hweir,4)]])},
+    {n:'Kimia',rows:[['Bahan','Dosis (ppm)','kg/jam','kg/hari','Harga (Rp/kg)','Rp/hari'],['PAC',P.pac,R(C.pacH,3),R(C.pacD,2),P.hpac,Math.round(C.rpPac)],['PAM',P.pam,R(C.pamH,4),R(C.pamD,3),P.hpam,Math.round(C.rpPam)],['Kapur tohor',P.lime,R(C.limeH,3),R(C.limeD,2),P.hlime,Math.round(C.rpLime)],['Total','','','','',Math.round(C.rpDay)],[],['Biaya bulanan (Rp)',Math.round(C.rpMon)],['Pompa PAC (L/jam)',R(C.pumpPac,1)],['Pompa PAM (L/jam)',R(C.pumpPam,2)],['Tangki PAC 12 jam (L)',R(C.tankPac,0)],['Tangki PAM 12 jam (L)',R(C.tankPam,0)]]},
+    {n:'Pengerukan',rows:[['Erosi USLE (ton/ha/tahun)',R(C.erosi,2)],['Erosi kotor (ton/tahun)',R(C.gross,1)],['Hasil sedimen (ton/tahun)',R(C.yield,1)],['Volume sedimen (m3/tahun)',R(C.volY,1)],['Volume sedimen (m3/bulan)',R(C.volM,2)],['Kapasitas lumpur (m3)',R(C.Vm,1)],['Batas kritis (%)',P.trig],['Volume kritis (m3)',R(C.Vkrit,1)],['Siklus (bulan)',R(C.siklus,2)],['Durasi per siklus (hari)',R(C.durasi,2)],['Biaya per siklus (Rp)',Math.round(C.rpSiklus)],['Biaya tahunan (Rp)',Math.round(C.rpTahun)],[],['Realisasi pengerukan','Tanggal','Kompartemen','Volume (m3)','Biaya (Rp)']].concat(keruk.map(function(k){return ['',k.tanggal,k.komp,Number(k.vol)||0,spBiayaKeruk(k)]}))},
+    {n:'Pemantauan',rows:[['Tanggal','Titik','pH','TSS (mg/L)','Debit (m3/jam)','Hujan (mm)','Tebal lumpur (m)']].concat(mon.map(function(m){var f=function(v){return v===''||v==null?'':Number(v)};return [m.tanggal,m.titik,f(m.ph),f(m.tss),f(m.debit),f(m.hujan),f(m.lumpur)]}))}];
+  opSave('desain-'+spSlug(P)+'.xlsx',spXlsx(sh));
+}
+
+/* ---------- tampilan ---------- */
+function spGrid(){return h('div',{style:'display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px'})}
+function spKv(rows){return prdTable(['Parameter','Nilai','Keterangan'],rows.map(function(r){return [r[0],h('b',{text:r[1]}),r[2]||'']}))}
+function spPick(){
+  var L=spPonds();if(!L.length)return null;var cur=spCur();SP.id=cur.id;
+  var sel=h('select',{'aria-label':'Pilih kolam',onchange:function(e){SP.id=e.target.value;paint()}},L.map(function(x){return h('option',{value:x.id,selected:x.id===cur.id},x.nama)}));
+  return h('label',{class:'fld op-inl'},h('span',{text:'Kolam'}),sel);
+}
+function spMonRows(P,titik){return (S.sppantau||[]).filter(function(x){return x.pond===P.nama&&(!titik||x.titik===titik)}).sort(function(a,b){return String(a.tanggal).localeCompare(String(b.tanggal))})}
+function spDash(P,C){
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),n=opNf;
+  var kp=h('div',{class:'grid'});
+  kp.append(kpi('HRT',n(C.HRT,2)+' jam','syarat ≥ 2 jam',C.HRT>=2?'good':'crit'),kpi('SOR / Vs',n(C.SOR,3)+' / '+n(C.VsH,3),'m/jam',C.SOR<=C.VsH?'good':'crit'),kpi('Vh',n(C.Vh,4),'m/detik, maks 0,05',C.Vh<=0.05?'good':'crit'),
+    kpi('Penyisihan TSS',n(C.rem*100,1)+'%',n(P.tssIn,0)+' → '+n(P.tssOut,0)+' mg/L',C.rem>=0.85?'good':'warn'),kpi('Siklus keruk',n(C.siklus,1)+' bln','syarat ≥ 3 bulan',C.siklus>=3?'good':'warn'),kpi('Biaya kimia',spRp(C.rpMon),'per bulan',''));
+  root.append(kp);
+  var okAll=C.lulus===C.cek.length;
+  root.append(panel('Kepatuhan kriteria desain',C.lulus+' dari '+C.cek.length+' kriteria terpenuhi'+(okAll?'.':'. Perbaiki yang berstatus merah di tab Kolam dan parameter.'),
+    prdTable(['Kriteria','Hasil','Syarat','Status'],C.cek.map(function(x){return [x.l,x.t,x.k,badge(x.ok?'Memenuhi':'Tidak memenuhi',x.ok?'good':'crit')]}))));
+  var g=spGrid();
+  var puhs=[2,5,10,25,50],qs=puhs.map(function(t){var P2=Object.assign({},P,{puh:t,r24:SP_PUH[t]});var c2=spCalc(P2);return c2.Qin});
+  g.append(panel('Debit desain menurut periode ulang hujan','Batang tertanda adalah PUH yang dipakai ('+P.puh+' tahun).',prdBars(qs,puhs.map(function(t){return 'PUH '+t}),{unit:'m³/jam',hi:puhs.indexOf(P.puh),label:'Debit desain per PUH'})));
+  g.append(panel('Luas dan koefisien limpasan per zona','C komposit '+n(C.Cc,3)+' dari catchment '+n(C.A,2)+' Ha.',prdDonut(P.A.map(function(a,k){return {l:SP_ZONA[k]+' (C '+n(P.C[k],2)+')',v:a}}),{d:2,unit:'Ha',center:'Ha'})));
+  g.append(panel('Volume air dan ruang lumpur per kompartemen','Volume air efektif dan volume cadangan lumpur.',prdGrp([{name:'Volume air',vals:C.k.map(function(k){return k.vw}),color:'#2b7bd1'},{name:'Ruang lumpur',vals:C.k.map(function(k){return k.vm}),color:'#a8764a'}],['K-1','K-2','K-3','K-4'],{unit:'m³'})));
+  g.append(panel('Biaya bahan kimia per hari','Total '+spRp(C.rpDay)+', atau Rp '+n(C.rpM3,0)+' per m³ air olahan.',prdDonut([{l:'PAC',v:C.rpPac/1e6},{l:'PAM',v:C.rpPam/1e6},{l:'Kapur tohor',v:C.rpLime/1e6}],{d:2,unit:'juta Rp',center:'juta Rp/hari'})));
+  var ms=[],lab=[],lim=[],mx=Math.ceil(Math.max(24,C.siklus*1.4));for(var m=0;m<=mx;m+=Math.max(1,Math.round(mx/12))){lab.push(m+' bln');ms.push(Math.min(C.volM*m,C.Vm*1.1))}
+  g.append(panel('Akumulasi lumpur terhadap batas kritis','Kapasitas '+n(C.Vm,0)+' m³; batas kritis '+n(C.Vkrit,0)+' m³ tercapai sekitar bulan ke-'+n(C.siklus,1)+'.',prdMulti([{name:'Akumulasi lumpur (m³)',vals:ms,color:'#a8764a'},{name:'Batas kritis',vals:ms.map(function(){return C.Vkrit}),color:'var(--crit,#c0392b)'},{name:'Kapasitas ruang lumpur',vals:ms.map(function(){return C.Vm}),color:'var(--muted)'}],lab,{max:Math.max(C.Vm*1.15,1)})));
+  g.append(panel('Rincian kebutuhan bahan kimia','Per hari operasi dosing '+n(P.top,0)+' jam.',prdHBars([{l:'PAC (kg/hari)',v:C.pacD},{l:'Kapur tohor (kg/hari)',v:C.limeD},{l:'PAM (kg/hari)',v:C.pamD}],{d:1})));
+  root.append(g);
+  /* pemantauan aktual */
+  var out=spMonRows(P,'Outlet'),inl=spMonRows(P,'Inlet'),all=spMonRows(P,'');
+  var g2=spGrid(),lim2=P.bmTss;
+  if(out.length){
+    var tl=out.slice(-30),tssV=tl.map(function(x){return Number(x.tss)||0}),dl=tl.map(function(x){return String(x.tanggal).slice(5)});
+    var outTss=out.filter(function(x){return x.tss!==''&&x.tss!=null}),okT=outTss.filter(function(x){return Number(x.tss)<=lim2}).length,outPh=out.filter(function(x){return x.ph!==''&&x.ph!=null}),okP=outPh.filter(function(x){var v=Number(x.ph);return v>=6&&v<=9}).length;
+    var kp2=h('div',{class:'grid'});kp2.append(kpi('Outlet TSS memenuhi',outTss.length?n(100*okT/outTss.length,0)+'%':'—',okT+' dari '+outTss.length+' sampel, batas '+n(lim2,0)+' mg/L',outTss.length&&okT===outTss.length?'good':'warn'),kpi('Outlet pH memenuhi',outPh.length?n(100*okP/outPh.length,0)+'%':'—',okP+' dari '+outPh.length+' sampel, 6–9',outPh.length&&okP===outPh.length?'good':'warn'));
+    var pd=spMonRows(P,'Inlet'),rm=[];inl.forEach(function(a){var b=out.find(function(x){return x.tanggal===a.tanggal});if(b&&Number(a.tss)>0&&b.tss!=='')rm.push(100*(Number(a.tss)-Number(b.tss))/Number(a.tss))});
+    kp2.append(kpi('Penyisihan TSS aktual',rm.length?n(rm.reduce(function(a,b){return a+b},0)/rm.length,1)+'%':'—','rata-rata inlet ke outlet',rm.length&&rm.reduce(function(a,b){return a+b},0)/rm.length>=85?'good':'warn'));
+    root.append(kp2);
+    g2.append(panel('TSS outlet 30 catatan terakhir','Garis merah adalah batas baku mutu.',prdMulti([{name:'TSS outlet (mg/L)',vals:tssV,color:'var(--brand)'},{name:'Batas '+n(lim2,0)+' mg/L',vals:tssV.map(function(){return lim2}),color:'var(--crit,#c0392b)'}],dl,{max:Math.max(lim2*1.5,Math.max.apply(null,tssV)*1.1)})));
+    g2.append(panel('pH outlet 30 catatan terakhir','Rentang aman 6 sampai 9.',prdMulti([{name:'pH outlet',vals:tl.map(function(x){return Number(x.ph)||0}),color:'#5b8c85'},{name:'Batas bawah 6',vals:tl.map(function(){return 6}),color:'var(--warn)'},{name:'Batas atas 9',vals:tl.map(function(){return 9}),color:'var(--crit,#c0392b)'}],dl,{max:10,d:1})));
+    var avg=SP_TITIK.map(function(t){var rs=spMonRows(P,t).filter(function(x){return x.tss!==''&&x.tss!=null});return rs.length?rs.reduce(function(a,x){return a+Number(x.tss)},0)/rs.length:0});
+    g2.append(panel('Profil TSS rata-rata sepanjang kolam','Dari inlet sampai outlet; penurunan menunjukkan kerja tiap kompartemen.',prdBars(avg,['Inlet','K-1','K-2','K-3','K-4','Outlet'],{unit:'mg/L',color:'var(--info)'})));
+    var deb=out.filter(function(x){return x.hujan!==''&&x.hujan!=null}).slice(-30);
+    if(deb.length)g2.append(panel('Curah hujan harian','Catatan hujan pada hari sampling outlet.',prdBars(deb.map(function(x){return Number(x.hujan)||0}),deb.map(function(x){return String(x.tanggal).slice(5)}),{unit:'mm',color:'#2b7bd1'})));
+    var lm=all.filter(function(x){return x.lumpur!==''&&x.lumpur!=null}).slice(-20);
+    if(lm.length)g2.append(panel('Tebal lumpur terukur','Garis putus: batas kritis '+n(P.trig,0)+'% dari ruang lumpur ('+n(P.hm*P.trig/100,2)+' m).',prdBars(lm.map(function(x){return Number(x.lumpur)||0}),lm.map(function(x){return String(x.tanggal).slice(5)}),{unit:'m',plan:P.hm*P.trig/100,color:'#a8764a',d:2})));
+    root.append(g2);
+  }else root.append(h('div',{class:'note'},h('p',{text:'Belum ada catatan pemantauan untuk kolam ini. Isi di tab Pemantauan harian agar grafik tren TSS, pH, profil kolam, dan tebal lumpur muncul di sini.'})));
+  var kr=(S.spkeruk||[]).filter(function(x){return x.pond===P.nama});
+  if(kr.length){var tv=kr.reduce(function(a,x){return a+(Number(x.vol)||0)},0),tb=kr.reduce(function(a,x){return a+spBiayaKeruk(x)},0);
+    root.append(panel('Realisasi pengerukan',kr.length+' kegiatan, '+n(tv,0)+' m³ dikeruk, biaya '+spRp(tb)+'.',prdBars(kr.slice().sort(function(a,b){return String(a.tanggal).localeCompare(String(b.tanggal))}).map(function(x){return Number(x.vol)||0}),kr.slice().sort(function(a,b){return String(a.tanggal).localeCompare(String(b.tanggal))}).map(function(x){return String(x.tanggal).slice(2,7)}),{unit:'m³',color:'#a8764a'})))}
+  return root;
+}
+function spHitung(P,C){
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),n=opNf;
+  root.append(panel('1. Hidrologi catchment','Metode rasional, waktu konsentrasi Kirpich, intensitas Mononobe, dan regulasi inflow.',spKv([
+    ['Luas catchment total',n(C.A,2)+' Ha','Jumlah luas lima zona'],['C komposit',n(C.Cc,3),'Σ(C·A) / ΣA'],['Waktu konsentrasi Tc',n(C.Tc,3)+' jam','(0,87·L³/H)^0,385, L km, H m'],
+    ['Curah hujan rencana R24',n(P.r24,0)+' mm','PUH '+P.puh+' tahun'],['Intensitas hujan I',n(C.I,1)+' mm/jam','R24/24 · (24/Tc)^(2/3)'],['Debit puncak rasional',n(C.Qpuncak,3)+' m³/detik','0,278·C·I·A (A km²)'],
+    ['Volume limpasan harian',n(C.Vrun,0)+' m³','10·C·R24·A'],['Debit desain teregulasi',n(C.Qin,1)+' m³/jam','Volume ÷ waktu pengosongan '+n(P.tdr,0)+' jam']])));
+  root.append(panel('2. Hukum Stokes','Kecepatan endap partikel kritis dan validasi bilangan Reynolds.',spKv([
+    ['Densitas dan viskositas air',n(C.rw,1)+' kg/m³ · '+C.mu+' Pa.s','Suhu '+P.suhu+' °C'],['Densitas partikel',n(C.rs,0)+' kg/m³','Gs × 1000'],['Kecepatan endap Vs',n(C.VsH,3)+' m/jam','g(ρs−ρw)d²/(18μ)'],
+    ['Bilangan Reynolds partikel',C.Re.toExponential(2),C.Re<1?'Valid (Re < 1, aliran laminer)':'Tidak valid: gunakan koreksi'],['Vs desain',n(C.VsDH,3)+' m/jam','Vs ÷ faktor turbulensi '+n(P.ft)],['Waktu endap teoritis',n(C.tEndap,2)+' jam','kedalaman air '+n(P.hw)+' m ÷ Vs']])));
+  root.append(panel('3. Geometri dan hidrolika kompartemen','Dimensi dasar dihitung dari dimensi atas, kedalaman total dan talud.',
+    h('div',null,prdTable(['Kompartemen','Atas L × W (m)','Dasar L × W (m)','L/W','V air (m³)','V lumpur (m³)'],C.k.map(function(k,i){return ['K-'+(i+1),n(k.Lt,1)+' × '+n(k.Wt,1),n(k.Lb,1)+' × '+n(k.Wb,1),badge(n(k.lw,2),k.lw>=3?'good':'warn'),n(k.vw,0),n(k.vm,0)]}).concat([[h('b',{text:'Total'}),'','','',h('b',{text:n(C.Vw,0)}),h('b',{text:n(C.Vm,0)})]])),
+    spKv([['Kedalaman total galian',n(C.Htot,2)+' m','jagaan + air + lumpur'],['HRT total',n(C.HRT,2)+' jam','V air ÷ Q desain'],['SOR total',n(C.SOR,4)+' m/jam','Q ÷ luas permukaan'],['Kecepatan horizontal Vh',n(C.Vh,4)+' m/detik','Q ÷ (lebar rata-rata × kedalaman air)'],['Tinggi air di atas pelimpah',n(C.Hweir,3)+' m','(Q/(1,7·b))^(2/3), b '+n(P.bw,1)+' m']]))));
+  root.append(panel('4. Dosis koagulan dan flokulan','Kebutuhan bahan, pompa dosing, tangki pelarut 12 jam, dan biaya.',h('div',null,
+    prdTable(['Bahan','Dosis (ppm)','kg/jam','kg/hari','kg/bulan','Rp/hari'],[['PAC',n(P.pac,1),n(C.pacH,2),n(C.pacD,1),n(C.pacD*30,0),n(C.rpPac,0)],['PAM',n(P.pam,2),n(C.pamH,3),n(C.pamD,2),n(C.pamD*30,0),n(C.rpPam,0)],['Kapur tohor',n(P.lime,1),n(C.limeH,2),n(C.limeD,1),n(C.limeD*30,0),n(C.rpLime,0)]]),
+    spKv([['Pompa dosing PAC',n(C.pumpPac,0)+' L/jam','Larutan '+n(P.kpac,1)+'%; tangki stok 12 jam '+n(C.tankPac,0)+' L'],['Pompa dosing PAM',n(C.pumpPam,1)+' L/jam','Larutan '+n(P.kpam,2)+'%; tangki stok 12 jam '+n(C.tankPam,0)+' L'],['Biaya kimia per hari',spRp(C.rpDay),n(P.top,0)+' jam dosing'],['Biaya kimia per bulan',spRp(C.rpMon),'30 hari kerja'],['Biaya per m³ air olahan','Rp '+n(C.rpM3,0),'']]))));
+  root.append(panel('5. Sedimentasi dan pengerukan','Erosi USLE, hasil sedimen ke kolam, dan interval pengerukan.',spKv([
+    ['Laju erosi USLE',n(C.erosi,1)+' ton/ha/tahun','R·K·LS·C·P'],['Erosi kotor catchment',n(C.gross,0)+' ton/tahun',''],['Hasil sedimen',n(C.yield,0)+' ton/tahun','× SDR '+n(P.sdr)],['Volume sedimen',n(C.volM,1)+' m³/bulan',n(C.volY,0)+' m³/tahun, bulk density '+n(P.rho,2)],
+    ['Volume kritis pengerukan',n(C.Vkrit,0)+' m³',n(P.trig,0)+'% dari ruang lumpur '+n(C.Vm,0)+' m³'],['Siklus pengerukan',n(C.siklus,1)+' bulan',C.siklus>=3?'Memenuhi (≥ 3 bulan)':'Terlalu rapat (< 3 bulan)'],['Durasi pekerjaan per siklus',n(C.durasi,1)+' hari',n(C.capD,0)+' m³/hari'],['Biaya per siklus / tahun',spRp(C.rpSiklus)+' / '+spRp(C.rpTahun),'Rp '+n(P.hk,0)+' per m³']])));
+  root.append(panel('Baku mutu acuan',SP_BM[P.baku].ket+'.',prdTable(['Parameter','Satuan','Kadar maksimum'],SP_BM[P.baku].tab)));
+  return root;
+}
+function spGambar(P,C){
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),sh=spSheets(P,C);
+  root.append(h('div',{class:'note'},h('p',{text:'Gambar dibuat otomatis dari parameter kolam, jadi berubah mengikuti desain. Tersedia empat lembar, sama dengan set gambar DED: layout umum, denah 4 kompartemen, potongan, dan detail pelimpah dan dosing. Unduh sebagai DXF untuk dibuka di AutoCAD atau BricsCAD.'})));
+  sh.forEach(function(s,i){root.append(panel(s.no+'  '+s.judul,'',spSvg(s),h('div',{class:'acts',style:'margin-top:8px'},h('button',{class:'btn',type:'button',onclick:function(){spDxfSave(i)}},'Unduh DXF lembar ini'))))});
+  return root;
+}
+function spEkspor(P,C){
+  var b=function(t,f,c){return h('button',{class:'btn'+(c?' primary':''),type:'button',onclick:f},t)};
+  return panel('Ekspor desain','Semua hasil mengikuti kolam yang dipilih dan kop surat perusahaan di Setelan.',h('div',{style:'display:flex;flex-direction:column;gap:12px'},
+    h('div',null,h('b',{text:'Laporan desain (PDF)'}),h('p',{class:'sub',text:'Ringkasan kriteria, seluruh perhitungan lima modul, baku mutu, dan empat lembar gambar.'}),h('div',{class:'acts'},b('PDF laporan lengkap',spPdfLapor,1),b('PDF gambar saja',spPdfGambar))),
+    h('div',null,h('b',{text:'Gambar CAD (DXF)'}),h('p',{class:'sub',text:'Layer: BORDER_TITLE, POND_STRUCTURE, WATER_LEVEL, SEDIMENT_ZONE, DRAINAGE_CHANNEL, DIM_ANNOTATION. Satuan gambar milimeter kertas A3.'}),h('div',{class:'acts',style:'flex-wrap:wrap'},b('DXF gabungan 4 lembar',function(){spDxfSave()},1),b('DED-SP-01',function(){spDxfSave(0)}),b('DED-SP-02',function(){spDxfSave(1)}),b('DED-SP-03',function(){spDxfSave(2)}),b('DED-SP-04',function(){spDxfSave(3)}))),
+    h('div',null,h('b',{text:'Data (Excel)'}),h('p',{class:'sub',text:'Tujuh lembar kerja: ringkasan, hidrologi, Stokes, kompartemen, kimia, pengerukan, dan seluruh catatan pemantauan.'}),h('div',{class:'acts'},b('Unduh Excel (.xlsx)',spXlsxSave,1)))));
+}
+function spView(){
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),t=PRD.tab.sp||'dash';
+  root.append(opHead('Settling Pond','Desain, perhitungan, gambar, dan pemantauan kolam pengendap air tambang: dari hidrologi catchment sampai siklus pengerukan lumpur.'));
+  if((S.spond||[]).some(prdDemoRow))root.append(h('div',{class:'note'},h('p',{text:'Kolam dan catatan di halaman ini masih berupa data contoh (bertanda “contoh”). Hapus di tab Kolam dan parameter, lalu isi kolam Anda.'})));
+  root.append(prdTabs.call(null,'sp',[['dash','Dashboard'],['kolam','Kolam dan parameter'],['hitung','Perhitungan'],['gambar','Gambar desain'],['pantau','Pemantauan harian'],['keruk','Pengerukan'],['ekspor','Ekspor']]));
+  var cur=spCur(),P=cur?spP(cur):null,C=P?spCalc(P):null;
+  var pick=spPick();
+  if(t!=='kolam'&&t!=='pantau'&&t!=='keruk'){
+    if(!cur){root.append(h('div',{class:'emptyst'},h('p',{class:'empty',text:'Belum ada kolam. Tambahkan kolam di tab Kolam dan parameter, atau muat data contoh.'}),canWrite?h('div',{class:'emptyst-a'},h('button',{class:'btn primary',type:'button',onclick:function(){PRD.tab.sp='kolam';paint()}},'Buka Kolam dan parameter')):null));return root}
+    root.append(h('div',{class:'toolbar',style:'margin:0;flex-wrap:wrap'},pick,h('span',{class:'grow'}),canWrite?h('button',{class:'btn',type:'button',onclick:function(){openForm('spond',cur)}},'Ubah parameter'):null));
+    if(C.bad)root.append(h('div',{class:'note warn'},h('p',{text:'Dimensi dasar kolam bernilai nol atau negatif pada parameter ini. Perbesar ukuran atas, kurangi kedalaman, atau perlandai talud agar hasil valid.'})));
+  }
+  if(t==='dash')root.append(prdSafe(function(){return spDash(P,C)}));
+  else if(t==='kolam')root.append(panel('Kolam pengendap','Satu kolam per catatan. Ubah angka lalu simpan; seluruh dashboard, perhitungan, dan gambar langsung menyesuaikan.',listView('spond')),
+    panel('Kriteria desain yang diperiksa','Dipakai dashboard untuk menilai kepatuhan.',prdTable(['Kriteria','Syarat'],SP_KRIT)));
+  else if(t==='hitung')root.append(prdSafe(function(){return spHitung(P,C)}));
+  else if(t==='gambar')root.append(prdSafe(function(){return spGambar(P,C)}));
+  else if(t==='pantau')root.append(panel('Pemantauan harian','Catat pH, TSS, dan debit pada tiap titik: inlet, empat kompartemen, dan outlet. Baris outlet dinilai terhadap baku mutu kolam.',listView('sppantau')));
+  else if(t==='keruk')root.append(panel('Catatan pengerukan lumpur','Volume dan biaya aktual. Dipakai untuk membandingkan dengan prediksi siklus di Perhitungan.',listView('spkeruk')));
+  else root.append(prdSafe(function(){return spEkspor(P,C)}));
+  return root;
+}
+
+/* ---------- data contoh ---------- */
+function spDemo(){
+  var seed=7,rnd=function(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646},iso=function(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)};
+  var T=['Inlet','Kompartemen 1','Kompartemen 2','Kompartemen 3','Kompartemen 4','Outlet'],nm='SP-01 Pit Utara (contoh)',pond=[],mon=[],ker=[],today=new Date();
+  pond.push({id:'dsp1',nama:nm,lokasi:'Pit Utara, Blok A',baku:'Nikel',a1:2.8,c1:0.8,a2:2.2,c2:0.7,a3:0.75,c3:0.85,a4:0.55,c4:0.75,a5:1.2,c5:0.35,panjang:950,beda:47,puh:'10',tdrain:10,suhu:'28',gs:2.65,dp:20,fturb:1.25,
+    lt1:55,wt1:18,lt2:45,wt2:15,lt3:40,wt3:14,lt4:35,wt4:13,hw:2,hm:1,fb:0.8,talud:1.5,bweir:3,tssIn:2500,tssOut:150,phIn:5.2,phOut:7.2,pac:35,pam:1.5,kapur:45,kpac:10,kpam:0.15,hpac:12500,hpam:58000,hkapur:2800,
+    uR:1850,uK:0.28,uLS:3.85,uC:0.48,uP:0.75,sdr:0.28,rhoSed:1.35,trigger:60,prodExc:45,jamExc:8,hargaKeruk:38000,catatan:'Contoh dari template desain kompartemen.',demo:true});
+  for(var d=29;d>=0;d--){var dt=new Date(today);dt.setDate(today.getDate()-d);var rain=rnd()<0.3?Math.round(rnd()*60):0,k=rain>25?1:0;
+    var tss=[2500+Math.round((rnd()-0.5)*600)+rain*20,1500+Math.round(rnd()*300),800+Math.round(rnd()*200),420+Math.round(rnd()*120),230+Math.round(rnd()*70),(k?190+Math.round(rnd()*60):105+Math.round(rnd()*70))];
+    var ph=[5.2+Math.round((rnd()-0.5)*8)/10,5.8,6.4,6.8,7,7.2+Math.round((rnd()-0.5)*6)/10];
+    T.forEach(function(t,i){if(i>0&&i<5&&d%3!==0)return;mon.push({id:'dsm'+d+'_'+i,tanggal:iso(dt),pond:nm,titik:t,ph:Math.round(ph[i]*10)/10,tss:tss[i],debit:i===0||i===5?Math.round(700+rnd()*100):'',hujan:i===5?rain:'',lumpur:(i===1&&d%5===0)?Math.round((0.35+(29-d)*0.006)*100)/100:'',petugas:'Tim lingkungan',demo:true})});}
+  ker.push({id:'dsk1',tanggal:iso(new Date(today.getFullYear(),today.getMonth()-4,12)),pond:nm,komp:'Kompartemen 1',vol:310,alat:'Excavator long arm',jam:7,biaya:11780000,lokasiBuang:'Area pengeringan lumpur',demo:true});
+  ker.push({id:'dsk2',tanggal:iso(new Date(today.getFullYear(),today.getMonth()-1,5)),pond:nm,komp:'Kompartemen 2',vol:245,alat:'Excavator long arm',jam:5.5,biaya:9310000,lokasiBuang:'Area pengeringan lumpur',demo:true});
+  return {spond:pond,sppantau:mon,spkeruk:ker};
+}
+
+/* ---------- menu ---------- */
+(function(){
+  MGRP.settling='Reklamasi dan lingkungan';
+  var i=MORD.indexOf('reklamasi');i=i<0?MORD.length:i+1;MORD.splice(i,0,'settling');
+  var NS=navSetup;
+  navSetup=function(){
+    MODS.push({k:'settling',t:'Settling Pond',i:'M3 8c3-2 6 2 9 0s6 2 9 0M3 13c3-2 6 2 9 0s6 2 9 0M3 18c3-2 6 2 9 0s6 2 9 0'});
+    NS();
+  };
+  if(typeof SUB_KUNCI_DASAR!=='undefined'&&SUB_KUNCI_DASAR.indexOf('settling')<0)SUB_KUNCI_DASAR.push('settling');
+  if(typeof PR_RK!=='undefined'){['spond','sppantau','spkeruk'].forEach(function(c){if(PR_RK.indexOf(c)<0)PR_RK.push(c)});PR_TAG=PR_K3.concat(PR_RK,['personel','kdok'])}
+  if(typeof PR_MENU!=='undefined'){['hse','pjo'].forEach(function(r){if(PR_MENU[r]&&PR_MENU[r].indexOf('settling')<0)PR_MENU[r].splice(PR_MENU[r].indexOf('reklamasi')+1,0,'settling')})}
+  if(typeof AKS_HSE!=='undefined'&&AKS_HSE.indexOf('settling')<0)AKS_HSE.push('settling');
+})();
 
 /* ---------- Penyimpanan file besar di Supabase Storage (v77) ----------
    Gambar dan lampiran yang tadinya tersimpan sebagai teks base64 di dalam baris database
@@ -16489,7 +16999,7 @@ VIEWS.inventaris=function(){return invView()};
 VIEWS.asetsite=function(){return asetView()};
 VIEWS.operasional=function(){return opView()};
 VIEWS.pgdash=function(){return pgTabWrap('pgdash',pgDash)};VIEWS.pgship=function(){return pgTabWrap('pgship',pgShip)};VIEWS.pgarsip=function(){return pgTabWrap('pgarsip',pgArsip)};VIEWS.pgmaster=function(){return pgTabWrap('pgmaster',pgMaster)};VIEWS.pgset=function(){return pgTabWrap('pgset',pgSetting)};VIEWS.pgtrack=function(){return pgTabWrap('pgtrack',pgTrack)};VIEWS.pgcek=function(){return pgTabWrap('pgcek',pgCek)};
-VIEWS.kredit=function(){return krView()};VIEWS.prodov=function(){return prodView()};VIEWS.plantov=function(){return plantView()};VIEWS.fuelov=function(){return fuelView()};VIEWS.whov=function(){return whView()};
+VIEWS.kredit=function(){return krView()};VIEWS.prodov=function(){return prodView()};VIEWS.plantov=function(){return plantView()};VIEWS.fuelov=function(){return fuelView()};VIEWS.settling=function(){return spView()};VIEWS.whov=function(){return whView()};
 VIEWS.setelan=function(){return setView()};
 VIEWS.kontraktor=function(){
   var m=metrics(),root=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
