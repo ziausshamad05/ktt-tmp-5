@@ -12338,6 +12338,7 @@ var PR_TULIS={
   spv_plant:['opalat','opunit','opfuel','optank','opbd'],
   admin_gudang:['whitem','whin','whout','inventaris','invpakai','asetsite','asetserah','asetservis']
 };
+var PR_SPC=['spond','sppantau','spkeruk'];
 var PR_AJU=0;
 function prMember(){return (typeof HOST!=='undefined'&&HOST&&HOST.member)?HOST.member:null}
 function prPeran(){var m=prMember();return m&&m.peran?m.peran:null}
@@ -12439,6 +12440,7 @@ function prFormHas(c){var C=CFG[c];return !!(C&&C.fields&&c!=='risiko'&&C.fields
 function prPerluSetuju(c,row,data){
   var p=prPeran();if(aksKtt()||!row)return false;
   if(c==='opeto')return opPeran()==='kontraktor'&&JSON.stringify(row.psi||null)!==JSON.stringify((data||{}).psi||null);
+  if(PR_SPC.indexOf(c)>=0)return false;
   if(p==='hse')return !row.kontraktor&&(PR_K3.indexOf(c)>=0||PR_RK.indexOf(c)>=0||c==='sop'||c==='ptw');
   if(p==='pjo')return PR_K3.indexOf(c)>=0||PR_RK.indexOf(c)>=0;
   return false;
@@ -12446,6 +12448,7 @@ function prPerluSetuju(c,row,data){
 function prBolehUbah(c,row){
   var p=prPeran();if(aksKtt())return true;
   if(PR_TULIS[p])return PR_TULIS[p].indexOf(c)>=0;
+  if(p==='hse'&&PR_SPC.indexOf(c)>=0)return false;
   if(p==='hse'){if(c==='jaminan')return false;if(c==='surat'||c==='distribusi')return true;return !(row&&row.kontraktor)}
   if(p==='pjo'){if(c==='surat'||c==='ptw')return false;return true}
   return true;
@@ -12453,6 +12456,7 @@ function prBolehUbah(c,row){
 function prBolehTambah(c){
   var p=prPeran();if(aksKtt())return true;
   if(PR_TULIS[p])return PR_TULIS[p].indexOf(c)>=0;
+  if(p==='hse'&&PR_SPC.indexOf(c)>=0)return false;
   if(p==='hse')return PR_K3.indexOf(c)>=0||PR_RK.indexOf(c)>=0||['sop','ptw','surat','distribusi'].indexOf(c)>=0;
   if(p==='pjo')return PR_K3.indexOf(c)>=0||PR_RK.indexOf(c)>=0||c==='personel'||c==='kdok';
   return c.indexOf('op')===0;
@@ -15942,7 +15946,7 @@ function spView(){
   var pick=spPick();
   if(t!=='kolam'&&t!=='pantau'&&t!=='keruk'){
     if(!cur){root.append(h('div',{class:'emptyst'},h('p',{class:'empty',text:'Belum ada kolam. Tambahkan kolam di tab Kolam dan parameter, atau muat data contoh.'}),canWrite?h('div',{class:'emptyst-a'},h('button',{class:'btn primary',type:'button',onclick:function(){PRD.tab.sp='kolam';paint()}},'Buka Kolam dan parameter')):null));return root}
-    root.append(h('div',{class:'toolbar',style:'margin:0;flex-wrap:wrap'},pick,h('span',{class:'grow'}),canWrite?h('button',{class:'btn',type:'button',onclick:function(){openForm('spond',cur)}},'Ubah parameter'):null));
+    root.append(h('div',{class:'toolbar',style:'margin:0;flex-wrap:wrap'},pick,h('span',{class:'grow'}),canWrite&&prBolehUbah('spond',cur)?h('button',{class:'btn',type:'button',onclick:function(){openForm('spond',cur)}},'Ubah parameter'):null));
     if(C.bad)root.append(h('div',{class:'note warn'},h('p',{text:'Dimensi dasar kolam bernilai nol atau negatif pada parameter ini. Perbesar ukuran atas, kurangi kedalaman, atau perlandai talud agar hasil valid.'})));
   }
   if(t==='dash')root.append(prdSafe(function(){return spDash(P,C)}));
