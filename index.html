@@ -2005,6 +2005,7 @@ SEED.rkdok=[
 SEED.jamkerja=[{id:'jk01',periode:'2026-01',jam:3080,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk02',periode:'2026-02',jam:2800,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk03',periode:'2026-03',jam:3220,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk04',periode:'2026-04',jam:3150,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk05',periode:'2026-05',jam:3300,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk06',periode:'2026-06',jam:3080,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk07',periode:'2026-07',jam:3260,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk08',periode:'2026-08',jam:3320,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk09',periode:'2026-09',jam:3150,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk10',periode:'2026-10',jam:3400,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk11',periode:'2026-11',jam:1800,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true}];
 SEED.ubah=[];SEED.minepermit=[];SEED.simper=[];SEED.pgship=[];SEED.pgbarge=[];SEED.pgjetty=[];SEED.pgsurv=[];SEED.pgkontrak=[];SEED.pgcust=[];SEED.pgstock=[];SEED.pgset=[];
 SEED.kdok=[];SEED.rkthn=[];SEED.opsm=[];SEED.opcat=[];SEED.opeto=[];SEED.opbarge=[];SEED.opform=[];SEED.oplog=[];SEED.opset=[];SEED.opmaster=[];SEED.opplan=[];SEED.oprkab=[];SEED.opkon=[];
+SEED.invpakai=[];
 var COLS=Object.keys(SEED);
 var RK_DEF={tahun:2026,nomor:'T-2350.RKAB/MB.04/DJB.M/2026',tgl:'2026-11-09',berlaku:'2026-12-31',limit:0,satuan:'ton',komoditas:'bijih nikel',penerbit:'Direktorat Jenderal Mineral dan Batubara',sifat:'Segera',lampiran:'Satu berkas (pokok-pokok kegiatan)',perihal:'Persetujuan RKAB IUP Tahap Operasi Produksi PT Surya Saga Utama Tahun 2026',
  ketentuan:['Persetujuan diberikan berdasarkan evaluasi data dan dokumen pendukung yang disampaikan.','Dilarang disalahgunakan untuk kegiatan usaha pertambangan yang tidak sesuai peraturan perundang-undangan.','Akibat hukum atas ketidakbenaran data atau penyalahgunaan menjadi tanggung jawab perusahaan, dan persetujuan dapat dibatalkan.','Bila ada kekeliruan, persetujuan diperbaiki sesuai ketentuan peraturan perundang-undangan.']};
@@ -5694,7 +5695,7 @@ async function bkPrep(file){
   out.b64=await lampB64(file);out.ukuran=file.size;return out;
 }
 function bkField(key,row,ro){
-  if(key==='distribusi')return {el:null,commit:async function(){}};
+  if(key==='distribusi'||key==='invpakai')return {el:null,commit:async function(){}};
   var existing=row&&row.id?bkFor(key,row.id):[],staged=[],gone={};
   var list=h('div',{class:'bk-list'}),busy=h('p',{class:'sub',style:'margin:0',hidden:true});
   function items(){return existing.filter(function(e){return !gone[e.id]}).map(function(e){return {it:e,st:false}}).concat(staged.map(function(s){return {it:s,st:true}}))}
@@ -6955,7 +6956,7 @@ var GD_FITUR=[
  ['reklamasi','Reklamasi dan Pascatambang','Menu sendiri dengan sembilan tab: Dashboard, Rencana vs realisasi, Kegiatan lapangan, Revegetasi, Tanah pucuk dan bibit, Pengendali erosi, Evaluasi dan pascatambang, Jaminan, serta Dokumen dan laporan.',['Rencana dan realisasi per area (ha), jenis kegiatan, tahap reklamasi, target waktu, biaya, dan koordinat untuk peta skematis','Kegiatan lapangan: backfilling, penataan lahan, tanah pucuk, penanaman, pemeliharaan, dengan luas, volume, dan biaya','Revegetasi: tingkat hidup tanaman, tinggi, tutupan, kondisi, dan tren pemantauan','Tanah pucuk (neraca stockpile) dan mutasi bibit (stok per jenis)','Pengendali erosi: kolam sedimen, drainase, check dam, dengan jadwal cek dan peringatan sedimen 70%','Evaluasi tahapan area dan program pascatambang beserta biaya','Jaminan reklamasi dan pascatambang: kebutuhan, nilai ditempatkan, cakupan, masa berlaku','Dokumen: rencana reklamasi, rencana pascatambang, laporan pelaksanaan dengan tenggat dan masa berlaku'],'Mengisi Matrik 17 (total per jenis dan realisasi per triwulan dari kegiatan lapangan), Matrik 15 butir 7, dan narasi 2.6.1.1.'],
  ['temuan','Temuan','Temuan dari inspeksi, audit, dan Inspektur Tambang sampai ditutup.',['Tingkat, tenggat, dan status yang dapat diubah langsung di daftar','Peringatan temuan terlambat'],'Temuan terbuka masuk narasi 2.7.4.'],
  ['agenda','Agenda K3 dan Pelatihan','Rapat, pelatihan, simulasi, inspeksi, dan audit.',['Jenis dan status agenda','Peringatan agenda yang terlewat'],'Agenda berstatus Selesai mengisi Matrik 24 dan Matrik 26.b.'],
- ['inventaris','Inventaris K3','Peralatan keselamatan: APAR, P3K, spill kit, rambu, APD, radio.',['Jumlah, lokasi, kondisi, dan masa berlaku','Peringatan kedaluwarsa dan kondisi perlu perbaikan'],'Masuk narasi 2.7.4.'],
+ ['inventaris','Inventaris K3','Peralatan keselamatan: APAR, P3K, spill kit, rambu, APD, radio.',['Jumlah, lokasi, kondisi, dan masa berlaku','Pemakai: serah terima ke karyawan, form PDF, unggah berkas bertanda tangan, pengembalian','Ganti unit baru tiap 6 bulan; hilang dan minta unit baru didenda 30% harga pasar','Peringatan kedaluwarsa dan kondisi perlu perbaikan'],'Masuk narasi 2.7.4.'],
  ['izin','Perizinan','Register izin dan persetujuan dengan masa berlaku.',['Peringatan 90 hari sebelum berakhir','Penanda dokumen yang belum lengkap'],'Mengisi Matrik 1 dan Bab 1.2.'],
  ['kontraktor','Kontraktor dan CSMS','Data kontraktor, penanggung jawab operasional (PJO), kontrak kerja, sertifikat, dan hasil evaluasi.',['Form kontraktor: identitas, PJO, petugas K3, kontrak kerja, evaluasi','Matriks kelengkapan 8 dokumen wajib, klik sel untuk mengisi','Peringatan dokumen atau kontrak yang berakhir dalam 90 hari'],'Mengisi Matrik 25.b dan narasi 2.8.2.'],
  ['personel','Personel','Pengawas, petugas K3, dan masa berlaku sertifikat kompetensi.',['Jabatan, sertifikat, dan masa berlaku','Peringatan sertifikat segera berakhir'],'Mengisi Matrik 1 (Kepala Teknik Tambang) dan Matrik 26.a.'],
@@ -13116,6 +13117,390 @@ var KT_CLOSE=closeModal;
 closeModal=function(){KT_FOTO=null;return KT_CLOSE.apply(this,arguments)};
 ['minepermit','simper'].forEach(function(c){var C=CFG[c];if(C&&C.cols)C.cols.unshift({l:'Foto',r:function(r){return r.foto&&r.foto.b64?h('img',{class:'kt-mini',alt:'Foto '+(r.nama||''),src:'data:image/jpeg;base64,'+r.foto.b64}):h('span',{class:'kt-mini kt-mini0','aria-label':'Belum ada foto'})}})});
 
+/* ---------- Pemakaian perlengkapan K3 oleh karyawan (v80) ----------
+   Setiap barang inventaris dapat diserahkan ke karyawan. Serah terima dan pengembalian dicatat,
+   form PDF dapat diunduh, dan berkas yang sudah ditandatangani diunggah ke catatan yang sama.
+   Aturan: diganti unit baru tiap 6 bulan (unit lama wajib kembali dulu); bila hilang dan minta unit baru,
+   denda 30% dari harga pasar. */
+var INV_BULAN=6,INV_DENDA=0.3,INV_PDF_MAX=1500000;
+function invRp(v){return 'Rp '+Math.round(Number(v)||0).toLocaleString('id-ID')}
+function invLabel(it){
+  if(!it)return '';
+  var base=(it.nama||'')+' · '+(it.lokasi||'tanpa lokasi');
+  var dup=(S.inventaris||[]).filter(function(x){return ((x.nama||'')+' · '+(x.lokasi||'tanpa lokasi'))===base});
+  return dup.length>1?base+' ('+String(it.id).slice(-4)+')':base;
+}
+function invLabels(){return (S.inventaris||[]).slice().sort(CFG.inventaris.sort).map(invLabel)}
+function invById(id){return (S.inventaris||[]).find(function(x){return x.id===id})||null}
+function invByLabel(l){return (S.inventaris||[]).find(function(x){return invLabel(x)===l})||null}
+function ivRows(id){return (S.invpakai||[]).filter(function(r){return r.barangId===id})}
+function ivAktif(id){return ivRows(id).filter(function(r){return r.status==='Dipakai'})}
+function ivStok(it){
+  var pakai=0,hil=0;
+  ivRows(it.id).forEach(function(r){var n=Number(r.jumlah)||0;if(r.status==='Dipakai')pakai+=n;else if(r.status==='Hilang')hil+=n});
+  var tot=Number(it.jumlah)||0;
+  return {total:tot,pakai:pakai,hilang:hil,sedia:tot-pakai-hil};
+}
+function ivTempo(tgl){
+  var d=parse(tgl);if(!d)return '';
+  var dd=d.getDate(),t=new Date(d.getFullYear(),d.getMonth()+INV_BULAN,dd);
+  if(t.getDate()!==dd)t=new Date(d.getFullYear(),d.getMonth()+INV_BULAN+1,0);
+  return isoOf(t);
+}
+function ivDenda(r){return r.status==='Hilang'?Math.round(INV_DENDA*(Number(r.hargaPasar)||0)*(Number(r.jumlah)||0)):0}
+function ivState(r){
+  if(r.status==='Hilang')return r.dendaLunas==='Lunas'?['Hilang, denda lunas','warn']:['Hilang, denda belum lunas','crit'];
+  if(r.status==='Dikembalikan')return r.kondisiKembali==='Rusak'?['Dikembalikan (rusak)','warn']:['Dikembalikan','info'];
+  var d=daysTo(r.jatuhTempo);
+  if(d==null)return ['Dipakai','good'];
+  if(d<0)return ['Lewat '+(-d)+' hari','crit'];
+  if(d<=30)return [d+' hari lagi','warn'];
+  return ['Dipakai','good'];
+}
+function ivNames(){
+  var s={};
+  (S.personel||[]).forEach(function(r){if(r.nama)s[r.nama]=1});
+  (S.minepermit||[]).forEach(function(r){if(r.nama)s[r.nama]=1});
+  (S.invpakai||[]).forEach(function(r){if(r.karyawan)s[r.karyawan]=1});
+  return Object.keys(s).sort();
+}
+function ivNomor(prefix,tgl){
+  var y=String(tgl||isoOf(TODAY)).slice(0,4),key=prefix==='BAST'?'nomorSerah':'nomorKembali',mx=0;
+  (S.invpakai||[]).forEach(function(r){var m=String(r[key]||'').match(/\/(\d{4})\/(\d+)$/);if(m&&m[1]===y)mx=Math.max(mx,Number(m[2]))});
+  return prefix+'/K3/'+y+'/'+String(mx+1).padStart(3,'0');
+}
+
+/* harga pasar per unit pada inventaris, dasar denda */
+(function(){
+  var F=CFG.inventaris.fields,i=F.findIndex(function(f){return f.k==='catatan'});
+  F.splice(i<0?F.length:i,0,{k:'harga',l:'Harga pasar per unit (Rp), dasar denda bila hilang',t:'number',min:0});
+})();
+
+CFG.invpakai={key:'invpakai',add:'Serahkan barang',empty:'Belum ada serah terima perlengkapan.',title:'Serah terima perlengkapan',
+  fields:[
+    {k:'karyawan',l:'Nama karyawan penerima',t:'text',req:1,sec:'Penerima',get dl(){return ivNames()}},
+    {k:'jabatan',l:'Jabatan',t:'text'},
+    {k:'kontraktor',l:'Kontraktor (kosongkan bila karyawan perusahaan)',t:'select',o:prKonNames},
+    {k:'barangLabel',l:'Barang',t:'select',req:1,o:invLabels,sec:'Barang yang diserahkan'},
+    {k:'jumlah',l:'Jumlah (unit)',t:'number',req:1,min:1},
+    {k:'tglSerah',l:'Tanggal serah terima',t:'date',req:1},
+    {k:'hargaPasar',l:'Harga pasar per unit (Rp), dasar denda bila hilang',t:'number',min:0},
+    {k:'status',l:'Status',t:'select',req:1,o:['Dipakai','Dikembalikan','Hilang'],sec:'Pengembalian'},
+    {k:'tglKembali',l:'Tanggal pengembalian atau kehilangan',t:'date'},
+    {k:'kondisiKembali',l:'Kondisi saat dikembalikan',t:'select',o:['Baik','Rusak']},
+    {k:'dendaLunas',l:'Denda 30% karena hilang',t:'select',o:['Belum dibayar','Lunas']},
+    {k:'catatan',l:'Catatan',t:'area'}],
+  defaults:{status:'Dipakai',jumlah:1},
+  filter:{k:'status',all:'Semua status'},
+  sort:function(a,b){
+    var x=a.status==='Dipakai'?0:1,y=b.status==='Dipakai'?0:1;if(x!==y)return x-y;
+    return x===0?String(a.jatuhTempo||'').localeCompare(String(b.jatuhTempo||'')):String(b.tglSerah||'').localeCompare(String(a.tglSerah||''));
+  },
+  cols:[
+    {l:'Karyawan',r:function(r){return h('span',null,r.karyawan||'—',r.jabatan?h('small',{style:'display:block;color:var(--muted)',text:r.jabatan}):null)}},
+    {l:'Barang',r:function(r){var it=invById(r.barangId);return (it&&it.nama)||r.barang||'—'}},
+    {l:'Jumlah',r:function(r){return h('span',{class:'mono',text:nf(r.jumlah)})}},
+    {l:'Diserahkan',r:function(r){return fmt(r.tglSerah)}},
+    {l:'Ganti unit baru',r:function(r){return r.status==='Dipakai'?fmt(r.jatuhTempo):'—'}},
+    {l:'Status',r:function(r){var s=ivState(r);return badge(s[0],s[1])}},
+    {l:'Form bertanda tangan',r:function(r){
+      var o=[badge(r.fSerah?'Serah terima ada':'Serah terima belum',r.fSerah?'good':'warn')];
+      if(r.status!=='Dipakai')o.push(' ',badge(r.fKembali?'Pengembalian ada':'Pengembalian belum',r.fKembali?'good':'warn'));
+      return h('span',null,o);
+    }},
+    {l:'Denda',r:function(r){return r.status==='Hilang'?h('span',null,invRp(r.denda),h('small',{style:'display:block;color:var(--muted)',text:r.dendaLunas==='Lunas'?'Lunas':'Belum lunas'})):'—'}},
+    {l:'Kontraktor',r:function(r){return r.kontraktor||'Perusahaan'}}]};
+PR_TAG.push('invpakai');
+
+/* hak tambah: HSE dan PJO boleh mencatat serah terima (cermin RLS) */
+var IV_TAMBAH=prBolehTambah;
+prBolehTambah=function(c){
+  if(c==='invpakai'){var p=prPeran();return aksKtt()||p==='hse'||p==='pjo'}
+  return IV_TAMBAH(c);
+};
+
+/* ---------- validasi dan penghitung otomatis saat simpan ---------- */
+var IV_SAVE=save;
+save=async function(c,id,data){
+  if(c!=='invpakai')return IV_SAVE(c,id,data);
+  data=Object.assign({},data);
+  var lama=id?(S.invpakai||[]).find(function(r){return r.id===id}):null;
+  var hapus=data._hapusF,lewat=!!data._lewat;delete data._hapusF;delete data._lewat;
+  ['fSerah','fKembali','nomorSerah','nomorKembali','barangId','barang','barangLabel'].forEach(function(k){
+    if(data[k]===undefined&&lama&&lama[k]!==undefined)data[k]=lama[k];
+  });
+  if(hapus)delete data[hapus];
+  if(lewat)return IV_SAVE(c,id,data);
+
+  var it=data.barangLabel?invByLabel(data.barangLabel):null;
+  if(it){data.barangId=it.id;data.barang=it.nama}
+  else it=invById(data.barangId);
+  if(!it)throw new Error('Pilih barang dari daftar inventaris.');
+  data.karyawan=String(data.karyawan||'').trim();
+  if(!data.karyawan)throw new Error('Isi nama karyawan penerima.');
+  var n=Number(data.jumlah)||0,st=data.status||'Dipakai';
+  if(!(n>=1))throw new Error('Jumlah minimal 1 unit.');
+  if(!data.tglSerah)throw new Error('Isi tanggal serah terima.');
+  data.status=st;
+  data.jatuhTempo=ivTempo(data.tglSerah);
+  if(st!=='Dipakai'&&!data.tglKembali)throw new Error('Isi tanggal pengembalian atau kehilangan.');
+  if(st==='Dikembalikan'&&!data.kondisiKembali)throw new Error('Pilih kondisi barang saat dikembalikan.');
+  if(st!=='Dikembalikan')delete data.kondisiKembali;
+  if(st==='Dipakai')delete data.tglKembali;
+  if(st==='Hilang'){
+    if(!(Number(data.hargaPasar)>0))throw new Error('Isi harga pasar per unit agar denda 30% dapat dihitung.');
+    data.denda=ivDenda(data);
+    if(!data.dendaLunas)data.dendaLunas='Belum dibayar';
+  }else{delete data.denda;delete data.dendaLunas}
+
+  if(st==='Dipakai'){
+    var kk=function(s){return String(s||'').trim().toLowerCase()};
+    var lain=(S.invpakai||[]).filter(function(r){return r.id!==id&&r.barangId===data.barangId&&kk(r.karyawan)===kk(data.karyawan)});
+    var aktif=lain.find(function(r){return r.status==='Dipakai'});
+    if(aktif)throw new Error(data.karyawan+' masih memegang '+it.nama+' (diserahkan '+fmt(aktif.tglSerah)+'). Catat pengembalian unit lama lebih dahulu sebelum menyerahkan unit baru.');
+    var tunggak=lain.find(function(r){return r.status==='Hilang'&&r.dendaLunas!=='Lunas'});
+    if(tunggak)throw new Error('Denda kehilangan '+it.nama+' oleh '+data.karyawan+' ('+invRp(tunggak.denda)+') belum lunas. Tandai lunas dahulu sebelum unit pengganti diberikan.');
+    var s=ivStok(it),lamaN=lama&&(lama.status==='Dipakai'||lama.status==='Hilang')?(Number(lama.jumlah)||0):0,sedia=s.sedia+lamaN;
+    if(n>sedia)throw new Error('Stok '+it.nama+' yang tersedia hanya '+Math.max(0,sedia)+' unit. Tambah jumlah barang pada daftar inventaris bila stok baru sudah masuk.');
+  }
+  if(!data.nomorSerah)data.nomorSerah=ivNomor('BAST',data.tglSerah);
+  if(st!=='Dipakai'&&!data.nomorKembali)data.nomorKembali=ivNomor('BPK',data.tglKembali);
+  return IV_SAVE(c,id,data);
+};
+
+/* ---------- form PDF ---------- */
+function ivDok(kind,r){
+  var P=pgProf(),it=invById(r.barangId)||{},kota=P.kota||'',ser=kind==='serah';
+  var tg=ser?r.tglSerah:r.tglKembali,nomor=ser?r.nomorSerah:r.nomorKembali,per=r.kontraktor||coName();
+  var titik='...........................................';
+  var B=[{t:'title',text:ser?'Berita Acara Serah Terima Perlengkapan K3':'Berita Acara Pengembalian Perlengkapan K3',
+    sub:'No. '+(nomor||titik.slice(0,20))+(kota?' · '+kota:'')+(tg?', '+fmt(tg):'')}];
+  B.push({t:'p',text:ser?'Yang bertanda tangan di bawah ini:':'Yang bertanda tangan di bawah ini, berkaitan dengan serah terima No. '+(r.nomorSerah||'-')+' tanggal '+fmt(r.tglSerah)+':'});
+  B.push({t:'kv',rows:[['Pihak pertama',(ser?'Yang menyerahkan':'Yang menerima kembali')+', HSE '+coName()],['Pihak kedua',r.karyawan||'-'],['Jabatan',r.jabatan||'-'],['Perusahaan',per]]});
+  B.push({t:'p',text:ser?'Pihak pertama menyerahkan perlengkapan berikut kepada pihak kedua dalam keadaan baik dan layak pakai:':'Pihak kedua mengembalikan perlengkapan berikut kepada pihak pertama:'});
+  B.push({t:'table',cols:[{h:'No.',w:6},{h:'Barang',w:38},{h:'Kategori',w:24},{h:'Jumlah',w:12,a:'r'},{h:'Lokasi',w:20}],rows:[['1',it.nama||r.barang||'-',it.kategori||'-',String(r.jumlah||''),it.lokasi||'-']]});
+  if(ser){
+    B.push({t:'kv',rows:[['Tanggal serah terima',fmt(r.tglSerah)],['Masa pakai',INV_BULAN+' bulan'],['Diganti unit baru paling lambat',fmt(r.jatuhTempo||ivTempo(r.tglSerah))]]});
+  }else{
+    var kd=r.status==='Hilang'?'Hilang':r.status==='Dikembalikan'?(r.kondisiKembali||'-'):'';
+    B.push({t:'kv',rows:[['Tanggal pengembalian',r.tglKembali?fmt(r.tglKembali):titik],['Kondisi barang',kd||'[  ] Baik     [  ] Rusak     [  ] Hilang']]});
+    if(r.status==='Hilang'){
+      B.push({t:'h',text:'Denda kehilangan'});
+      B.push({t:'table',cols:[{h:'Uraian',w:60},{h:'Nilai',w:40,a:'r'}],total:true,rows:[
+        ['Harga pasar per unit',invRp(r.hargaPasar)],['Jumlah unit hilang',String(r.jumlah||'')],['Denda '+Math.round(INV_DENDA*100)+'% dari harga pasar',invRp(ivDenda(r))],['Status pembayaran',r.dendaLunas==='Lunas'?'Lunas':'Belum dibayar']]});
+    }
+  }
+  B.push({t:'h',text:'Ketentuan'});
+  var K=ser?[
+    '1. Perlengkapan dipakai sesuai peruntukannya selama bekerja dan dirawat oleh pihak kedua.',
+    '2. Setiap '+INV_BULAN+' bulan perlengkapan diganti dengan unit baru. Unit lama wajib dikembalikan lebih dahulu pada saat penggantian.',
+    '3. Bila perlengkapan hilang dan pihak kedua meminta unit pengganti, pihak kedua dikenakan denda sebesar '+Math.round(INV_DENDA*100)+'% dari harga barang di pasaran'+(Number(r.hargaPasar)>0?' (untuk barang ini '+invRp(INV_DENDA*Number(r.hargaPasar)*(Number(r.jumlah)||1))+').':'.'),
+    '4. Pihak kedua wajib segera melapor kepada HSE bila perlengkapan hilang atau rusak.']
+  :[
+    '1. Penggantian dengan unit baru dilakukan setelah unit lama diterima kembali oleh pihak pertama.',
+    '2. Bila perlengkapan hilang dan pihak kedua meminta unit pengganti, berlaku denda '+Math.round(INV_DENDA*100)+'% dari harga barang di pasaran, dan unit pengganti diberikan setelah denda dilunasi.',
+    '3. Berita acara ini ditandatangani kedua pihak dan dipindai untuk diunggah pada menu Inventaris K3.'];
+  K.forEach(function(x){B.push({t:'p',text:x})});
+  B.push({t:'sign',left:{role:ser?'Yang menyerahkan':'Yang menerima kembali',name:'',sub:'HSE '+coName()},right:{role:ser?'Yang menerima':'Yang mengembalikan',name:String(r.karyawan||'').toUpperCase(),sub:r.jabatan||''}});
+  return B;
+}
+function ivPdf(kind,r){
+  if(!r)return;
+  var slug=function(s){return String(s||'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'form'};
+  pgPdf(kind==='serah'?'Serah terima perlengkapan K3':'Pengembalian perlengkapan K3',(kind==='serah'?'serah-terima-':'pengembalian-')+slug(r.karyawan)+'-'+slug(r.barang)+'.pdf',ivDok(kind,r));
+}
+
+/* ---------- unggah form bertanda tangan ---------- */
+async function ivUnggah(rid,kind,file,ok){
+  var r=(S.invpakai||[]).find(function(x){return x.id===rid}),fk=kind==='serah'?'fSerah':'fKembali';
+  if(!r||!file)return;
+  try{
+    var f;
+    if(/^image\//.test(file.type||''))f=await bkPrep(file);
+    else{
+      if(!/pdf/i.test(file.type||file.name||''))throw new Error('Unggah berkas PDF atau foto (JPG atau PNG).');
+      if(file.size>INV_PDF_MAX)throw new Error('Berkas '+bkKb(file.size)+' melebihi batas '+bkKb(INV_PDF_MAX)+'. Pindai ulang dengan resolusi lebih rendah.');
+      f={nama:file.name||'form.pdf',tipe:'application/pdf',ukuran:file.size,ts:Date.now(),b64:await lampB64(file)};
+    }
+    var d=Object.assign({},r);delete d.id;d[fk]=f;d._lewat=1;
+    await save('invpakai',rid,d);
+    toast('Berkas tersimpan');ok(f);
+  }catch(e){toast((e&&e.message)||'Gagal mengunggah berkas')}
+}
+async function ivHapusBerkas(rid,kind,ok){
+  var r=(S.invpakai||[]).find(function(x){return x.id===rid}),fk=kind==='serah'?'fSerah':'fKembali';
+  if(!r)return;
+  try{var d=Object.assign({},r);delete d.id;d._hapusF=fk;d._lewat=1;await save('invpakai',rid,d);toast('Berkas dihapus');ok()}
+  catch(e){toast((e&&e.message)||'Gagal menghapus berkas')}
+}
+function ivDokRow(rid,kind){
+  var fk=kind==='serah'?'fSerah':'fKembali',judul=kind==='serah'?'Form serah terima':'Form pengembalian',ov={};
+  var wrap=h('div',{class:'bk-it',style:'flex-wrap:wrap;gap:8px'});
+  function cur(){var r=(S.invpakai||[]).find(function(x){return x.id===rid})||{};return Object.assign({},r,ov)}
+  function draw(){
+    var r=cur(),f=r[fk],armed=false;
+    var nm=h('div',{class:'bk-nm'},h('b',{text:judul}),h('small',{text:f?(f.nama||'berkas')+' · '+bkKb(f.ukuran||0)+' · sudah bertanda tangan':(kind==='kembali'&&r.status==='Dipakai'?'Dicetak saat barang dikembalikan':'Belum ada berkas bertanda tangan')}));
+    var ac=h('div',{class:'bk-ac',style:'flex-wrap:wrap'});
+    ac.append(h('button',{type:'button',class:'btn',onclick:function(){ivPdf(kind,cur())}},'Unduh form PDF'));
+    if(f){
+      if(bkIsImg(f))ac.append(h('button',{type:'button',class:'btn',onclick:function(){bkLight(f)}},'Lihat'));
+      ac.append(h('button',{type:'button',class:'btn',onclick:function(){bkDownload(f)}},'Unduh berkas'));
+    }
+    if(canWrite){
+      var fi=h('input',{type:'file',accept:'application/pdf,image/*',hidden:true,'aria-label':'Pilih berkas '+judul.toLowerCase(),onchange:function(){
+        var fl=fi.files&&fi.files[0];fi.value='';
+        ivUnggah(rid,kind,fl,function(nf2){ov[fk]=nf2;draw()});
+      }});
+      ac.append(h('button',{type:'button',class:'btn',onclick:function(){fi.click()}},f?'Ganti berkas':'Unggah yang sudah ditandatangani'),fi);
+      if(f&&prBolehHapus('invpakai',r)){
+        ac.append(h('button',{type:'button',class:'btn',style:'color:var(--crit)',onclick:function(){
+          var b=this;if(!armed){armed=true;b.textContent='Hapus berkas?';setTimeout(function(){armed=false;b.textContent='Hapus berkas'},3000);return}
+          ivHapusBerkas(rid,kind,function(){ov[fk]=undefined;draw()});
+        }},'Hapus berkas'));
+      }
+    }
+    wrap.replaceChildren(nm,ac);
+  }
+  draw();return wrap;
+}
+
+/* ---------- penyesuaian form serah terima ---------- */
+var IV_FORM=openForm;
+openForm=function(key,row,pre){
+  if(key==='invpakai'){
+    if(row){var it0=invById(row.barangId);if(it0)row=Object.assign({},row,{barangLabel:invLabel(it0)})}
+    else pre=Object.assign({tglSerah:isoOf(TODAY)},pre||{});
+  }
+  var res=IV_FORM.call(this,key,row,pre);
+  if(key==='invpakai'){try{ivFormTweak(row)}catch(e){if(window.console)console.error(e)}}
+  return res;
+};
+function ivFormTweak(row){
+  var dlg=document.querySelector('#ov .dlg');if(!dlg)return;
+  var form=dlg.querySelector('form');if(!form)return;
+  var F=function(k){return form.querySelector('#m-'+k)},L=function(k){var x=F(k);return x?x.closest('label'):null};
+  var st=F('status'),kar=F('karyawan'),br=F('barangLabel'),hg=F('hargaPasar'),ts=F('tglSerah'),jm=F('jumlah');
+  var info=h('p',{class:'note info',style:'margin:0 0 10px'});
+  form.insertBefore(info,form.firstChild);
+  var acts=form.querySelector('.acts');
+  function sync(){
+    var s=st.value||'Dipakai';
+    var lt=L('tglKembali');if(lt)lt.hidden=(s==='Dipakai');
+    var lk=L('kondisiKembali');if(lk)lk.hidden=(s!=='Dikembalikan');
+    var ld=L('dendaLunas');if(ld)ld.hidden=(s!=='Hilang');
+    var tg=F('tglKembali');if(s!=='Dipakai'&&tg&&!tg.value)tg.value=isoOf(TODAY);
+    var parts=[],tj=ivTempo(ts.value);
+    if(tj)parts.push('Masa pakai '+INV_BULAN+' bulan: diganti unit baru paling lambat '+fmt(tj)+'. Unit lama wajib dikembalikan lebih dahulu.');
+    var it=invByLabel(br.value);
+    if(it){var sk=ivStok(it);parts.push('Stok '+it.nama+': tersedia '+Math.max(0,sk.sedia)+' dari '+sk.total+' unit.')}
+    if(s==='Hilang'){
+      var d=ivDenda({status:'Hilang',hargaPasar:hg.value,jumlah:jm.value});
+      parts.push(d?'Denda kehilangan '+Math.round(INV_DENDA*100)+'% dari harga pasar: '+invRp(d)+'. Unit pengganti baru diberikan setelah denda lunas.':'Isi harga pasar per unit agar denda '+Math.round(INV_DENDA*100)+'% dapat dihitung.');
+    }
+    info.textContent=parts.join(' ');
+  }
+  [st,ts,jm,hg].forEach(function(x){x.addEventListener('input',sync);x.addEventListener('change',sync)});
+  br.addEventListener('change',function(){
+    var it=invByLabel(br.value);
+    if(it&&!hg.value&&Number(it.harga)>0)hg.value=it.harga;
+    sync();
+  });
+  kar.addEventListener('change',function(){
+    var nm=kar.value.trim().toLowerCase();
+    var p=(S.personel||[]).find(function(x){return String(x.nama||'').trim().toLowerCase()===nm});
+    if(!p)return;
+    var jb=F('jabatan');if(jb&&!jb.value&&p.jabatan)jb.value=p.jabatan;
+    var ks=F('kontraktor');
+    if(ks&&!ks.disabled&&p.kontraktor&&[].some.call(ks.options,function(o){return o.value===p.kontraktor}))ks.value=p.kontraktor;
+  });
+  if(!row&&br.value){var it1=invByLabel(br.value);if(it1&&!hg.value&&Number(it1.harga)>0)hg.value=it1.harga}
+  sync();
+
+  var box=h('div',{style:'display:flex;flex-direction:column;gap:8px'},h('p',{class:'fsec',text:'Form serah terima dan pengembalian'}));
+  if(row&&row.id){
+    box.append(ivDokRow(row.id,'serah'),ivDokRow(row.id,'kembali'));
+    if(canWrite){
+      var nx=h('div',{class:'bk-ac',style:'flex-wrap:wrap;justify-content:flex-start'});
+      if(row.status==='Dipakai'){
+        nx.append(h('button',{type:'button',class:'btn',onclick:function(){st.value='Dikembalikan';sync();st.focus();toast('Isi kondisi barang lalu simpan')}},'Catat pengembalian'));
+        box.append(h('small',{style:'color:var(--muted)',text:'Penggantian '+INV_BULAN+' bulan: catat pengembalian unit lama dulu, lalu serahkan unit baru.'}));
+      }else if(prBolehTambah('invpakai')){
+        nx.append(h('button',{type:'button',class:'btn primary',onclick:function(){
+          var it=invById(row.barangId);
+          closeModal();
+          openForm('invpakai',null,{karyawan:row.karyawan,jabatan:row.jabatan,kontraktor:row.kontraktor,barangLabel:it?invLabel(it):row.barangLabel,jumlah:row.jumlah,hargaPasar:row.hargaPasar,tglSerah:isoOf(TODAY),
+            catatan:(row.status==='Hilang'?'Pengganti unit hilang (denda 30%)':'Penggantian berkala '+INV_BULAN+' bulan')+', menggantikan '+(row.nomorSerah||'unit sebelumnya')});
+        }},'Serahkan unit pengganti'));
+      }
+      if(nx.children.length)box.append(nx);
+    }
+  }else{
+    box.append(h('small',{style:'color:var(--muted)',text:'Setelah disimpan, buka kembali catatan ini untuk mengunduh form serah terima dan mengunggah berkas yang sudah ditandatangani.'}));
+  }
+  form.insertBefore(box,acts);
+}
+
+/* ---------- kolom pemakai pada daftar inventaris dan dialog kelola ---------- */
+function ivWho(r){
+  var a=ivAktif(r.id),sk=ivStok(r);
+  var go=function(e){e.stopPropagation();invKelola(r)};
+  if(!a.length&&!sk.hilang)return h('button',{type:'button',class:'btn',style:'white-space:nowrap;border-radius:12px',onclick:go},canWrite?'Serahkan':'Riwayat');
+  var nm=a.slice(0,2).map(function(x){return x.karyawan}).join(', ')+(a.length>2?' +'+(a.length-2):'');
+  var late=a.filter(function(x){return daysTo(x.jatuhTempo)<0}).length;
+  return h('button',{type:'button',class:'btn',style:'text-align:left;white-space:normal;height:auto;padding:6px 12px;border-radius:12px;min-width:150px;line-height:1.3',onclick:go},
+    h('b',{text:nm||'Riwayat'}),
+    h('small',{style:'display:block;color:var(--muted)',text:'Dipakai '+sk.pakai+' dari '+sk.total+' unit'+(sk.hilang?' · hilang '+sk.hilang:'')+(late?' · '+late+' lewat '+INV_BULAN+' bln':'')}));
+}
+(function(){
+  var C=CFG.inventaris,i=C.cols.findIndex(function(x){return x.l==='Status'});
+  C.cols.splice(i<0?C.cols.length:i+1,0,{l:'Pemakai',r:ivWho});
+})();
+function invKelola(it){
+  var sk=ivStok(it),box=h('div',{style:'display:flex;flex-direction:column;gap:12px'});
+  box.append(h('p',{class:'sub',style:'margin:0',text:'Total '+sk.total+' unit · dipakai '+sk.pakai+' · hilang '+sk.hilang+' · tersedia '+Math.max(0,sk.sedia)}));
+  var rows=ivRows(it.id).sort(CFG.invpakai.sort);
+  if(!rows.length)box.append(h('p',{class:'empty',text:'Belum ada karyawan yang menerima barang ini.'}));
+  else box.append(h('div',{class:'scroll'},h('table',{class:'tbl'},
+    h('thead',null,h('tr',null,['Karyawan','Jumlah','Diserahkan','Status'].map(function(x){return h('th',{text:x})}))),
+    h('tbody',null,rows.map(function(r){
+      var s=ivState(r);
+      return h('tr',{class:'click',onclick:function(){closeModal();openForm('invpakai',r)}},
+        h('td',null,r.karyawan||'—',r.jabatan?h('small',{style:'display:block;color:var(--muted)',text:r.jabatan}):null),
+        h('td',null,h('span',{class:'mono',text:nf(r.jumlah)})),h('td',null,fmt(r.tglSerah)),h('td',null,badge(s[0],s[1])));
+    })))));
+  var a=h('div',{class:'acts'},h('span',{class:'grow'}),h('button',{type:'button',class:'btn',onclick:closeModal},'Tutup'));
+  if(canWrite&&prBolehTambah('invpakai'))a.append(h('button',{type:'button',class:'btn primary',onclick:function(){closeModal();openForm('invpakai',null,{barangLabel:invLabel(it),hargaPasar:Number(it.harga)>0?it.harga:undefined})}},'Serahkan ke karyawan'));
+  box.append(a);
+  openModal('Pemakai '+(it.nama||'barang'),box);
+}
+
+/* ---------- halaman Inventaris K3 ---------- */
+function invView(){
+  var m=metrics(),root=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
+  root.append(head('Inventaris K3','Peralatan keselamatan, tanggap darurat, serta penanganan BBM dan B3 di wilayah IUP. Kedaluwarsa atau jadwal servis dalam 90 hari ditandai.'));
+  var tot=S.inventaris.reduce(function(a,r){return a+(Number(r.jumlah)||0)},0);
+  var bad=S.inventaris.filter(function(r){return invStatus(r)[1]==='crit'}).length;
+  root.append(h('div',{class:'grid'},
+    kpi('Jenis barang',String(S.inventaris.length),nf(tot)+' unit'),
+    kpi('Perlu tindakan',String(m.invAttn.length),'Rusak, kedaluwarsa, atau segera berakhir',m.invAttn.length?'warn':'good'),
+    kpi('Rusak atau kedaluwarsa',String(bad),'Ganti atau perbaiki segera',bad?'crit':'good')));
+  root.append(panel('Daftar inventaris','Klik tombol pada kolom Pemakai untuk menyerahkan barang ke karyawan atau melihat riwayatnya.',listView('inventaris')));
+  var pk=S.invpakai||[],aktif=pk.filter(function(r){return r.status==='Dipakai'});
+  var unit=aktif.reduce(function(a,r){return a+(Number(r.jumlah)||0)},0);
+  var telat=aktif.filter(function(r){return daysTo(r.jatuhTempo)<0}).length;
+  var dekat=aktif.filter(function(r){var d=daysTo(r.jatuhTempo);return d!=null&&d>=0&&d<=30}).length;
+  var denda=pk.filter(function(r){return r.status==='Hilang'&&r.dendaLunas!=='Lunas'}).reduce(function(a,r){return a+(Number(r.denda)||0)},0);
+  var tanpa=pk.filter(function(r){return !r.fSerah||(r.status!=='Dipakai'&&!r.fKembali)}).length;
+  root.append(panel('Pemakaian oleh karyawan','Setiap serah terima dan pengembalian tercatat. Perlengkapan diganti unit baru tiap '+INV_BULAN+' bulan dan unit lama wajib dikembalikan lebih dahulu. Bila hilang dan meminta unit baru, dikenakan denda '+Math.round(INV_DENDA*100)+'% dari harga pasar.',
+    h('div',{class:'grid',style:'margin-bottom:12px'},
+      kpi('Sedang dipakai',nf(unit)+' unit',aktif.length+' penyerahan aktif'),
+      kpi('Lewat '+INV_BULAN+' bulan',String(telat),dekat?dekat+' lagi dalam 30 hari':'Perlu diganti unit baru',telat?'crit':dekat?'warn':'good'),
+      kpi('Form belum bertanda tangan',String(tanpa),'Unggah berkas yang sudah ditandatangani',tanpa?'warn':'good'),
+      kpi('Denda belum lunas',invRp(denda),'Kehilangan barang',denda?'crit':'good')),
+    listView('invpakai')));
+  return root;
+}
+
 /* ---------- Penyimpanan file besar di Supabase Storage (v77) ----------
    Gambar dan lampiran yang tadinya tersimpan sebagai teks base64 di dalam baris database
    dipindahkan ke bucket privat "ktt-berkas". Baris hanya menyimpan alamat file (b64ref, kopImgRef).
@@ -14123,6 +14508,7 @@ VIEWS.panduan=function(){return guideView()};
 VIEWS.langganan=function(){return subView()};
 VIEWS.permit=function(){return permitView()};VIEWS.setuju=function(){return prSetujuView()};
 VIEWS.ptw=function(){return ptwView()};
+VIEWS.inventaris=function(){return invView()};
 VIEWS.operasional=function(){return opView()};
 VIEWS.pgdash=function(){return pgDash()};VIEWS.pgship=function(){return pgShip()};VIEWS.pgarsip=function(){return pgArsip()};VIEWS.pgmaster=function(){return pgMaster()};VIEWS.pgset=function(){return pgSetting()};VIEWS.pgtrack=function(){return pgTrack()};
 VIEWS.kredit=function(){return krView()};
