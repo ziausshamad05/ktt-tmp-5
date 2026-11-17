@@ -2005,7 +2005,7 @@ SEED.rkdok=[
 SEED.jamkerja=[{id:'jk01',periode:'2026-01',jam:3080,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk02',periode:'2026-02',jam:2800,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk03',periode:'2026-03',jam:3220,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk04',periode:'2026-04',jam:3150,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk05',periode:'2026-05',jam:3300,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk06',periode:'2026-06',jam:3080,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk07',periode:'2026-07',jam:3260,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk08',periode:'2026-08',jam:3320,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk09',periode:'2026-09',jam:3150,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk10',periode:'2026-10',jam:3400,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk11',periode:'2026-11',jam:1800,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true}];
 SEED.ubah=[];SEED.minepermit=[];SEED.simper=[];SEED.pgship=[];SEED.pgbarge=[];SEED.pgjetty=[];SEED.pgsurv=[];SEED.pgkontrak=[];SEED.pgcust=[];SEED.pgstock=[];SEED.pgset=[];
 SEED.kdok=[];SEED.rkthn=[];SEED.opsm=[];SEED.opcat=[];SEED.opeto=[];SEED.opbarge=[];SEED.opform=[];SEED.oplog=[];SEED.opset=[];SEED.opmaster=[];SEED.opplan=[];SEED.oprkab=[];SEED.opkon=[];
-SEED.invpakai=[];
+var __PD=prdDemo();SEED.opalat=__PD.opalat;SEED.opunit=__PD.opunit;SEED.opfuel=__PD.opfuel;SEED.invpakai=[];
 SEED.asetsite=[];
 SEED.asetmut=[];
 SEED.asetserah=[];
@@ -13952,6 +13952,398 @@ function pgTabWrap(k,fn){
   try{box.append(fn())}catch(e){box.append(h('div',{class:'note warn'},h('p',{text:'Tampilan gagal dimuat: '+(e&&e.message?e.message:'kesalahan tak dikenal')})));if(window.console)console.error(e)}
   return box;
 }
+/* ===== Operasional tambang: Overview Produktivitas, Overview Plant, Overview Fuel =====
+   Acuan: Dashboard Mining Daily Report, Dashboard Daily Report Activity Based Fuel, Template Dashboard Maintenance Planner,
+   dan Mining Tools Production and Fleet Simulator.
+   Koleksi: opalat (laporan harian alat per shift), opunit (master alat dan jadwal PM), opfuel (stok dan penerimaan fuel),
+   parameter target di opset (id 'prodplan'). */
+var PRD={bulan:'',shift:'',unit:'',tab:{prod:'dash',plant:'dash',fuel:'dash'},sim:null};
+var PRD_AKT=['Loading','Hauling','Dozing','Road Maintenance','STP','General'];
+var PRD_JENIS=['Loader','Hauler','Dozer','Grader','Support'];
+var PRD_PM=['PM1','PM2','PM3'];
+
+/* ---------- gaya ---------- */
+(function(){
+  if(document.getElementById('prd-css'))return;
+  var st=document.createElement('style');st.id='prd-css';
+  st.textContent='.prd-hb{display:grid;grid-template-columns:minmax(84px,150px) 1fr auto;gap:6px 12px;align-items:center;font-size:13px}.prd-hb .tr{height:12px;border-radius:6px;background:var(--line);overflow:hidden}.prd-hb .tr i{display:block;height:100%;border-radius:6px;background:var(--brand)}.prd-hb .tr i.w{background:var(--warn)}.prd-hb .tr i.c{background:var(--crit,#c0392b)}.prd-hb .tr i.n{background:var(--info)}.prd-hb b{font-variant-numeric:tabular-nums;font-weight:600}.prd-2{align-items:start;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px}.prd-2>*{min-width:0}.prd-sim{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px 14px}.prd-sim label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}.prd-sim input{width:100%}.prd-note{font-size:12px;color:var(--muted);margin:0}.prd-pm{height:8px;border-radius:5px;background:var(--line);overflow:hidden;min-width:90px}.prd-pm i{display:block;height:100%;background:var(--brand)}';
+  document.head.appendChild(st);
+})();
+
+/* ---------- util ---------- */
+function prdDemoRow(r){return r&&r.demo}
+function prdUnits(){var s={};(S.opunit||[]).forEach(function(u){if(u.kode)s[u.kode]=1});(S.opalat||[]).forEach(function(r){if(r.unit)s[r.unit]=1});return Object.keys(s).sort()}
+function prdPlan(){var p=opSet('prodplan');return {jamShift:Number(p.jamShift)>0?Number(p.jamShift):12,targetBcm:Number(p.targetBcm)||0,targetFuel:Number(p.targetFuel)||0,pmSoon:Number(p.pmSoon)>0?Number(p.pmSoon):50}}
+function prdEwh(r){var v=opNum(r.ewh);if(v!=null)return v;var a=opNum(r.hmAwal),b=opNum(r.hmAkhir);return a!=null&&b!=null&&b>=a?b-a:0}
+function prdN(v){return Number(v)||0}
+function prdLatestMonth(){var m='';(S.opalat||[]).forEach(function(r){var x=String(r.tanggal||'').slice(0,7);if(x>m)m=x});return m||opIso().slice(0,7)}
+function prdMonthRows(){
+  if(!PRD.bulan)PRD.bulan=prdLatestMonth();
+  return (S.opalat||[]).filter(function(r){return String(r.tanggal||'').slice(0,7)===PRD.bulan&&(!PRD.shift||r.shift===PRD.shift)&&(!PRD.unit||r.unit===PRD.unit)});
+}
+function prdAgg(rows){
+  var P=prdPlan(),a={n:rows.length,ewh:0,idle:0,bd:0,bcm:0,rit:0,fuel:0,fuelStd:0,paS:0,uaS:0,paN:0};
+  rows.forEach(function(r){var e=prdEwh(r),bd=prdN(r.breakdown);a.ewh+=e;a.idle+=prdN(r.idle);a.bd+=bd;a.bcm+=prdN(r.produksi);a.rit+=prdN(r.ritase);a.fuel+=prdN(r.fuelActual);a.fuelStd+=prdN(r.fuelStd);
+    var avail=Math.max(0,P.jamShift-bd);a.paS+=avail/P.jamShift;a.paN++;a.uaS+=avail>0?Math.min(1,e/avail):0});
+  a.pa=a.paN?a.paS/a.paN:null;a.ua=a.paN?a.uaS/a.paN:null;a.pdty=a.ewh>0?a.bcm/a.ewh:null;a.fr=a.bcm>0?a.fuel/a.bcm:null;a.fbr=a.ewh>0?a.fuel/a.ewh:null;
+  return a;
+}
+function prdBy(rows,keyf){var m={};rows.forEach(function(r){var k=keyf(r);if(k==null||k==='')return;(m[k]=m[k]||[]).push(r)});return m}
+function prdPct(v){return v==null?'—':opNf(v*100,1)+'%'}
+function prdToneHi(v,good,warn){return v==null?'':v>=good?'good':v>=warn?'warn':'crit'}
+function prdMonthLabel(m){var n=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];return n[Number(m.slice(5,7))-1]+' '+m.slice(0,4)}
+
+/* ---------- grafik ---------- */
+function prdBars(vals,labels,o){
+  o=o||{};var W=640,H=200,pl=46,pr=8,pt=14,pb=26,iw=W-pl-pr,ih=H-pt-pb,mx=Math.max(1,Math.max.apply(null,vals.concat([o.plan||0]))),n=Math.max(1,vals.length),bw=iw/n,g=[];
+  [0,1,2,3].forEach(function(i){var y=pt+ih-ih*i/3;g.push(sv('line',{x1:pl,x2:W-pr,y1:y,y2:y,stroke:'var(--line)','stroke-width':'1'}),sv('text',{x:pl-6,y:y+4,'text-anchor':'end','font-size':'10',fill:'var(--muted)'},[document.createTextNode(opNf(mx*i/3,0))]))});
+  vals.forEach(function(v,i){var bh=ih*v/mx,x=pl+i*bw+bw*0.16;
+    g.push(sv('rect',{x:x,y:pt+ih-bh,width:Math.max(1,bw*0.68),height:Math.max(0,bh),rx:'2',fill:o.color||'var(--brand)',opacity:o.hi===i?'1':'.7'},[sv('title',{},[document.createTextNode(labels[i]+' · '+opNf(v)+(o.unit?' '+o.unit:''))])]));
+    if(n<=16||i%3===0)g.push(sv('text',{x:pl+i*bw+bw/2,y:H-8,'text-anchor':'middle','font-size':'10',fill:'var(--muted)'},[document.createTextNode(labels[i])]))});
+  if(o.plan)g.push(sv('line',{x1:pl,x2:W-pr,y1:pt+ih-ih*o.plan/mx,y2:pt+ih-ih*o.plan/mx,stroke:'var(--warn)','stroke-dasharray':'5 4','stroke-width':'1.5'}));
+  return sv('svg',{viewBox:'0 0 '+W+' '+H,class:'chart',role:'img','aria-label':o.label||'Grafik'},g);
+}
+function prdLine(vals,labels,o){
+  o=o||{};var W=640,H=200,pl=52,pr=10,pt=14,pb=26,iw=W-pl-pr,ih=H-pt-pb,mx=Math.max(1,Math.max.apply(null,vals)),n=vals.length,pts=[],g=[];
+  [0,1,2,3].forEach(function(i){var y=pt+ih-ih*i/3;g.push(sv('line',{x1:pl,x2:W-pr,y1:y,y2:y,stroke:'var(--line)'}),sv('text',{x:pl-6,y:y+4,'text-anchor':'end','font-size':'10',fill:'var(--muted)'},[document.createTextNode(opNf(mx*i/3,0))]))});
+  vals.forEach(function(v,i){pts.push((pl+(n>1?iw*i/(n-1):iw/2))+','+(pt+ih-ih*v/mx))});
+  if(n)g.push(sv('polyline',{points:pts.join(' '),fill:'none',stroke:'var(--brand)','stroke-width':'2.2','stroke-linejoin':'round'}));
+  vals.forEach(function(v,i){var p=pts[i].split(',');g.push(sv('circle',{cx:p[0],cy:p[1],r:'3',fill:'var(--brand)'},[sv('title',{},[document.createTextNode(labels[i]+' · '+opNf(v)+(o.unit?' '+o.unit:''))])]))});
+  [0,Math.floor(n/2),n-1].forEach(function(i){if(labels[i]!=null)g.push(sv('text',{x:pl+(n>1?iw*i/(n-1):iw/2),y:H-8,'text-anchor':i===0?'start':i===n-1?'end':'middle','font-size':'10',fill:'var(--muted)'},[document.createTextNode(labels[i])]))});
+  return sv('svg',{viewBox:'0 0 '+W+' '+H,class:'chart',role:'img','aria-label':o.label||'Tren'},g);
+}
+function prdHBars(items,o){
+  o=o||{};if(!items.length)return h('p',{class:'empty',text:'Belum ada data pada periode ini.'});
+  var mx=Math.max(o.max||0,Math.max.apply(null,items.map(function(x){return x.v})),0.0001);
+  var box=h('div',{class:'prd-hb'});
+  items.forEach(function(x){box.append(h('span',{text:x.l,title:x.l,style:'overflow:hidden;text-overflow:ellipsis;white-space:nowrap'}),h('span',{class:'tr'},h('i',{class:x.t||'',style:'width:'+Math.max(1,Math.min(100,100*x.v/mx))+'%'})),h('b',{text:opNf(x.v,o.d==null?1:o.d)+(o.unit?' '+o.unit:'')}))});
+  return box;
+}
+function prdTable(head,rows){
+  if(!rows.length)return h('p',{class:'empty',text:'Belum ada data pada periode ini.'});
+  return h('div',{class:'scroll'},h('table',{class:'tbl'},h('thead',null,h('tr',null,head.map(function(x){return h('th',{text:x})}))),
+    h('tbody',null,rows.map(function(r){return h('tr',null,r.map(function(c,i){return h('td',{data:{label:head[i]}},c)}))}))));
+}
+function prdSafe(fn){try{return fn()}catch(e){if(window.console)console.error(e);return h('div',{class:'note warn'},h('p',{text:'Tampilan gagal dimuat: '+(e&&e.message?e.message:'kesalahan tak dikenal')}))}}
+function prdTabs(view,T){
+  return h('div',{class:'op-tabs',role:'tablist'},T.map(function(t){return h('button',{type:'button',role:'tab',class:'op-tab'+(PRD.tab[view]===t[0]?' on':''),'aria-selected':PRD.tab[view]===t[0]?'true':'false',onclick:function(){PRD.tab[view]=t[0];paint()}},t[1])}));
+}
+function prdFilter(o){
+  o=o||{};var m=h('input',{type:'month','aria-label':'Filter bulan'});m.value=PRD.bulan||prdLatestMonth();PRD.bulan=m.value;
+  m.addEventListener('change',function(){if(m.value){PRD.bulan=m.value;paint()}});
+  var sel=function(lbl,val,opts,set){return h('select',{'aria-label':lbl,onchange:function(e){set(e.target.value);paint()}},h('option',{value:''},lbl),opts.map(function(x){return h('option',{value:x,selected:val===x},x)}))};
+  return h('div',{class:'toolbar',style:'margin:0;flex-wrap:wrap'},h('label',{class:'fld op-inl'},h('span',{text:'Bulan'}),m),
+    sel('Semua shift',PRD.shift,['Day','Night'],function(v){PRD.shift=v}),
+    o.unit===false?null:sel('Semua unit',PRD.unit,prdUnits(),function(v){PRD.unit=v}),
+    h('span',{class:'grow'}),
+    canWrite?h('button',{class:'btn primary',type:'button',onclick:function(){openForm('opalat')}},'+ Laporan harian alat'):null);
+}
+function prdDemoNote(){
+  var d=(S.opalat||[]).some(prdDemoRow);
+  return d?h('div',{class:'note'},h('p',{text:'Data pada dashboard ini masih berupa data contoh (bertanda “contoh”). Hapus data contoh di menu Dashboard, lalu catat laporan harian alat yang sebenarnya.'})):null;
+}
+function prdEmpty(){
+  return h('div',{class:'emptyst'},h('p',{class:'empty',text:'Belum ada laporan harian alat. Catat laporan per unit dan per shift untuk mengisi dashboard.'}),
+    canWrite?h('div',{class:'emptyst-a'},h('button',{type:'button',class:'btn primary',onclick:function(){openForm('opalat')}},'+ Laporan harian alat')):null);
+}
+function prdPlanPanel(){
+  var P=prdPlan(),F={};
+  function fld(k,lbl,v,step){var i=h('input',{type:'number',min:'0',step:step||'any',value:v||''});F[k]=i;return h('label',{class:'fld'},h('span',{text:lbl}),i)}
+  var box=h('div',{class:'prd-sim'},fld('jamShift','Jam kerja per shift (jam)',P.jamShift),fld('targetBcm','Target produksi OB per bulan (BCM)',P.targetBcm||''),fld('targetFuel','Batas pemakaian fuel per bulan (L)',P.targetFuel||''),fld('pmSoon','Peringatan PM jatuh tempo (sisa HM)',P.pmSoon));
+  var b=h('button',{class:'btn primary',type:'button',onclick:async function(){
+    try{await save('opset','prodplan',{jamShift:prdN(F.jamShift.value)||12,targetBcm:prdN(F.targetBcm.value),targetFuel:prdN(F.targetFuel.value),pmSoon:prdN(F.pmSoon.value)||50});toast('Parameter tersimpan');paint()}catch(e){toast('Gagal menyimpan parameter')}}},'Simpan parameter');
+  return panel('Parameter dan target','Dipakai untuk ketersediaan alat (PA/UA), garis target pada grafik, dan peringatan PM.',box,canWrite&&opCan('setting')?h('div',{class:'acts'},b):h('p',{class:'prd-note',text:'Hanya KTT yang dapat mengubah parameter.'}));
+}
+
+/* ================= OVERVIEW PRODUKTIVITAS ================= */
+function prdProdDash(){
+  var rows=prdMonthRows(),root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),P=prdPlan();
+  if(!(S.opalat||[]).length){root.append(prdEmpty());return root}
+  var A=prdAgg(rows),obRows=rows.filter(function(r){return r.jenis==='Loader'});if(!obRows.length)obRows=rows;var OB=prdAgg(obRows),days=prdBy(obRows,function(r){return String(r.tanggal).slice(8,10)}),dk=Object.keys(days).sort();
+  var loaders=prdBy(rows.filter(function(r){return r.jenis==='Loader'}),function(r){return r.unit}),haulers=prdBy(rows.filter(function(r){return r.jenis==='Hauler'}),function(r){return r.unit});
+  var ldA=prdAgg(rows.filter(function(r){return r.jenis==='Loader'})),hlA=prdAgg(rows.filter(function(r){return r.jenis==='Hauler'}));
+  var ach=P.targetBcm>0?OB.bcm/P.targetBcm:null;
+  root.append(h('div',{class:'grid'},
+    kpi('OB removal',opNf(OB.bcm,0)+' BCM',P.targetBcm?'target '+opNf(P.targetBcm,0)+' BCM':'target belum diatur',ach==null?'':prdToneHi(ach,0.9,0.7)),
+    kpi('Pencapaian target',ach==null?'—':prdPct(ach),ach==null?'atur target di tab Parameter':'dari target bulan ini',ach==null?'':prdToneHi(ach,0.9,0.7)),
+    kpi('Productivity loader',ldA.pdty==null?'—':opNf(ldA.pdty,1)+' BCM/jam','BCM per jam kerja efektif'),
+    kpi('Physical availability',prdPct(A.pa),'rata-rata semua alat',prdToneHi(A.pa,0.9,0.8)),
+    kpi('Use of availability',prdPct(A.ua),'jam efektif per jam tersedia',prdToneHi(A.ua,0.75,0.6)),
+    kpi('Ritase hauler',opNf(hlA.rit,0),'total rit, '+Object.keys(haulers).length+' hauler')));
+  var daily=dk.map(function(d){return opSum(days[d],function(r){return r.produksi})});
+  var tgtDay=P.targetBcm>0?P.targetBcm/new Date(Number(PRD.bulan.slice(0,4)),Number(PRD.bulan.slice(5,7)),0).getDate():0;
+  var ldItems=Object.keys(loaders).map(function(u){var a=prdAgg(loaders[u]);return {l:u,v:a.pdty||0,t:'n'}}).sort(function(a,b){return b.v-a.v});
+  var del=function(by){var o=Object.keys(by).map(function(u){return {l:u,v:opSum(by[u],function(r){return r.idle})+opSum(by[u],function(r){return r.breakdown}),t:'w'}}).sort(function(a,b){return b.v-a.v});return o.slice(0,3)};
+  var rs={};rows.forEach(function(r){var k=r.idleReason;if(k&&prdN(r.idle)>0)rs[k]=(rs[k]||0)+prdN(r.idle)});
+  var rsItems=Object.keys(rs).map(function(k){return {l:k,v:rs[k],t:'w'}}).sort(function(a,b){return b.v-a.v}).slice(0,6);
+  root.append(h('div',{class:'prd-2'},
+    panel('Tren OB removal harian',tgtDay?'Garis putus-putus adalah target rata-rata per hari.':'Total BCM per hari pada bulan terpilih.',dk.length?prdBars(daily,dk.map(function(d){return d}),{unit:'BCM',plan:tgtDay,label:'OB removal harian'}):h('p',{class:'empty',text:'Belum ada data bulan ini.'})),
+    panel('Productivity per loader','BCM per jam kerja efektif (EWH).',prdHBars(ldItems,{unit:'BCM/jam'}))));
+  root.append(h('div',{class:'prd-2'},
+    panel('Delay terbesar: hauler','Tiga unit dengan jam idle dan breakdown tertinggi.',prdHBars(del(haulers),{unit:'jam'})),
+    panel('Delay terbesar: loader','Tiga unit dengan jam idle dan breakdown tertinggi.',prdHBars(del(loaders),{unit:'jam'})),
+    panel('Penyebab idle','Jam idle menurut alasan yang dicatat.',prdHBars(rsItems,{unit:'jam'}))));
+  var sh=['Day','Night'].map(function(s){var a=prdAgg(obRows.filter(function(r){return r.shift===s}));return [s==='Day'?'Day shift':'Night shift',opNf(a.bcm,0),opNf(a.ewh,1),prdPct(a.pa),prdPct(a.ua),a.pdty==null?'—':opNf(a.pdty,1)]});
+  root.append(panel('Performa per shift',null,prdTable(['Shift','OB (BCM)','EWH (jam)','PA','UA','Productivity (BCM/jam)'],sh)));
+  var us=prdBy(rows,function(r){return r.unit}),ur=Object.keys(us).sort().map(function(u){var a=prdAgg(us[u]);return [h('span',{class:'mono',text:u}),us[u][0].jenis||'—',opNf(a.ewh,1),opNf(a.idle,1),opNf(a.bd,1),badge(prdPct(a.pa),prdToneHi(a.pa,0.9,0.8)||'mute'),badge(prdPct(a.ua),prdToneHi(a.ua,0.75,0.6)||'mute'),opNf(a.bcm,0),opNf(a.fuel,0)]});
+  root.append(panel('Ringkasan per unit','PA = (jam shift − breakdown) / jam shift. UA = EWH / jam tersedia.',prdTable(['Unit','Jenis','EWH','Idle','Breakdown','PA','UA','OB (BCM)','Fuel (L)'],ur)));
+  return root;
+}
+/* simulator fleet */
+function prdSimDef(){return {vessel:11,jarak:1.0,vMuat:12.5,vKosong:15,antriMuat:0.6,loading:1.6,antriBongkar:1,dumping:0.6,bucket:2.29,siklus:0.32,effMuat:0.95,effKerja:0.9,target:0}}
+function prdSimCalc(s,jarak){
+  var m=function(v){return v*1000/60},tm=jarak*1000/(m(s.vMuat)||1),tk=jarak*1000/(m(s.vKosong)||1);
+  var cyc=s.antriMuat+s.loading+tm+s.antriBongkar+s.dumping+tk,rit=cyc>0?60/cyc:0,dt=rit*s.vessel;
+  var ld=s.siklus>0?s.bucket*(60/s.siklus)*s.effMuat*s.effKerja:0,need=dt>0?ld/dt:0;
+  return {cyc:cyc,rit:rit,dt:dt,ld:ld,need:need,fleet:Math.min(ld,Math.ceil(need)*dt),tm:tm,tk:tk};
+}
+function prdSim(){
+  if(!PRD.sim)PRD.sim=prdSimDef();var s=PRD.sim,out=h('div'),F=[
+    ['Unit hauler','—'],
+    ['vessel','Kapasitas vessel (BCM/rit)'],['jarak','Jarak hauling pit–disposal (km)'],['vMuat','Kecepatan bermuatan (km/jam)'],['vKosong','Kecepatan kosong (km/jam)'],
+    ['antriMuat','Antri muat dan manuver (menit)'],['loading','Waktu loading OB (menit)'],['antriBongkar','Antri bongkar (menit)'],['dumping','Dumping dan manuver (menit)'],
+    ['Unit loader','—'],
+    ['bucket','Kapasitas bucket (BCM)'],['siklus','Waktu 1 siklus bucket (menit)'],['effMuat','Efisiensi pemuatan / fill factor (0–1)'],['effKerja','Efisiensi kerja (0–1)'],['target','Target produksi (BCM/jam, opsional)']];
+  var inputs=h('div',{class:'prd-sim'});
+  F.forEach(function(f){
+    if(f[1]==='—'){inputs.append(h('h3',{style:'grid-column:1/-1;margin:6px 0 0;font-size:13px',text:f[0]}));return}
+    var i=h('input',{type:'number',step:'any',min:'0',value:s[f[0]]});i.addEventListener('input',function(){s[f[0]]=Number(i.value)||0;calc()});
+    inputs.append(h('label',null,h('span',{text:f[1]}),i));
+  });
+  function calc(){
+    var r=prdSimCalc(s,s.jarak),n=Math.ceil(r.need-1e-9),tg=s.target>0&&r.dt>0?Math.ceil(s.target/r.dt-1e-9):null;
+    var K=h('div',{class:'grid'},kpi('Waktu edar hauler',opNf(r.cyc,1)+' menit','1 putaran'),kpi('Ritase per jam',opNf(r.rit,2)+' rit','per hauler'),kpi('Produksi hauler',opNf(r.dt,1)+' BCM/jam','per unit'),kpi('Produksi loader',opNf(r.ld,1)+' BCM/jam','kapasitas muat'),kpi('Hauler dibutuhkan',String(n)+' unit',tg!=null?'untuk target '+opNf(s.target,0)+' BCM/jam: '+tg+' unit':'agar loader tidak menunggu',''),kpi('Produksi 1 fleet',opNf(Math.min(r.ld,n*r.dt),1)+' BCM/jam','loader dan '+n+' hauler'));
+    var rows=[0.4,0.6,0.8,1,1.2,1.5,2,3].map(function(j){var x=prdSimCalc(s,j);return [opNf(j,1)+' km',opNf(x.cyc,1),opNf(x.rit,2),opNf(x.dt,1),String(Math.ceil(x.need-1e-9)),opNf(Math.min(x.ld,Math.ceil(x.need-1e-9)*x.dt),1)]});
+    out.replaceChildren(K,h('div',{style:'margin-top:12px'},prdTable(['Jarak hauling','Waktu edar (menit)','Rit/jam','BCM/jam hauler','Hauler dibutuhkan','BCM/jam fleet'],rows)));
+  }
+  calc();
+  var lost=[['Meal and rest','60 menit/shift'],['Jumat (sholat Jumat)','60 menit/minggu'],['Safety talk','30 menit/minggu'],['Refueling','10 menit/shift'],['Pergantian shift','10 menit/shift'],['P5M','5 menit/shift'],['P2H','10 menit/shift'],['Sholat Ashar','10 menit/shift'],['Sholat Subuh','10 menit/shift'],['Reposition','10 menit/shift'],['Survey','5 menit/shift']];
+  return h('div',{style:'display:flex;flex-direction:column;gap:16px'},
+    panel('Simulator fleet','Hitung waktu edar, produksi, dan jumlah hauler yang dibutuhkan satu loader. Nilai awal mengikuti contoh Mining Tools: dump truck kelas kecil dan loader 2,29 BCM. Hitungan di halaman ini tidak disimpan.',inputs,out),
+    panel('Controllable lost time (acuan)','Waktu standby yang bisa dikendalikan per shift, sebagai pembanding dengan jam idle di laporan harian.',prdTable(['Aktivitas','Waktu'],lost)));
+}
+function prodView(){
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),t=PRD.tab.prod;
+  root.append(opHead('Overview Produktivitas','Produksi OB, produktivitas loader dan hauler, ketersediaan alat, serta delay dari laporan harian alat.'));
+  var dn=prdDemoNote();if(dn)root.append(dn);
+  root.append(prdTabs('prod',[['dash','Dashboard'],['data','Laporan harian alat'],['sim','Simulator fleet'],['set','Parameter']]));
+  if(t==='dash'){root.append(prdFilter());root.append(prdSafe(prdProdDash))}
+  else if(t==='data')root.append(panel('Laporan harian alat','Satu baris per unit per shift. Data ini juga dipakai Overview Fuel.',listView('opalat')));
+  else if(t==='sim')root.append(prdSim());
+  else root.append(prdPlanPanel());
+  return root;
+}
+
+/* ================= OVERVIEW PLANT ================= */
+function prdHmNow(u){
+  var hm=opNum(u.hm)||0;(S.opalat||[]).forEach(function(r){if(r.unit===u.kode){var b=opNum(r.hmAkhir);if(b!=null&&b>hm)hm=b}});return hm;
+}
+function prdPmInfo(u){
+  var P=prdPlan(),iv=opNum(u.interval)||250,last=opNum(u.hmPm)||0,hm=prdHmNow(u),target=last+iv,remain=target-hm;
+  var k=Math.round(target/250)*250,jenis=k>0&&k%1000===0?'PM3':k>0&&k%500===0?'PM2':'PM1';
+  var st=remain<0?'Over due':remain<=P.pmSoon?'Segera PM':'Aman';
+  return {hm:hm,iv:iv,last:last,target:target,remain:remain,jenis:jenis,st:st,pct:Math.max(0,Math.min(1,(hm-last)/iv))};
+}
+function prdPmTone(s){return s==='Over due'?'crit':s==='Segera PM'?'warn':'good'}
+function prdPlantDash(){
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),U=(S.opunit||[]).slice().sort(function(a,b){return String(a.kode).localeCompare(String(b.kode))});
+  if(!U.length){root.append(h('div',{class:'emptyst'},h('p',{class:'empty',text:'Belum ada unit alat terdaftar. Daftarkan unit dan HM PM terakhirnya untuk memantau jadwal servis.'}),canWrite?h('div',{class:'emptyst-a'},h('button',{type:'button',class:'btn primary',onclick:function(){openForm('opunit')}},'+ Unit alat')):null));return root}
+  var I=U.map(function(u){return {u:u,p:prdPmInfo(u)}}),od=I.filter(function(x){return x.p.st==='Over due'}).length,sn=I.filter(function(x){return x.p.st==='Segera PM'}).length,ok=I.length-od-sn;
+  var all=S.opalat||[],pa=prdAgg(all),dt=opSum(U,function(u){return u.downtime});
+  root.append(h('div',{class:'grid'},kpi('Total unit',String(I.length),'alat terdaftar'),kpi('Over due',String(od),'melewati jadwal PM',od?'crit':'good'),kpi('Segera PM',String(sn),'sisa HM ≤ '+prdPlan().pmSoon,sn?'warn':'good'),kpi('Aman',String(ok),'masih di dalam interval','good'),kpi('PA rata-rata',prdPct(pa.pa),'dari laporan harian',prdToneHi(pa.pa,0.9,0.8)),kpi('Estimasi downtime PM',opNf(dt,0)+' jam','total semua unit')));
+  var rows=I.slice().sort(function(a,b){return a.p.remain-b.p.remain}).map(function(x){var u=x.u,p=x.p;
+    return [h('span',{class:'mono',text:u.kode}),(u.model||'—')+(u.brand?' · '+u.brand:''),u.jenis||'—',opNf(p.hm,0),u.tglPm?fmt(u.tglPm):'—',u.tipePm||'—',
+      h('div',null,h('div',{class:'prd-pm'},h('i',{style:'width:'+Math.round(p.pct*100)+'%;background:var(--'+(p.st==='Over due'?'crit,#c0392b':p.st==='Segera PM'?'warn':'brand')+')'})),h('small',{style:'color:var(--muted)',text:'target '+opNf(p.target,0)+' HM · '+p.jenis})),
+      h('span',{class:'mono',style:'white-space:nowrap',text:(p.remain<0?'−':'')+opNf(Math.abs(p.remain),0)+' HM'}),badge(p.st,prdPmTone(p.st))]});
+  root.append(panel('Jadwal PM per unit','Urut dari yang paling mendesak. HM saat ini diambil dari HM akhir terbaru di laporan harian alat.',prdTable(['Unit','Model','Jenis','HM saat ini','PM terakhir','Tipe','Progres menuju PM berikutnya','Sisa','Status'],rows)));
+  var byJ=prdBy(I,function(x){return x.u.jenis||'Lainnya'}),jItems=Object.keys(byJ).sort().map(function(j){var l=all.filter(function(r){var u=U.find(function(q){return q.kode===r.unit});return u&&(u.jenis||'Lainnya')===j}),a=prdAgg(l);return {l:j+' ('+byJ[j].length+')',v:(a.pa||0)*100,t:a.pa!=null&&a.pa<0.8?'c':a.pa!=null&&a.pa<0.9?'w':''}});
+  var bdItems=Object.keys(prdBy(all,function(r){return r.unit})).map(function(k){return {l:k,v:opSum(all.filter(function(r){return r.unit===k}),function(r){return r.breakdown}),t:'w'}}).filter(function(x){return x.v>0}).sort(function(a,b){return b.v-a.v}).slice(0,8);
+  root.append(h('div',{class:'prd-2'},panel('Ketersediaan fisik (PA) per jenis alat','Rata-rata dari seluruh laporan harian.',prdHBars(jItems,{unit:'%',max:100,d:1})),panel('Jam breakdown terbesar','Akumulasi seluruh laporan harian.',prdHBars(bdItems,{unit:'jam'}))));
+  return root;
+}
+function plantView(){
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),t=PRD.tab.plant;
+  root.append(opHead('Overview Plant','Kesiapan alat berat: jadwal perawatan berkala (PM), HM, ketersediaan, dan downtime.'));
+  var dn=(S.opunit||[]).some(prdDemoRow)?h('div',{class:'note'},h('p',{text:'Data unit di halaman ini masih berupa data contoh (bertanda “contoh”).'})):null;if(dn)root.append(dn);
+  root.append(prdTabs('plant',[['dash','Dashboard'],['unit','Daftar unit alat'],['set','Parameter']]));
+  if(t==='dash')root.append(prdSafe(prdPlantDash));
+  else if(t==='unit')root.append(panel('Daftar unit alat','Isi HM PM terakhir dan interval. Jadwal PM berikutnya dihitung otomatis; HM saat ini mengikuti laporan harian alat.',listView('opunit')));
+  else root.append(prdPlanPanel());
+  return root;
+}
+
+/* ================= OVERVIEW FUEL ================= */
+function prdFuelDays(){
+  var dates={},pakai={};
+  (S.opalat||[]).forEach(function(r){if(!r.tanggal)return;dates[r.tanggal]=1;var p=pakai[r.tanggal]=pakai[r.tanggal]||{D:0,N:0};p[r.shift==='Night'?'N':'D']+=prdN(r.fuelActual)});
+  var masuk={},awal={},cat={};(S.opfuel||[]).forEach(function(r){if(!r.tanggal)return;dates[r.tanggal]=1;masuk[r.tanggal]=(masuk[r.tanggal]||0)+prdN(r.masuk);if(r.stokAwal!==''&&r.stokAwal!=null&&isFinite(r.stokAwal))awal[r.tanggal]=Number(r.stokAwal)});
+  var out=[],prev=0;Object.keys(dates).sort().forEach(function(d){var a=awal[d]!=null?awal[d]:prev,p=pakai[d]||{D:0,N:0},m=masuk[d]||0,e=a+m-p.D-p.N;out.push({d:d,awal:a,masuk:m,day:p.D,night:p.N,pakai:p.D+p.N,akhir:e});prev=e});
+  return out;
+}
+function prdFuelDash(){
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),rows=prdMonthRows(),P=prdPlan();
+  if(!(S.opalat||[]).length&&!(S.opfuel||[]).length){root.append(prdEmpty());return root}
+  var A=prdAgg(rows),D=prdFuelDays().filter(function(x){return x.d.slice(0,7)===PRD.bulan}),last=D.length?D[D.length-1]:null,masuk=opSum(D,function(x){return x.masuk});
+  var sel=A.fuelStd>0?A.fuel-A.fuelStd:null;
+  root.append(h('div',{class:'grid'},
+    kpi('Stok fuel akhir',last?opNf(last.akhir,0)+' L':'—',last?'per '+fmt(last.d):'belum ada data',last&&last.akhir<=0?'crit':''),
+    kpi('Fuel masuk',opNf(masuk,0)+' L','penerimaan bulan ini'),
+    kpi('Fuel terpakai',opNf(A.fuel,0)+' L',P.targetFuel?'batas '+opNf(P.targetFuel,0)+' L':'aktual dari laporan alat',P.targetFuel?prdToneHi(1-A.fuel/P.targetFuel+0.1,0.1,0):''),
+    kpi('Fuel ratio',A.fr==null?'—':opNf(A.fr,3)+' L/BCM','fuel terpakai per BCM'),
+    kpi('Konsumsi per jam',A.fbr==null?'—':opNf(A.fbr,1)+' L/jam','fuel burn rate'),
+    kpi('Selisih vs standar',sel==null?'—':(sel>0?'+':'')+opNf(sel,0)+' L',sel==null?'isi fuel standar di laporan':sel>0?'lebih boros dari standar':'lebih hemat dari standar',sel==null?'':sel>0?'warn':'good')));
+  var acts=prdBy(rows,function(r){return r.aktivitas}),aItems=['Loading','Hauling'].filter(function(a){return acts[a]}).map(function(a){var g=prdAgg(acts[a]);return {l:a,v:g.fr||0,t:'n'}}),
+    bItems=PRD_AKT.filter(function(a){return acts[a]&&a!=='Loading'&&a!=='Hauling'}).map(function(a){var g=prdAgg(acts[a]);return {l:a,v:g.fbr||0,t:'n'}});
+  var ld=prdBy(rows.filter(function(r){return r.jenis==='Loader'}),function(r){return r.unit}),lItems=Object.keys(ld).map(function(u){var g=prdAgg(ld[u]);return {l:u,v:g.fr||0,t:'w'}}).sort(function(a,b){return b.v-a.v});
+  root.append(h('div',{class:'prd-2'},
+    panel('Stok fuel harian','Stok akhir pit setelah penerimaan dan pemakaian alat.',D.length?prdLine(D.map(function(x){return x.akhir}),D.map(function(x){return x.d.slice(8,10)}),{unit:'L',label:'Stok fuel harian'}):h('p',{class:'empty',text:'Belum ada data stok bulan ini. Catat penerimaan fuel di tab Stok fuel.'})),
+    panel('Fuel ratio per aktivitas','Loading dan hauling: liter per BCM. Makin kecil makin hemat.',prdHBars(aItems,{unit:'L/BCM',d:3}),h('h3',{style:'margin:14px 0 6px;font-size:13px',text:'Aktivitas pendukung (liter per jam kerja)'}),prdHBars(bItems,{unit:'L/jam',d:1}))));
+  var uu=prdBy(rows,function(r){return r.unit}),ur=Object.keys(uu).sort().map(function(u){var g=prdAgg(uu[u]),s=g.fuelStd>0?g.fuel-g.fuelStd:null;return [h('span',{class:'mono',text:u}),uu[u][0].jenis||'—',opNf(g.ewh,1),opNf(g.fuel,0),g.fuelStd>0?opNf(g.fuelStd,0):'—',s==null?'—':badge((s>0?'+':'')+opNf(s,0)+' L',s>0?'warn':'good'),g.fbr==null?'—':opNf(g.fbr,1),g.fr==null?'—':opNf(g.fr,3)]});
+  root.append(h('div',{class:'prd-2'},
+    panel('Loader dengan fuel ratio tertinggi','Periksa loader di urutan teratas: teknik operator, front, atau kondisi mesin.',prdHBars(lItems,{unit:'L/BCM',d:3})),
+    panel('Stok fuel masuk dan keluar','Ringkasan 10 hari terakhir pada bulan terpilih.',prdTable(['Tanggal','Stok awal','Masuk','Day','Night','Stok akhir'],D.slice(-10).reverse().map(function(x){return [fmt(x.d),opNf(x.awal,0),x.masuk?opNf(x.masuk,0):'—',opNf(x.day,0),opNf(x.night,0),badge(opNf(x.akhir,0),x.akhir<=0?'crit':'good')]})))));
+  root.append(panel('Fuel per unit','Aktual dibanding standar yang diisi pada laporan harian (selisih positif = lebih boros).',prdTable(['Unit','Jenis','EWH','Aktual (L)','Standar (L)','Selisih','L/jam','L/BCM'],ur)));
+  return root;
+}
+function fuelView(){
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),t=PRD.tab.fuel;
+  root.append(opHead('Overview Fuel','Stok, penerimaan, dan pemakaian fuel alat, beserta fuel ratio per aktivitas dan per unit.'));
+  var dn=prdDemoNote();if(dn)root.append(dn);
+  root.append(prdTabs('fuel',[['dash','Dashboard'],['stok','Stok fuel'],['data','Laporan harian alat'],['set','Parameter']]));
+  if(t==='dash'){root.append(prdFilter());root.append(prdSafe(prdFuelDash))}
+  else if(t==='stok')root.append(panel('Stok dan penerimaan fuel','Isi stok awal hanya pada hari pertama atau saat koreksi. Pemakaian dihitung otomatis dari laporan harian alat.',listView('opfuel')));
+  else if(t==='data')root.append(panel('Laporan harian alat','Satu baris per unit per shift. Isi kolom fuel aktual dan fuel standar.',listView('opalat')));
+  else root.append(prdPlanPanel());
+  return root;
+}
+
+/* ---------- konfigurasi form dan daftar ---------- */
+CFG.opalat={key:'opalat',add:'Laporan harian alat',empty:'Belum ada laporan harian alat.',title:'Laporan harian alat',
+  fields:[
+    {k:'tanggal',l:'Tanggal',t:'date',req:1,sec:'Unit dan shift'},
+    {k:'shift',l:'Shift',t:'select',req:1,o:['Day','Night']},
+    {k:'unit',l:'Kode unit (samakan dengan Daftar unit alat)',t:'text',req:1},
+    {k:'jenis',l:'Jenis alat',t:'select',req:1,o:PRD_JENIS},
+    {k:'operator',l:'Operator atau driver',t:'text'},
+    {k:'lokasi',l:'Lokasi kerja (pit)',t:'text'},
+    {k:'aktivitas',l:'Aktivitas',t:'select',req:1,o:PRD_AKT},
+    {k:'hmAwal',l:'HM awal',t:'number',min:0,sec:'Jam kerja'},
+    {k:'hmAkhir',l:'HM akhir',t:'number',min:0},
+    {k:'ewh',l:'EWH, jam kerja efektif (kosongkan untuk HM akhir − HM awal)',t:'number',min:0},
+    {k:'idle',l:'Jam idle',t:'number',min:0},
+    {k:'breakdown',l:'Jam breakdown',t:'number',min:0},
+    {k:'idleReason',l:'Alasan idle',t:'text'},
+    {k:'ritase',l:'Ritase',t:'number',min:0,sec:'Produksi dan fuel'},
+    {k:'produksi',l:'Produksi OB (BCM)',t:'number',min:0},
+    {k:'jarak',l:'Jarak angkut (m)',t:'number',min:0},
+    {k:'fuelActual',l:'Fuel aktual terpakai (L)',t:'number',min:0},
+    {k:'fuelStd',l:'Fuel standar atau plan (L)',t:'number',min:0},
+    {k:'catatan',l:'Catatan',t:'area'}],
+  defaults:{shift:'Day',aktivitas:'Hauling',jenis:'Hauler'},
+  filter:{k:'shift',all:'Semua shift'},
+  sort:function(a,b){return String(b.tanggal||'').localeCompare(String(a.tanggal||''))||String(a.unit||'').localeCompare(String(b.unit||''))},
+  cols:[
+    {l:'Tanggal',r:function(r){return r.tanggal?fmt(r.tanggal):'—'}},
+    {l:'Shift',r:function(r){return r.shift||'—'}},
+    {l:'Unit',r:function(r){return r.unit||'—'}},
+    {l:'Aktivitas',r:function(r){return r.aktivitas||'—'}},
+    {l:'EWH',r:function(r){return opNf(prdEwh(r),1)}},
+    {l:'OB (BCM)',r:function(r){return opNf(r.produksi,0)}},
+    {l:'Fuel (L)',r:function(r){return opNf(r.fuelActual,0)}}]};
+CFG.opunit={key:'opunit',add:'Unit alat',empty:'Belum ada unit alat terdaftar.',title:'Unit alat',
+  fields:[
+    {k:'kode',l:'Kode unit',t:'text',req:1,sec:'Identitas alat'},
+    {k:'model',l:'Model',t:'text'},
+    {k:'brand',l:'Merek',t:'text'},
+    {k:'jenis',l:'Jenis alat',t:'select',req:1,o:PRD_JENIS},
+    {k:'hm',l:'HM saat ini (diperbarui otomatis dari laporan harian bila lebih tinggi)',t:'number',min:0,sec:'Perawatan berkala (PM)'},
+    {k:'hmPm',l:'HM saat PM terakhir',t:'number',min:0},
+    {k:'tglPm',l:'Tanggal PM terakhir',t:'date'},
+    {k:'tipePm',l:'Tipe PM terakhir',t:'select',o:PRD_PM},
+    {k:'interval',l:'Interval PM (HM)',t:'number',min:1},
+    {k:'downtime',l:'Estimasi downtime PM (jam)',t:'number',min:0},
+    {k:'catatan',l:'Catatan',t:'area'}],
+  defaults:{interval:250,tipePm:'PM1',jenis:'Hauler'},
+  filter:{k:'jenis',all:'Semua jenis'},
+  sort:function(a,b){return String(a.kode||'').localeCompare(String(b.kode||''))},
+  cols:[
+    {l:'Unit',r:function(r){return r.kode||'—'}},
+    {l:'Model',r:function(r){return (r.model||'—')+(r.brand?' · '+r.brand:'')}},
+    {l:'Jenis',r:function(r){return r.jenis||'—'}},
+    {l:'HM saat ini',r:function(r){return opNf(prdHmNow(r),0)}},
+    {l:'Sisa PM',r:function(r){var p=prdPmInfo(r);return badge(opNf(p.remain,0)+' HM',prdPmTone(p.st))}}]};
+CFG.opfuel={key:'opfuel',add:'Catatan stok fuel',empty:'Belum ada catatan stok atau penerimaan fuel.',title:'Stok fuel',
+  fields:[
+    {k:'tanggal',l:'Tanggal',t:'date',req:1},
+    {k:'masuk',l:'Fuel masuk pit (L)',t:'number',min:0},
+    {k:'stokAwal',l:'Stok awal (L), isi hanya untuk hari pertama atau koreksi',t:'number',min:0},
+    {k:'catatan',l:'Catatan (nomor DO, pemasok, dan lain-lain)',t:'area'}],
+  defaults:{},
+  filter:null,
+  sort:function(a,b){return String(b.tanggal||'').localeCompare(String(a.tanggal||''))},
+  cols:[
+    {l:'Tanggal',r:function(r){return r.tanggal?fmt(r.tanggal):'—'}},
+    {l:'Fuel masuk (L)',r:function(r){return r.masuk?opNf(r.masuk,0):'—'}},
+    {l:'Stok awal (L)',r:function(r){return r.stokAwal!==''&&r.stokAwal!=null?opNf(r.stokAwal,0):'otomatis'}},
+    {l:'Catatan',r:function(r){return r.catatan||'—'}}]};
+
+/* validasi sederhana saat simpan */
+(function(){
+  var S0=save;
+  save=async function(key,id,data){
+    if(key==='opalat'&&data&&!data._lewat){
+      var a=opNum(data.hmAwal),b=opNum(data.hmAkhir);
+      if(a!=null&&b!=null&&b<a)throw new Error('HM akhir tidak boleh lebih kecil dari HM awal.');
+      if(data.unit&&!(data.jenis)){var u=(S.opunit||[]).find(function(x){return x.kode===data.unit});if(u)data.jenis=u.jenis}
+    }
+    if(key==='opunit'&&data&&data.kode){
+      var dup=(S.opunit||[]).some(function(x){return x.kode===data.kode&&x.id!==id});
+      if(dup)throw new Error('Kode unit '+data.kode+' sudah terdaftar.');
+    }
+    return S0(key,id,data);
+  };
+})();
+
+/* ---------- data contoh ---------- */
+function prdDemo(){
+  var seed=7,rnd=function(){seed=(seed*16807)%2147483647;return seed/2147483647},R=function(a,b){return a+(b-a)*rnd()},iso=function(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)};
+  var U=[['AEX-301','PC 350-8','KOMATSU','Loader',1490,1380],['AEX-201','PC 210-10','KOMATSU','Loader',1890,1700],['AEX-202','PC 210-10','KOMATSU','Loader',1523,1300],['AMG-01','GD 535-3','KOMATSU','Grader',1525,1350],
+    ['ADC-01','FAW 420','FAW','Hauler',810,600],['ADC-02','FAW 420','FAW','Hauler',975,760],['ADC-03','FAW 420','FAW','Hauler',764,740],['ADT-01','FAW 340','FAW','Hauler',1146,900],['ADT-02','FAW 340','FAW','Hauler',1083,850],['ADT-03','FAW 340','FAW','Hauler',990,740],['ADT-04','FAW 340','FAW','Hauler',566,330],['ADT-05','FAW 340','FAW','Hauler',970,760],['DZ-01','D85ESS','KOMATSU','Dozer',3244,3050]];
+  var outU=U.map(function(u,i){var t=new Date();t.setDate(t.getDate()-Math.round(R(10,45)));return {id:'dmu'+i,kode:u[0],model:u[1],brand:u[2],jenis:u[3],hm:u[4]-prdHmBase(u),hmPm:u[4]-[60,120,180,230,20,100,150,210,260,90,140,40,170][i],tglPm:iso(t),tipePm:['PM1','PM2','PM3'][i%3],interval:250,downtime:[8,6,6,6,5,5,5,6,6,6,5,5,8][i],demo:true}});
+  var A=[],F=[],n=0,hm={};U.forEach(function(u){hm[u[0]]=u[4]-prdHmBase(u)});
+  var plan={Loader:[['Loading',1.4,80]],Hauler:[['Hauling',1.0,60]],Dozer:[['Dozing',2.6,110]],Grader:[['Road Maintenance',1.2,60]]};
+  var reasons=['Waiting hauler','Prepare front','Disposal crowded','Hujan dan licin','Refueling','Istirahat'];
+  var today=new Date(),stok=18000;
+  for(var d=11;d>=0;d--){
+    var dt=new Date(today);dt.setDate(today.getDate()-d);var tg=iso(dt);
+    ['Day','Night'].forEach(function(sh){U.forEach(function(u){
+      if(rnd()<0.08)return;
+      var jn=u[3],bd=rnd()<0.1?Math.round(R(1,4)):0,idle=Math.round(R(0.5,2.5)*10)/10,ew=Math.max(3,Math.round((12-bd-idle-R(0,1.5))*10)/10),
+        rt=Math.round(ew*R(2.5,4)),pr=jn==='Hauler'?rt*11:jn==='Loader'?Math.round(R(105,170)*ew):0,
+        a0=hm[u[0]];hm[u[0]]=Math.round((a0+ew)*10)/10;
+      var ak=plan[jn][0],std=Math.round(ak[2]*ew/8),act=Math.round(std*R(0.9,1.3));
+      A.push({id:'dma'+(n++),tanggal:tg,shift:sh,unit:u[0],jenis:jn,operator:['ERIKO','SURYO','JULI','FIKRI','DARUS','MARTUNIS','SAFII','MAULA'][Math.floor(rnd()*8)],lokasi:'PIT SELATAN',aktivitas:ak[0],hmAwal:a0,hmAkhir:hm[u[0]],idle:idle,breakdown:bd,
+        idleReason:idle>=1?reasons[Math.floor(rnd()*reasons.length)]:'',ritase:jn==='Hauler'?rt:0,produksi:pr,jarak:jn==='Hauler'?Math.round(R(800,1300)):'',fuelActual:act,fuelStd:std,demo:true});
+    })});
+    if(d%3===0||d===11)F.push({id:'dmf'+d,tanggal:tg,masuk:d%3===0?10000:0,stokAwal:d===11?stok:'',demo:true});
+  }
+  return {opalat:A,opunit:outU,opfuel:F};
+}
+function prdHmBase(u){return 190}
+
+/* ---------- menu, grup, paket ---------- */
+(function(){
+  MGRP.prodov=MGRP.plantov=MGRP.fuelov='Operasional tambang';
+  var i=MORD.indexOf('pgdash');i=i<0?MORD.length:i+1;MORD.splice(i,0,'prodov','plantov','fuelov');
+  var NS=navSetup;
+  navSetup=function(){
+    MODS.push({k:'prodov',t:'Overview Produktivitas',i:'M3 20h18M6 20V11M11 20V5M16 20v-6M21 20V9'});
+    MODS.push({k:'plantov',t:'Overview Plant',i:'M3 20h18M5 20V9l5 3V9l5 3V6h4v14M8 16h2M13 16h2'});
+    MODS.push({k:'fuelov',t:'Overview Fuel',i:'M6 20V6a2 2 0 012-2h5a2 2 0 012 2v14M5 20h11M15 9h2.5a1.5 1.5 0 011.5 1.5V16a1.5 1.5 0 003 0V9l-3-3'});
+    NS();
+  };
+  ['prodov','plantov','fuelov'].forEach(function(k){if(typeof SUB_KUNCI_DASAR!=='undefined'&&SUB_KUNCI_DASAR.indexOf(k)<0)SUB_KUNCI_DASAR.push(k)});
+})();
 
 /* ---------- Penyimpanan file besar di Supabase Storage (v77) ----------
    Gambar dan lampiran yang tadinya tersimpan sebagai teks base64 di dalam baris database
@@ -14964,7 +15356,7 @@ VIEWS.inventaris=function(){return invView()};
 VIEWS.asetsite=function(){return asetView()};
 VIEWS.operasional=function(){return opView()};
 VIEWS.pgdash=function(){return pgTabWrap('pgdash',pgDash)};VIEWS.pgship=function(){return pgTabWrap('pgship',pgShip)};VIEWS.pgarsip=function(){return pgTabWrap('pgarsip',pgArsip)};VIEWS.pgmaster=function(){return pgTabWrap('pgmaster',pgMaster)};VIEWS.pgset=function(){return pgTabWrap('pgset',pgSetting)};VIEWS.pgtrack=function(){return pgTabWrap('pgtrack',pgTrack)};
-VIEWS.kredit=function(){return krView()};
+VIEWS.kredit=function(){return krView()};VIEWS.prodov=function(){return prodView()};VIEWS.plantov=function(){return plantView()};VIEWS.fuelov=function(){return fuelView()};
 VIEWS.setelan=function(){return setView()};
 VIEWS.kontraktor=function(){
   var m=metrics(),root=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
