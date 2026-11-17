@@ -14274,23 +14274,114 @@ function prdSim(){
     panel('Simulator fleet','Hitung waktu edar, produksi, dan jumlah hauler yang dibutuhkan satu loader. Nilai awal mengikuti contoh Mining Tools: dump truck kelas kecil dan loader 2,29 BCM. Hitungan di halaman ini tidak disimpan.',inputs,out),
     panel('Controllable lost time (acuan)','Waktu standby yang bisa dikendalikan per shift, sebagai pembanding dengan jam idle di laporan harian.',prdTable(['Aktivitas','Waktu'],lost)));
 }
+/* ---------- Kalkulator produktivitas semua jenis alat berat ---------- */
+/* Katalog: [jenis, merek, model, kapasitas tipikal, cycle time tipikal (detik, excavator dan wheel loader)]. Nilai tipikal brosur sebagai titik awal; sesuaikan dengan unit di lapangan. */
+var PRD_KAT=[
+ ['Excavator','Komatsu','PC200-8',0.9,18],['Excavator','Komatsu','PC210-10',1.0,18],['Excavator','Komatsu','PC300-8',1.4,19],['Excavator','Komatsu','PC350-8',1.7,19],['Excavator','Komatsu','PC400-8',2.0,20],['Excavator','Komatsu','PC1250-8',6.7,26],['Excavator','Komatsu','PC2000-8',12,30],
+ ['Excavator','Caterpillar','320D',1.0,18],['Excavator','Caterpillar','330D',1.5,19],['Excavator','Caterpillar','336D',2.0,20],['Excavator','Caterpillar','349D',2.5,21],['Excavator','Caterpillar','374F',3.2,24],
+ ['Excavator','Hitachi','ZX200-3',0.9,18],['Excavator','Hitachi','ZX330-3',1.5,19],['Excavator','Hitachi','ZX350H',1.7,19],['Excavator','Hitachi','EX1200-6',6.5,27],
+ ['Excavator','Volvo','EC210B',1.0,18],['Excavator','Volvo','EC300D',1.5,19],['Excavator','Volvo','EC480D',2.8,21],['Excavator','Volvo','EC750D',4.2,24],
+ ['Excavator','Doosan','DX225LC',1.0,18],['Excavator','Doosan','DX300LC',1.4,19],['Excavator','Kobelco','SK200-8',0.9,18],['Excavator','Kobelco','SK330-8',1.4,19],['Excavator','Kobelco','SK480',2.2,20],['Excavator','Sany','SY215C',1.0,18],['Excavator','Sany','SY365H',1.7,19],
+ ['Wheel loader','Komatsu','WA380-6',3.1,40],['Wheel loader','Komatsu','WA470-6',3.9,42],['Wheel loader','Komatsu','WA500-6',4.5,43],['Wheel loader','Caterpillar','950GC',2.7,38],['Wheel loader','Caterpillar','966H',3.8,40],['Wheel loader','Caterpillar','980H',5.0,43],['Wheel loader','Caterpillar','988H',6.6,45],['Wheel loader','Volvo','L120H',3.0,40],['Wheel loader','Volvo','L220H',4.8,43],['Wheel loader','SDLG','LG958L',3.0,40],['Wheel loader','Liugong','CLG856H',3.0,40],
+ ['Dump truck','Komatsu','HD465-7',33,0],['Dump truck','Komatsu','HD785-7',60,0],['Dump truck','Caterpillar','773E',41,0],['Dump truck','Caterpillar','777D',60,0],['Dump truck','Volvo','A40G (articulated)',24,0],['Dump truck','Hino','500 FM 260 JD (10 roda)',12,0],['Dump truck','Sinotruk','HOWO 371 6x4',16,0],['Dump truck','Shacman','F3000 6x4',16,0],['Dump truck','FAW','CA3250 / 340 (6x4)',15,0],['Dump truck','FAW','420 (8x4)',20,0],
+ ['Bulldozer','Komatsu','D65EX-16',4.0,0],['Bulldozer','Komatsu','D85ESS-2',5.2,0],['Bulldozer','Komatsu','D155A-6',6.5,0],['Bulldozer','Komatsu','D375A-6',17,0],['Bulldozer','Komatsu','D475A-5',23,0],['Bulldozer','Caterpillar','D6R',4.0,0],['Bulldozer','Caterpillar','D8R',8.7,0],['Bulldozer','Caterpillar','D9R',13.5,0],['Bulldozer','Caterpillar','D10T',20,0],['Bulldozer','Caterpillar','D11T',34,0],['Bulldozer','Shantui','SD22',4.5,0],
+ ['Motor grader','Komatsu','GD535-5',3.7,0],['Motor grader','Komatsu','GD705-5',4.3,0],['Motor grader','Caterpillar','120K',3.7,0],['Motor grader','Caterpillar','140K',3.7,0],['Motor grader','Caterpillar','14M',4.3,0],['Motor grader','Caterpillar','16M',4.9,0],['Motor grader','Caterpillar','24M',7.3,0],
+ ['Compactor','Caterpillar','CS533E',2.13,0],['Compactor','Caterpillar','CS56',2.13,0],['Compactor','Bomag','BW211 D-40',2.13,0],['Compactor','Sakai','SV512D',2.1,0],['Compactor','Hamm','3411',2.14,0],['Compactor','Dynapac','CA2500',2.1,0]
+];
+var PRD_KJ=['Excavator','Wheel loader','Dump truck','Bulldozer','Motor grader','Compactor'];
+var PRD_KUNIT={'Excavator':'m³ bucket','Wheel loader':'m³ bucket','Dump truck':'m³ bak (heaped)','Bulldozer':'m³ blade (LCM)','Motor grader':'m lebar blade','Compactor':'m lebar drum'};
+var PRD_CAL={jenis:'Excavator',model:'Komatsu PC2000-8',v:null,draw:null};
+function prdKatLabel(k){return k[1]+' '+k[2]}
+function prdKatDef(k){
+  var j=k?k[0]:PRD_CAL.jenis,c=k?k[3]:0,ct=k?k[4]:0;
+  if(j==='Excavator')return {ct:ct||20,kb:c||1.0,ff:0.85,sf:1.3,e:1};
+  if(j==='Wheel loader')return {ct:ct||40,kb:c||3.0,ff:0.9,sf:1.3,e:1};
+  if(j==='Dump truck')return {kap:c||15,ff:0.9,sf:1.3,muat:3,jarak:2,visi:20,vkos:30,dump:1.5,antri:1,e:0.83};
+  if(j==='Bulldozer')return {bl:c||5,bf:0.75,jarak:50,vf:60,vr:100,z:0.25,sf:1.3,e:0.75};
+  if(j==='Motor grader')return {v:6,w:c||3.7,ov:0.3,n:2,e:0.8};
+  return {w:c||2.1,v:3,h:0.3,n:6,e:0.8};
+}
+var PRD_KF={
+  'Excavator':[['ct','Cycle time Ct (detik)'],['kb','Kapasitas bucket Kb (m³)'],['ff','Fill factor Ff (0–1)'],['sf','Swell factor SF'],['e','Efisiensi kerja E (0–1)']],
+  'Wheel loader':[['ct','Cycle time Ct (detik)'],['kb','Kapasitas bucket Kb (m³)'],['ff','Fill factor Ff (0–1)'],['sf','Swell factor SF'],['e','Efisiensi kerja E (0–1)']],
+  'Dump truck':[['kap','Kapasitas bak (m³ heaped)'],['ff','Fill factor (0–1)'],['sf','Swell factor SF'],['muat','Waktu muat (menit)'],['jarak','Jarak angkut satu arah (km)'],['visi','Kecepatan isi (km/jam)'],['vkos','Kecepatan kosong (km/jam)'],['dump','Spot dan dumping (menit)'],['antri','Antri muat dan bongkar (menit)'],['e','Efisiensi kerja E (0–1)']],
+  'Bulldozer':[['bl','Kapasitas blade (m³ LCM)'],['bf','Blade factor (0–1)'],['jarak','Jarak dorong (m)'],['vf','Kecepatan maju (m/menit)'],['vr','Kecepatan mundur (m/menit)'],['z','Waktu tetap ganti gigi (menit)'],['sf','Swell factor SF'],['e','Efisiensi kerja E (0–1)']],
+  'Motor grader':[['v','Kecepatan kerja (km/jam)'],['w','Lebar blade (m)'],['ov','Tumpang tindih lintasan (m)'],['n','Jumlah lintasan (pass)'],['e','Efisiensi kerja E (0–1)']],
+  'Compactor':[['w','Lebar drum efektif (m)'],['v','Kecepatan (km/jam)'],['h','Tebal lapisan padat (m)'],['n','Jumlah lintasan (pass)'],['e','Efisiensi kerja E (0–1)']]
+};
+function prdCalcOut(j,v){
+  var g=function(k){return Number(v[k])||0},K=[];
+  if(j==='Excavator'||j==='Wheel loader'){
+    var cph=g('ct')>0?3600/g('ct'):0,lcm=cph*g('kb')*g('ff')*g('e'),q=g('sf')>0?lcm/g('sf'):0;
+    K.push(['Siklus per jam',opNf(cph,1),'3600 / Ct'],['Produktivitas (LCM)',opNf(lcm,0)+' LCM/jam','(3600/Ct) × Kb × Ff × E'],['Produktivitas (Q)',opNf(q,0)+' BCM/jam','(3600/Ct) × Kb × Ff ÷ SF × E','good'],['Per shift 12 jam',opNf(q*12,0)+' BCM','Q × 12 jam, tanpa EU']);
+  }else if(j==='Dump truck'){
+    var ct=g('muat')+g('dump')+g('antri')+(g('visi')>0?g('jarak')/g('visi')*60:0)+(g('vkos')>0?g('jarak')/g('vkos')*60:0),rit=ct>0?60/ct*g('e'):0,mb=g('sf')>0?g('kap')*g('ff')/g('sf'):0;
+    K.push(['Cycle time',opNf(ct,1)+' menit','muat + angkut + dump + kembali + antri'],['Ritase per jam',opNf(rit,2),'(60 ÷ CT) × E'],['Muatan per rit',opNf(mb,1)+' BCM','kapasitas × Ff ÷ SF'],['Produktivitas (Q)',opNf(rit*mb,0)+' BCM/jam','ritase × muatan','good']);
+  }else if(j==='Bulldozer'){
+    var cm=(g('vf')>0?g('jarak')/g('vf'):0)+(g('vr')>0?g('jarak')/g('vr'):0)+g('z'),lc=cm>0?60*g('bl')*g('bf')/cm*g('e'):0;
+    K.push(['Cycle time',opNf(cm,2)+' menit','D/F + D/R + Z'],['Produktivitas (LCM)',opNf(lc,0)+' LCM/jam','60 × Kapasitas × BF ÷ Cm × E'],['Produktivitas (Q)',opNf(g('sf')>0?lc/g('sf'):0,0)+' BCM/jam','LCM ÷ SF','good']);
+  }else if(j==='Motor grader'){
+    var km=g('n')>0?g('v')*g('e')/g('n'):0,lb=Math.max(0,g('w')-g('ov'));
+    K.push(['Lebar efektif',opNf(lb,2)+' m','lebar blade − tumpang tindih'],['Panjang jalan selesai',opNf(km,2)+' km/jam','V × E ÷ N','good'],['Luas perataan',opNf(km*1000*lb,0)+' m²/jam','panjang × lebar efektif']);
+  }else{
+    var ar=g('n')>0?g('w')*g('v')*1000*g('e')/g('n'):0;
+    K.push(['Luas pemadatan',opNf(ar,0)+' m²/jam','W × V × E ÷ N'],['Volume padat',opNf(ar*g('h'),0)+' m³/jam','luas × tebal lapisan','good'],['Per shift 12 jam',opNf(ar*g('h')*12,0)+' m³','tanpa EU']);
+  }
+  return K;
+}
+function prdCalcPanel(){
+  if(!PRD_CAL.v)PRD_CAL.v=prdKatDef(PRD_KAT.filter(function(k){return prdKatLabel(k)===PRD_CAL.model})[0]);
+  var fWrap=h('div',{class:'prd-sim'}),oWrap=h('div'),selJ=h('select',null,PRD_KJ.map(function(x){return h('option',{value:x,selected:x===PRD_CAL.jenis},x)})),
+      selB=h('select'),selM=h('select'),hint=h('p',{class:'prd-note',style:'margin:0'});
+  function brands(){var b=[];PRD_KAT.forEach(function(k){if(k[0]===PRD_CAL.jenis&&b.indexOf(k[1])<0)b.push(k[1])});return b}
+  function models(br){return PRD_KAT.filter(function(k){return k[0]===PRD_CAL.jenis&&(!br||k[1]===br)})}
+  function out(){oWrap.replaceChildren(h('div',{class:'grid'},prdCalcOut(PRD_CAL.jenis,PRD_CAL.v).map(function(k){return kpi(k[0],k[1],k[2],k[3]||'')})))}
+  function fields(){fWrap.replaceChildren.apply(fWrap,PRD_KF[PRD_CAL.jenis].map(function(f){var i=h('input',{type:'number',step:'any',min:'0',value:PRD_CAL.v[f[0]]});i.addEventListener('input',function(){PRD_CAL.v[f[0]]=Number(i.value)||0;out()});return h('label',null,h('span',{text:f[1]}),i)}))}
+  function fillModels(){
+    var br=selB.value,L=models(br);
+    selM.replaceChildren.apply(selM,[h('option',{value:''},'Manual (isi sendiri)')].concat(L.map(function(k){return h('option',{value:prdKatLabel(k),selected:prdKatLabel(k)===PRD_CAL.model},prdKatLabel(k)+' ('+k[3]+' '+PRD_KUNIT[k[0]].split(' ')[0]+')')})));
+  }
+  function fillBrands(){var cur=PRD_CAL.model?PRD_CAL.model.split(' ')[0]:'';selB.replaceChildren.apply(selB,[h('option',{value:''},'Semua merek')].concat(brands().map(function(b){return h('option',{value:b,selected:b===cur},b)})));}
+  function note(){var k=PRD_KAT.filter(function(x){return prdKatLabel(x)===PRD_CAL.model})[0];hint.textContent=k?'Nilai awal dari katalog '+prdKatLabel(k)+': '+k[3]+' '+PRD_KUNIT[k[0]]+(k[4]?', Ct '+k[4]+' detik':'')+'. Nilai tipikal brosur; sesuaikan dengan spesifikasi unit dan kondisi lapangan.':'Mode manual: isi semua parameter sesuai alat Anda.'}
+  function applyModel(){var k=PRD_KAT.filter(function(x){return prdKatLabel(x)===PRD_CAL.model})[0];PRD_CAL.v=prdKatDef(k)}
+  function redraw(){selJ.value=PRD_CAL.jenis;fillBrands();fillModels();fields();out();note()}
+  selJ.addEventListener('change',function(){PRD_CAL.jenis=selJ.value;PRD_CAL.model='';PRD_CAL.v=prdKatDef(null);redraw()});
+  selB.addEventListener('change',function(){fillModels()});
+  selM.addEventListener('change',function(){PRD_CAL.model=selM.value;applyModel();fields();out();note()});
+  PRD_CAL.draw=redraw;redraw();
+  return panel('Kalkulator produktivitas alat berat','Pilih jenis, merek, dan model alat. Parameter terisi otomatis dari katalog dan dapat diubah. Contoh Komatsu PC2000: Ct 30 detik, bucket 12 m³, Ff 0,85, SF 1,30 menghasilkan ±942 BCM/jam.',
+    h('div',{class:'prd-sim',style:'margin-bottom:10px'},h('label',null,h('span',{text:'Jenis alat'}),selJ),h('label',null,h('span',{text:'Merek'}),selB),h('label',null,h('span',{text:'Model'}),selM)),hint,h('div',{style:'height:8px'}),fWrap,oWrap);
+}
+function prdKatPanel(){
+  var q='',fj='',body=h('div',{style:'max-height:440px;overflow:auto'});
+  function fill(){
+    var L=PRD_KAT.filter(function(k){return (!fj||k[0]===fj)&&(!q||(prdKatLabel(k)+' '+k[0]).toLowerCase().indexOf(q)>=0)});
+    body.replaceChildren(L.length?h('div',{class:'scroll'},h('table',{class:'tbl'},h('thead',null,h('tr',null,['Jenis','Merek','Model','Kapasitas','Cycle time',''].map(function(x){return h('th',{text:x})}))),
+      h('tbody',null,L.map(function(k){return h('tr',null,h('td',{data:{label:'Jenis'},text:k[0]}),h('td',{data:{label:'Merek'},text:k[1]}),h('td',{data:{label:'Model'},text:k[2]}),h('td',{data:{label:'Kapasitas'},text:k[3]+' '+PRD_KUNIT[k[0]]}),h('td',{data:{label:'Cycle time'},text:k[4]?k[4]+' detik':'—'}),
+        h('td',null,h('button',{type:'button',class:'btn',onclick:function(){PRD_CAL.jenis=k[0];PRD_CAL.model=prdKatLabel(k);PRD_CAL.v=prdKatDef(k);if(PRD_CAL.draw)PRD_CAL.draw();var el=document.getElementById('prd-cal');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}},'Hitung')))})))):h('p',{class:'empty',text:'Tidak ada alat yang cocok.'}));
+  }
+  var qi=h('input',{type:'search',placeholder:'Cari merek atau model…','aria-label':'Cari alat',oninput:function(e){q=e.target.value.toLowerCase();fill()}}),
+      sj=h('select',{'aria-label':'Saring jenis',onchange:function(e){fj=e.target.value;fill()}},h('option',{value:''},'Semua jenis'),PRD_KJ.map(function(x){return h('option',{value:x},x)}));
+  fill();
+  return panel('Katalog alat berat yang umum di Indonesia','Komatsu, Caterpillar, Hitachi, Volvo, Doosan, Kobelco, Sany, SDLG, Liugong, Hino, Sinotruk, Shacman, FAW, Shantui, Bomag, Sakai, Hamm, dan Dynapac. Kapasitas adalah nilai tipikal sebagai titik awal hitung, bukan pengganti spesifikasi resmi unit.',h('div',{class:'toolbar'},qi,sj),body);
+}
 function prdRumus(){
-  var q={ct:30,kb:12,ff:0.85,sf:1.3},w={q:942,jam:720,pa:85,ua:60,pa2:90,ua2:70};
-  var qOut=h('div'),wOut=h('div');
+  var w={q:942,jam:720,pa:85,ua:60,pa2:90,ua2:70};
+  var wOut=h('div');
   function inp(o,k,lbl,step,fn){var i=h('input',{type:'number',step:step||'any',min:'0',value:o[k]});i.addEventListener('input',function(){o[k]=Number(i.value)||0;fn()});return h('label',null,h('span',{text:lbl}),i)}
-  function cq(){var v=q.ct>0&&q.sf>0?(3600/q.ct)*q.kb*q.ff/q.sf:0;qOut.replaceChildren(h('div',{class:'grid'},kpi('Siklus per jam',opNf(q.ct>0?3600/q.ct:0,1),'3600 / Ct'),kpi('Produktivitas (Q)',opNf(v,0)+' BCM/jam','(3600/Ct) × Kb × Ff ÷ SF','good')));w.q=Math.round(v)||w.q}
   function cw(){
     var eu=w.pa/100*w.ua/100,eu2=w.pa2/100*w.ua2/100,p1=w.q*w.jam*eu,p2=w.q*w.jam*eu2,d=p2-p1;
     wOut.replaceChildren(h('div',{class:'grid'},kpi('EU saat ini',opNf(eu*100,1)+'%','PA × UA'),kpi('Produksi saat ini',opNf(p1,0)+' BCM','Q × jam × EU'),kpi('EU target',opNf(eu2*100,1)+'%','PA × UA baru'),kpi('Produksi target',opNf(p2,0)+' BCM','Q × jam × EU baru'),kpi('Tambahan produksi',(d>=0?'+':'')+opNf(d,0)+' BCM',p1>0?(d>=0?'+':'')+opNf(d/p1*100,1)+'% hanya dari perbaikan PA dan UA':'',d>0?'good':'warn')));
   }
-  cq();cw();
+  cw();
   /* dari data aktual */
   var rows=prdMonthRows(),ob=rows.filter(function(r){return r.jenis==='Loader'});if(!ob.length)ob=rows;var A=prdAgg(ob),R2=prdAgg(rows);
   var aktual=A.n?h('div',{class:'grid'},kpi('Productivity aktual',A.pdty==null?'—':opNf(A.pdty,1)+' BCM/jam','OB ÷ EWH loader'),kpi('Total jam',opNf(R2.tot,0)+' jam','W+S+R seluruh unit'),kpi('EU aktual',prdPct(R2.eu),'W ÷ total waktu',prdToneHi(R2.eu,0.5,0.4)),kpi('Produksi',opNf(A.bcm,0)+' BCM','periode '+prdMonthLabel(PRD.bulan))):h('p',{class:'empty',text:'Belum ada laporan harian alat pada bulan '+prdMonthLabel(PRD.bulan)+'.'});
-  var cheat=[['PA (Physical Availability)','PA = (W + S) ÷ (W + S + R) × 100%','Target ≥ 85%'],['UA (Use of Availability)','UA = W ÷ (W + S) × 100%','Normal ±60%'],['EU (Effective Utilization)','EU = PA × UA = W ÷ Total × 100%','Target > 50%'],['Produktivitas excavator','Q = (3600 ÷ Ct) × Kb × Ff ÷ SF','BCM/jam'],['Produksi','Produksi = Produktivitas × Total jam × EU','BCM/periode']];
+  var cheat=[['PA (Physical Availability)','PA = (W + S) ÷ (W + S + R) × 100%','Target ≥ 85%'],['UA (Use of Availability)','UA = W ÷ (W + S) × 100%','Normal ±60%'],['EU (Effective Utilization)','EU = PA × UA = W ÷ Total × 100%','Target > 50%'],['Excavator dan wheel loader','Q = (3600 ÷ Ct) × Kb × Ff ÷ SF × E','BCM/jam'],['Dump truck','Q = (60 ÷ CT) × Kapasitas × Ff ÷ SF × E; CT = muat + angkut + dump + kembali + antri','BCM/jam'],['Bulldozer','Q = 60 × Kapasitas blade × BF ÷ Cm × E; Cm = D/F + D/R + Z','LCM/jam'],['Motor grader','Panjang = V × E ÷ N; luas = panjang × (lebar blade − tumpang tindih)','km/jam, m²/jam'],['Compactor','Q = W × V × H × E ÷ N','m³/jam padat'],['Produksi','Produksi = Produktivitas × Total jam × EU','BCM/periode']];
   return h('div',{style:'display:flex;flex-direction:column;gap:16px'},
     panel('Produksi aktual dari laporan harian','Memakai filter bulan di tab Dashboard. Identitas: produktivitas × total jam × EU sama dengan total OB yang tercatat.',aktual),
-    panel('Hitung produktivitas excavator','Contoh Komatsu PC2000: Ct 30 detik, bucket 12 m³, fill factor 0,85, swell factor 1,30 menghasilkan ±942 BCM/jam.',h('div',{class:'prd-sim'},inp(q,'ct','Cycle time Ct (detik)','any',cq),inp(q,'kb','Kapasitas bucket Kb (m³)','any',cq),inp(q,'ff','Fill factor Ff (0–1)','any',cq),inp(q,'sf','Swell factor SF','any',cq)),qOut),
+    h('div',{id:'prd-cal'},prdCalcPanel()),
+    prdKatPanel(),
     panel('Produksi dan simulasi what-if','Produksi = Produktivitas × Total jam × EU. Ubah PA dan UA untuk melihat dampaknya pada produksi.',h('div',{class:'prd-sim'},inp(w,'q','Produktivitas Q (BCM/jam)','any',cw),inp(w,'jam','Total jam periode','any',cw),inp(w,'pa','PA saat ini (%)','any',cw),inp(w,'ua','UA saat ini (%)','any',cw),inp(w,'pa2','PA target (%)','any',cw),inp(w,'ua2','UA target (%)','any',cw)),wOut),
     panel('Kartu rumus','W = working, S = standby, R = repair atau breakdown, Ct = cycle time, Kb = kapasitas bucket, Ff = fill factor, SF = swell factor.',prdTable(['Parameter','Rumus','Acuan'],cheat),h('p',{class:'prd-note',style:'margin-top:8px',text:'Acuan: Komatsu Specification and Application Handbook Ed. 30, KepMen ESDM 1827 K/30/MEM/2018, Mining Course #4 Parameter Produksi.'})));
 }
