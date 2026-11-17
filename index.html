@@ -13680,14 +13680,12 @@ function asetView(){
   var A=S.asetsite||[],root=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
   root.append(head('Aset SITE (CAPEX)','Siapa memegang apa, di mana asetnya, dan bagaimana kondisinya. Berlaku untuk aset modal di lokasi tambang. Setiap perubahan PIC, lokasi, kondisi, dan opname tercatat otomatis.'));
   var perlu=A.filter(asPerlu).length,tanpa=A.filter(function(r){return !r.pic}).length,nonaktif=A.filter(function(r){return asPicState(r)==='nonaktif'}).length,belum=A.filter(asBelumOpname).length;
-  var nil=A.reduce(function(a,r){return a+(Number(r.nilai)||0)},0);
   root.append(h('div',{class:'grid'},
     kpi('Total aset',String(A.length),'unit terdaftar'),
     kpi('Perlu perhatian',String(perlu),'maintenance, rusak, atau hilang',perlu?'warn':'good'),
     kpi('Tanpa PIC',String(tanpa),'belum ada penanggung jawab',tanpa?'warn':'good'),
     kpi('PIC tidak aktif',String(nonaktif),'karyawan keluar masih pegang aset',nonaktif?'crit':'good'),
-    kpi('Belum diopname',String(belum),'lebih dari 12 bulan',belum?'warn':'good'),
-    kpi('Nilai perolehan',asRp(nil),nil?invRp(nil):'seluruh aset terdaftar')));
+    kpi('Belum diopname',String(belum),'lebih dari 12 bulan',belum?'warn':'good')));
   var T=[['daftar','Daftar aset'],['pic','Per penanggung jawab'],['mutasi','Riwayat mutasi']];
   var tabs=h('div',{class:'op-tabs',role:'tablist','aria-label':'Aset SITE'},T.map(function(t){
     return h('button',{type:'button',role:'tab',class:'op-tab'+(AS.tab===t[0]?' on':''),'aria-selected':AS.tab===t[0]?'true':'false',onclick:function(){AS.tab=t[0];paint()}},t[1])}));
