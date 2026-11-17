@@ -2006,6 +2006,8 @@ SEED.jamkerja=[{id:'jk01',periode:'2026-01',jam:3080,tk:14,catatan:'Personel SSU
 SEED.ubah=[];SEED.minepermit=[];SEED.simper=[];SEED.pgship=[];SEED.pgbarge=[];SEED.pgjetty=[];SEED.pgsurv=[];SEED.pgkontrak=[];SEED.pgcust=[];SEED.pgstock=[];SEED.pgset=[];
 SEED.kdok=[];SEED.rkthn=[];SEED.opsm=[];SEED.opcat=[];SEED.opeto=[];SEED.opbarge=[];SEED.opform=[];SEED.oplog=[];SEED.opset=[];SEED.opmaster=[];SEED.opplan=[];SEED.oprkab=[];SEED.opkon=[];
 SEED.invpakai=[];
+SEED.asetsite=[];
+SEED.asetmut=[];
 var COLS=Object.keys(SEED);
 var RK_DEF={tahun:2026,nomor:'T-2350.RKAB/MB.04/DJB.M/2026',tgl:'2026-11-09',berlaku:'2026-12-31',limit:0,satuan:'ton',komoditas:'bijih nikel',penerbit:'Direktorat Jenderal Mineral dan Batubara',sifat:'Segera',lampiran:'Satu berkas (pokok-pokok kegiatan)',perihal:'Persetujuan RKAB IUP Tahap Operasi Produksi PT Surya Saga Utama Tahun 2026',
  ketentuan:['Persetujuan diberikan berdasarkan evaluasi data dan dokumen pendukung yang disampaikan.','Dilarang disalahgunakan untuk kegiatan usaha pertambangan yang tidak sesuai peraturan perundang-undangan.','Akibat hukum atas ketidakbenaran data atau penyalahgunaan menjadi tanggung jawab perusahaan, dan persetujuan dapat dibatalkan.','Bila ada kekeliruan, persetujuan diperbaiki sesuai ketentuan peraturan perundang-undangan.']};
@@ -13501,6 +13503,210 @@ function invView(){
   return root;
 }
 
+/* ---------- Aset SITE (CAPEX): register aset, penanggung jawab, opname, riwayat mutasi (v80) ---------- */
+var AS_KAT=['Alat Berat','Kendaraan Operasional','IT & Elektronik','Furniture & Office','Bangunan & Fasilitas Site','Peralatan Survei & Laboratorium','Lain-lain'];
+var AS_LOK=['Site','Camp','Kantor','Workshop','Terminal khusus','Pos jaga','Gudang','Lainnya'];
+var AS_KOND=['Baik','Maintenance','Rusak Ringan','Rusak Berat','Hilang'];
+var AS_PERHATIAN=['Maintenance','Rusak Ringan','Rusak Berat','Hilang'];
+var AS={tab:'daftar',q:'',kat:'',kond:'',lok:'',pic:''};
+
+function asPicNames(){
+  var s={};(S.personel||[]).forEach(function(r){if(r.nama)s[r.nama]=1});
+  return Object.keys(s).sort();
+}
+function asPicState(r){
+  if(!r.pic)return 'tanpa';
+  var p=(S.personel||[]).find(function(x){return String(x.nama||'').trim()===String(r.pic).trim()});
+  return p&&p.kerja==='Tidak aktif'?'nonaktif':'aktif';
+}
+function asPerlu(r){return AS_PERHATIAN.indexOf(r.kondisi)>=0}
+function asBelumOpname(r){
+  if(r.kondisi==='Hilang')return false;
+  if(!r.tglOpname)return true;
+  var d=daysTo(r.tglOpname);return d!=null&&d<-365;
+}
+function asKode(tgl){
+  var y=String(tgl||isoOf(TODAY)).slice(0,4),mx=0,re=new RegExp('^AS-'+y+'-(\\d+)$');
+  (S.asetsite||[]).forEach(function(r){var m=re.exec(String(r.kode||''));if(m)mx=Math.max(mx,Number(m[1]))});
+  return 'AS-'+y+'-'+String(mx+1).padStart(3,'0');
+}
+function asRp(v){v=Number(v)||0;if(v>=1e9)return 'Rp '+(v/1e9).toLocaleString('id-ID',{maximumFractionDigits:2})+' M';if(v>=1e6)return 'Rp '+(v/1e6).toLocaleString('id-ID',{maximumFractionDigits:1})+' jt';return invRp(v)}
+function asTone(k){return k==='Baik'?'good':k==='Maintenance'||k==='Rusak Ringan'?'warn':'crit'}
+
+CFG.asetsite={key:'asetsite',add:'Aset baru',empty:'Belum ada aset terdaftar.',title:'Aset SITE',
+  fields:[
+    {k:'kode',l:'Kode aset (kosongkan untuk kode otomatis)',t:'text',sec:'Identitas aset'},
+    {k:'nama',l:'Nama aset',t:'text',req:1},
+    {k:'kategori',l:'Kategori',t:'select',req:1,o:AS_KAT},
+    {k:'noSeri',l:'Nomor seri atau plat',t:'text'},
+    {k:'tglPerolehan',l:'Tanggal perolehan',t:'date'},
+    {k:'nilai',l:'Nilai perolehan (Rp)',t:'number',min:0},
+    {k:'lokasi',l:'Lokasi penempatan',t:'select',o:AS_LOK,sec:'Penempatan dan penanggung jawab'},
+    {k:'detailLokasi',l:'Detail lokasi (ruang, blok, unit, atau kendaraan)',t:'text'},
+    {k:'kondisi',l:'Kondisi',t:'select',req:1,o:AS_KOND},
+    {k:'pic',l:'Penanggung jawab (PIC)',t:'select',o:asPicNames},
+    {k:'tglSerah',l:'Tanggal serah terima ke PIC',t:'date'},
+    {k:'tglOpname',l:'Opname terakhir',t:'date'},
+    {k:'catatan',l:'Catatan',t:'area'}],
+  defaults:{kondisi:'Baik',lokasi:'Site'},
+  filter:{k:'kategori',all:'Semua kategori'},
+  sort:function(a,b){return String(a.kode||'').localeCompare(String(b.kode||''))},
+  cols:[
+    {l:'Kode',r:function(r){return r.kode||'—'}},
+    {l:'Aset',r:function(r){return r.nama}},
+    {l:'Kategori',r:function(r){return r.kategori||'—'}},
+    {l:'Kondisi',r:function(r){return badge(r.kondisi||'—',asTone(r.kondisi))}},
+    {l:'PIC',r:function(r){return r.pic||'—'}}]};
+
+/* catat riwayat mutasi otomatis saat aset dibuat atau diubah */
+var AS_SAVE=save;
+save=async function(c,id,data){
+  if(c!=='asetsite')return AS_SAVE(c,id,data);
+  data=Object.assign({},data);
+  var lama=id?(S.asetsite||[]).find(function(r){return r.id===id}):null;
+  if(!data.kode)data.kode=lama&&lama.kode?lama.kode:asKode(data.tglPerolehan);
+  var rid=await AS_SAVE(c,id,data),logs=[],tgl=isoOf(TODAY);
+  function L(j,d,k){logs.push({asetId:rid||id,kode:data.kode,nama:data.nama,tgl:tgl,jenis:j,dari:d||'',ke:k||''})}
+  var lokTxt=function(x){return [x.lokasi,x.detailLokasi].filter(Boolean).join(' · ')};
+  if(!lama)L('Aset baru','',[data.pic?'PIC '+data.pic:'',lokTxt(data)].filter(Boolean).join(' · '));
+  else{
+    if((lama.pic||'')!==(data.pic||''))L('Perubahan PIC',lama.pic||'Belum ada PIC',data.pic||'Belum ada PIC');
+    if(lokTxt(lama)!==lokTxt(data))L('Pindah lokasi',lokTxt(lama)||'—',lokTxt(data)||'—');
+    if((lama.kondisi||'')!==(data.kondisi||''))L('Perubahan kondisi',lama.kondisi||'—',data.kondisi||'—');
+    if(data.tglOpname&&data.tglOpname!==lama.tglOpname)L('Opname','',fmt(data.tglOpname));
+  }
+  for(var i=0;i<logs.length;i++){try{await AS_SAVE('asetmut',null,logs[i])}catch(e){if(window.console)console.error(e)}}
+  return rid;
+};
+
+/* penyesuaian form */
+var AS_FORM=openForm;
+openForm=function(key,row,pre){
+  var res=AS_FORM.call(this,key,row,pre);
+  if(key==='asetsite'){try{asFormTweak(row)}catch(e){if(window.console)console.error(e)}}
+  return res;
+};
+function asFormTweak(row){
+  var dlg=document.querySelector('#ov .dlg');if(!dlg)return;
+  var form=dlg.querySelector('form');if(!form)return;
+  var kd=form.querySelector('#m-kode');if(kd&&!kd.value)kd.placeholder='Otomatis, mis. '+asKode();
+  var pc=form.querySelector('#m-pic');
+  if(pc&&row&&row.pic&&![].some.call(pc.options,function(o){return o.value===row.pic}))pc.append(h('option',{value:row.pic,selected:true},row.pic));
+  if(pc&&pc.options[0]&&!pc.options[0].value)pc.options[0].textContent='Belum ada PIC';
+  var op=form.querySelector('#m-tglOpname');
+  if(op&&!op.disabled){
+    var lb=op.closest('label');
+    lb.append(h('button',{type:'button',class:'btn',style:'margin-top:6px;align-self:flex-start',onclick:function(){op.value=isoOf(TODAY)}},'Isi hari ini'));
+  }
+}
+
+/* ---------- halaman ---------- */
+function asFiltered(){
+  var q=AS.q.trim().toLowerCase();
+  return S.asetsite.slice().sort(CFG.asetsite.sort).filter(function(r){
+    if(AS.kat&&r.kategori!==AS.kat)return false;
+    if(AS.lok&&r.lokasi!==AS.lok)return false;
+    if(AS.kond==='perhatian'){if(!asPerlu(r))return false}else if(AS.kond&&r.kondisi!==AS.kond)return false;
+    if(AS.pic==='__tanpa'){if(r.pic)return false}else if(AS.pic==='__nonaktif'){if(asPicState(r)!=='nonaktif')return false}else if(AS.pic&&r.pic!==AS.pic)return false;
+    if(q&&[r.kode,r.nama,r.noSeri,r.pic,r.detailLokasi].join(' ').toLowerCase().indexOf(q)<0)return false;
+    return true;
+  });
+}
+function asSel(label,val,opts,set){
+  return h('select',{'aria-label':label,onchange:function(e){set(e.target.value);paint()}},
+    h('option',{value:''},label),opts.map(function(o){var v=Array.isArray(o)?o[0]:o,t=Array.isArray(o)?o[1]:o;return h('option',{value:v,selected:val===v},t)}));
+}
+function asDaftar(){
+  var body=h('div'),cnt=h('span',{class:'tag',style:'margin:0'});
+  function fill(){
+    var rows=asFiltered();cnt.textContent=rows.length+' dari '+S.asetsite.length;
+    if(!rows.length){body.replaceChildren(h('div',{class:'emptyst'},h('p',{class:'empty',text:S.asetsite.length?'Tidak ada aset yang cocok dengan penyaringan.':CFG.asetsite.empty}),
+      !S.asetsite.length&&canWrite?h('div',{class:'emptyst-a'},h('button',{type:'button',class:'btn primary',onclick:function(){openForm('asetsite')}},'+ Aset baru')):null));return}
+    body.replaceChildren(h('div',{class:'scroll'},h('table',{class:'tbl'},
+      h('thead',null,h('tr',null,['Kode','Aset','Kategori','Lokasi','Kondisi','PIC','Opname','Nilai perolehan'].map(function(x){return h('th',{text:x})}))),
+      h('tbody',null,rows.map(function(r){
+        var ps=asPicState(r),nb=bkCount('asetsite',r.id);
+        return h('tr',{class:'click',onclick:function(){openForm('asetsite',r)}},
+          h('td',{data:{label:'Kode'}},h('span',{class:'mono',style:'white-space:nowrap',text:r.kode||'—'})),
+          h('td',{data:{label:'Aset'}},r.nama||'—',nb?h('span',{class:'tag',text:'Lampiran '+nb}):null,r.noSeri?h('small',{style:'display:block;color:var(--muted)',text:r.noSeri}):null),
+          h('td',{data:{label:'Kategori'}},r.kategori||'—'),
+          h('td',{data:{label:'Lokasi'}},r.lokasi||'—',r.detailLokasi?h('small',{style:'display:block;color:var(--muted)',text:r.detailLokasi}):null),
+          h('td',{data:{label:'Kondisi'}},badge(r.kondisi||'—',asTone(r.kondisi))),
+          h('td',{data:{label:'PIC'}},r.pic?h('span',null,r.pic,ps==='nonaktif'?[' ',badge('Tidak aktif','crit')]:null):h('span',{style:'color:var(--muted)',text:'Belum ada PIC'})),
+          h('td',{data:{label:'Opname'}},r.tglOpname?fmt(r.tglOpname):h('span',{style:'color:var(--muted)',text:'Belum'}),asBelumOpname(r)&&r.tglOpname?h('small',{style:'display:block;color:var(--warn)',text:'Lebih dari 12 bulan'}):null),
+          h('td',{data:{label:'Nilai perolehan'}},h('span',{class:'mono',text:r.nilai?invRp(r.nilai):'—'})));
+      })))));
+  }
+  var q=h('input',{type:'search',placeholder:'Kode, nama, no. seri, PIC','aria-label':'Cari aset',value:AS.q,oninput:function(e){AS.q=e.target.value;fill()}});
+  var pics=asPicNames();
+  var bar=h('div',{class:'toolbar',style:'flex-wrap:wrap'},q,
+    asSel('Semua kategori',AS.kat,AS_KAT,function(v){AS.kat=v}),
+    asSel('Semua kondisi',AS.kond,[['perhatian','Perlu perhatian']].concat(AS_KOND),function(v){AS.kond=v}),
+    asSel('Semua lokasi',AS.lok,AS_LOK,function(v){AS.lok=v}),
+    asSel('Semua PIC',AS.pic,[['__tanpa','Tanpa PIC'],['__nonaktif','PIC tidak aktif']].concat(pics),function(v){AS.pic=v}),
+    cnt,h('span',{class:'grow'}),exportBtn('asetsite'),canWrite?h('button',{class:'btn primary',type:'button',onclick:function(){openForm('asetsite')}},'+ Aset baru'):null);
+  fill();return h('div',null,bar,body);
+}
+function asPerPic(){
+  var g={};
+  S.asetsite.forEach(function(r){var k=r.pic||'';(g[k]=g[k]||[]).push(r)});
+  var ks=Object.keys(g).sort(function(a,b){return a===''?1:b===''?-1:a.localeCompare(b)});
+  if(!ks.length)return h('p',{class:'empty',text:'Belum ada aset terdaftar.'});
+  return h('div',{class:'scroll'},h('table',{class:'tbl'},
+    h('thead',null,h('tr',null,['Penanggung jawab','Status','Jumlah aset','Nilai perolehan','Aset'].map(function(x){return h('th',{text:x})}))),
+    h('tbody',null,ks.map(function(k){
+      var L=g[k],st=k?asPicState(L[0]):'tanpa',nil=L.reduce(function(a,r){return a+(Number(r.nilai)||0)},0);
+      return h('tr',{class:'click',onclick:function(){AS.tab='daftar';AS.pic=k||'__tanpa';AS.q='';AS.kat='';AS.kond='';AS.lok='';paint()}},
+        h('td',{data:{label:'Penanggung jawab'}},k||h('span',{style:'color:var(--muted)',text:'Belum ada PIC'})),
+        h('td',{data:{label:'Status'}},k?badge(st==='nonaktif'?'Tidak aktif':'Aktif',st==='nonaktif'?'crit':'good'):'—'),
+        h('td',{data:{label:'Jumlah aset'}},h('span',{class:'mono',text:String(L.length)})),
+        h('td',{data:{label:'Nilai perolehan'}},h('span',{class:'mono',text:nil?invRp(nil):'—'})),
+        h('td',{data:{label:'Aset'}},L.slice(0,4).map(function(r){return r.nama}).join(', ')+(L.length>4?' +'+(L.length-4)+' lagi':'')));
+    }))));
+}
+function asMutasi(){
+  var L=(S.asetmut||[]).slice().sort(function(a,b){return String(b.tgl||'').localeCompare(String(a.tgl||''))||String(b.id).localeCompare(String(a.id))});
+  if(!L.length)return h('p',{class:'empty',text:'Belum ada riwayat mutasi. Perubahan PIC, lokasi, kondisi, dan opname tercatat otomatis.'});
+  return h('div',{class:'scroll'},h('table',{class:'tbl'},
+    h('thead',null,h('tr',null,['Tanggal','Aset','Jenis','Dari','Ke'].map(function(x){return h('th',{text:x})}))),
+    h('tbody',null,L.slice(0,300).map(function(r){
+      return h('tr',null,h('td',{data:{label:'Tanggal'}},fmt(r.tgl)),
+        h('td',{data:{label:'Aset'}},r.nama||'—',h('small',{style:'display:block;color:var(--muted)',text:r.kode||''})),
+        h('td',{data:{label:'Jenis'}},badge(r.jenis||'—',r.jenis==='Perubahan kondisi'?'warn':'info')),
+        h('td',{data:{label:'Dari'}},r.dari||'—'),h('td',{data:{label:'Ke'}},r.ke||'—'));
+    }))));
+}
+function asetView(){
+  var A=S.asetsite||[],root=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
+  root.append(head('Aset SITE (CAPEX)','Siapa memegang apa, di mana asetnya, dan bagaimana kondisinya. Berlaku untuk aset modal di lokasi tambang. Setiap perubahan PIC, lokasi, kondisi, dan opname tercatat otomatis.'));
+  var perlu=A.filter(asPerlu).length,tanpa=A.filter(function(r){return !r.pic}).length,nonaktif=A.filter(function(r){return asPicState(r)==='nonaktif'}).length,belum=A.filter(asBelumOpname).length;
+  var nil=A.reduce(function(a,r){return a+(Number(r.nilai)||0)},0);
+  root.append(h('div',{class:'grid'},
+    kpi('Total aset',String(A.length),'unit terdaftar'),
+    kpi('Perlu perhatian',String(perlu),'maintenance, rusak, atau hilang',perlu?'warn':'good'),
+    kpi('Tanpa PIC',String(tanpa),'belum ada penanggung jawab',tanpa?'warn':'good'),
+    kpi('PIC tidak aktif',String(nonaktif),'karyawan keluar masih pegang aset',nonaktif?'crit':'good'),
+    kpi('Belum diopname',String(belum),'lebih dari 12 bulan',belum?'warn':'good'),
+    kpi('Nilai perolehan',asRp(nil),nil?invRp(nil):'seluruh aset terdaftar')));
+  var T=[['daftar','Daftar aset'],['pic','Per penanggung jawab'],['mutasi','Riwayat mutasi']];
+  var tabs=h('div',{class:'op-tabs',role:'tablist','aria-label':'Aset SITE'},T.map(function(t){
+    return h('button',{type:'button',role:'tab',class:'op-tab'+(AS.tab===t[0]?' on':''),'aria-selected':AS.tab===t[0]?'true':'false',onclick:function(){AS.tab=t[0];paint()}},t[1])}));
+  root.append(panel('Register aset',null,tabs,AS.tab==='pic'?asPerPic():AS.tab==='mutasi'?asMutasi():asDaftar()));
+  return root;
+}
+
+/* ---------- menu, grup, paket ---------- */
+(function(){
+  MGRP.asetsite='Kepatuhan dan administrasi';
+  var i=MORD.indexOf('surat');MORD.splice(i<0?MORD.length:i+1,0,'asetsite');
+  var NS=navSetup;
+  navSetup=function(){
+    MODS.push({k:'asetsite',t:'Aset SITE (CAPEX)',i:'M3 8l9-4 9 4v10l-9 4-9-4zM3 8l9 4 9-4M12 12v10'});
+    NS();
+  };
+  if(typeof SUB_KUNCI_DASAR!=='undefined'&&SUB_KUNCI_DASAR.indexOf('asetsite')<0)SUB_KUNCI_DASAR.push('asetsite');
+})();
+
 /* ---------- Penyimpanan file besar di Supabase Storage (v77) ----------
    Gambar dan lampiran yang tadinya tersimpan sebagai teks base64 di dalam baris database
    dipindahkan ke bucket privat "ktt-berkas". Baris hanya menyimpan alamat file (b64ref, kopImgRef).
@@ -14509,6 +14715,7 @@ VIEWS.langganan=function(){return subView()};
 VIEWS.permit=function(){return permitView()};VIEWS.setuju=function(){return prSetujuView()};
 VIEWS.ptw=function(){return ptwView()};
 VIEWS.inventaris=function(){return invView()};
+VIEWS.asetsite=function(){return asetView()};
 VIEWS.operasional=function(){return opView()};
 VIEWS.pgdash=function(){return pgDash()};VIEWS.pgship=function(){return pgShip()};VIEWS.pgarsip=function(){return pgArsip()};VIEWS.pgmaster=function(){return pgMaster()};VIEWS.pgset=function(){return pgSetting()};VIEWS.pgtrack=function(){return pgTrack()};
 VIEWS.kredit=function(){return krView()};
