@@ -2008,6 +2008,8 @@ SEED.kdok=[];SEED.rkthn=[];SEED.opsm=[];SEED.opcat=[];SEED.opeto=[];SEED.opbarge
 SEED.invpakai=[];
 SEED.asetsite=[];
 SEED.asetmut=[];
+SEED.asetserah=[];
+SEED.asetservis=[];
 var COLS=Object.keys(SEED);
 var RK_DEF={tahun:2026,nomor:'T-2350.RKAB/MB.04/DJB.M/2026',tgl:'2026-11-09',berlaku:'2026-12-31',limit:0,satuan:'ton',komoditas:'bijih nikel',penerbit:'Direktorat Jenderal Mineral dan Batubara',sifat:'Segera',lampiran:'Satu berkas (pokok-pokok kegiatan)',perihal:'Persetujuan RKAB IUP Tahap Operasi Produksi PT Surya Saga Utama Tahun 2026',
  ketentuan:['Persetujuan diberikan berdasarkan evaluasi data dan dokumen pendukung yang disampaikan.','Dilarang disalahgunakan untuk kegiatan usaha pertambangan yang tidak sesuai peraturan perundang-undangan.','Akibat hukum atas ketidakbenaran data atau penyalahgunaan menjadi tanggung jawab perusahaan, dan persetujuan dapat dibatalkan.','Bila ada kekeliruan, persetujuan diperbaiki sesuai ketentuan peraturan perundang-undangan.']};
@@ -5697,7 +5699,7 @@ async function bkPrep(file){
   out.b64=await lampB64(file);out.ukuran=file.size;return out;
 }
 function bkField(key,row,ro){
-  if(key==='distribusi'||key==='invpakai')return {el:null,commit:async function(){}};
+  if(key==='distribusi'||key==='invpakai'||key==='asetserah')return {el:null,commit:async function(){}};
   var existing=row&&row.id?bkFor(key,row.id):[],staged=[],gone={};
   var list=h('div',{class:'bk-list'}),busy=h('p',{class:'sub',style:'margin:0',hidden:true});
   function items(){return existing.filter(function(e){return !gone[e.id]}).map(function(e){return {it:e,st:false}}).concat(staged.map(function(s){return {it:s,st:true}}))}
@@ -13313,8 +13315,9 @@ function ivPdf(kind,r){
 }
 
 /* ---------- unggah form bertanda tangan ---------- */
-async function ivUnggah(rid,kind,file,ok){
-  var r=(S.invpakai||[]).find(function(x){return x.id===rid}),fk=kind==='serah'?'fSerah':'fKembali';
+async function ivUnggah(rid,kind,file,ok,col){
+  col=col||'invpakai';
+  var r=(S[col]||[]).find(function(x){return x.id===rid}),fk=kind==='serah'?'fSerah':'fKembali';
   if(!r||!file)return;
   try{
     var f;
@@ -13325,25 +13328,27 @@ async function ivUnggah(rid,kind,file,ok){
       f={nama:file.name||'form.pdf',tipe:'application/pdf',ukuran:file.size,ts:Date.now(),b64:await lampB64(file)};
     }
     var d=Object.assign({},r);delete d.id;d[fk]=f;d._lewat=1;
-    await save('invpakai',rid,d);
+    await save(col,rid,d);
     toast('Berkas tersimpan');ok(f);
   }catch(e){toast((e&&e.message)||'Gagal mengunggah berkas')}
 }
-async function ivHapusBerkas(rid,kind,ok){
-  var r=(S.invpakai||[]).find(function(x){return x.id===rid}),fk=kind==='serah'?'fSerah':'fKembali';
+async function ivHapusBerkas(rid,kind,ok,col){
+  col=col||'invpakai';
+  var r=(S[col]||[]).find(function(x){return x.id===rid}),fk=kind==='serah'?'fSerah':'fKembali';
   if(!r)return;
-  try{var d=Object.assign({},r);delete d.id;d._hapusF=fk;d._lewat=1;await save('invpakai',rid,d);toast('Berkas dihapus');ok()}
+  try{var d=Object.assign({},r);delete d.id;d._hapusF=fk;d._lewat=1;await save(col,rid,d);toast('Berkas dihapus');ok()}
   catch(e){toast((e&&e.message)||'Gagal menghapus berkas')}
 }
-function ivDokRow(rid,kind){
+function ivDokRow(rid,kind,col,pdf){
+  col=col||'invpakai';pdf=pdf||function(k,r){ivPdf(k,r)};
   var fk=kind==='serah'?'fSerah':'fKembali',judul=kind==='serah'?'Form serah terima':'Form pengembalian',ov={};
   var wrap=h('div',{class:'bk-it',style:'flex-wrap:wrap;gap:8px'});
-  function cur(){var r=(S.invpakai||[]).find(function(x){return x.id===rid})||{};return Object.assign({},r,ov)}
+  function cur(){var r=(S[col]||[]).find(function(x){return x.id===rid})||{};return Object.assign({},r,ov)}
   function draw(){
     var r=cur(),f=r[fk],armed=false;
     var nm=h('div',{class:'bk-nm'},h('b',{text:judul}),h('small',{text:f?(f.nama||'berkas')+' · '+bkKb(f.ukuran||0)+' · sudah bertanda tangan':(kind==='kembali'&&r.status==='Dipakai'?'Dicetak saat barang dikembalikan':'Belum ada berkas bertanda tangan')}));
     var ac=h('div',{class:'bk-ac',style:'flex-wrap:wrap'});
-    ac.append(h('button',{type:'button',class:'btn',onclick:function(){ivPdf(kind,cur())}},'Unduh form PDF'));
+    ac.append(h('button',{type:'button',class:'btn',onclick:function(){pdf(kind,cur())}},'Unduh form PDF'));
     if(f){
       if(bkIsImg(f))ac.append(h('button',{type:'button',class:'btn',onclick:function(){bkLight(f)}},'Lihat'));
       ac.append(h('button',{type:'button',class:'btn',onclick:function(){bkDownload(f)}},'Unduh berkas'));
@@ -13351,13 +13356,13 @@ function ivDokRow(rid,kind){
     if(canWrite){
       var fi=h('input',{type:'file',accept:'application/pdf,image/*',hidden:true,'aria-label':'Pilih berkas '+judul.toLowerCase(),onchange:function(){
         var fl=fi.files&&fi.files[0];fi.value='';
-        ivUnggah(rid,kind,fl,function(nf2){ov[fk]=nf2;draw()});
+        ivUnggah(rid,kind,fl,function(nf2){ov[fk]=nf2;draw()},col);
       }});
       ac.append(h('button',{type:'button',class:'btn',onclick:function(){fi.click()}},f?'Ganti berkas':'Unggah yang sudah ditandatangani'),fi);
-      if(f&&prBolehHapus('invpakai',r)){
+      if(f&&prBolehHapus(col,r)){
         ac.append(h('button',{type:'button',class:'btn',style:'color:var(--crit)',onclick:function(){
           var b=this;if(!armed){armed=true;b.textContent='Hapus berkas?';setTimeout(function(){armed=false;b.textContent='Hapus berkas'},3000);return}
-          ivHapusBerkas(rid,kind,function(){ov[fk]=undefined;draw()});
+          ivHapusBerkas(rid,kind,function(){ov[fk]=undefined;draw()},col);
         }},'Hapus berkas'));
       }
     }
@@ -13593,6 +13598,12 @@ function asFormTweak(row){
   var pc=form.querySelector('#m-pic');
   if(pc&&row&&row.pic&&![].some.call(pc.options,function(o){return o.value===row.pic}))pc.append(h('option',{value:row.pic,selected:true},row.pic));
   if(pc&&pc.options[0]&&!pc.options[0].value)pc.options[0].textContent='Belum ada PIC';
+  if(row&&row.id&&canWrite){
+    var bx=h('div',{class:'bk-ac',style:'flex-wrap:wrap;justify-content:flex-start'},
+      h('button',{type:'button',class:'btn',onclick:function(){closeModal();openForm('asetserah',null,{asetLabel:asLabel(row),tglSerah:isoOf(TODAY)})}},'Serah terima aset'),
+      h('button',{type:'button',class:'btn',onclick:function(){closeModal();openForm('asetservis',null,{asetLabel:asLabel(row),tglAju:isoOf(TODAY),status:'Diajukan'})}},'Ajukan servis'));
+    form.insertBefore(bx,form.querySelector('.acts'));
+  }
   var op=form.querySelector('#m-tglOpname');
   if(op&&!op.disabled){
     var lb=op.closest('label');
@@ -13679,17 +13690,19 @@ function asMutasi(){
 function asetView(){
   var A=S.asetsite||[],root=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
   root.append(head('Aset SITE (CAPEX)','Siapa memegang apa, di mana asetnya, dan bagaimana kondisinya. Berlaku untuk aset modal di lokasi tambang. Setiap perubahan PIC, lokasi, kondisi, dan opname tercatat otomatis.'));
+  var svAktif=(S.asetservis||[]).filter(asServisAktif).length;
   var perlu=A.filter(asPerlu).length,tanpa=A.filter(function(r){return !r.pic}).length,nonaktif=A.filter(function(r){return asPicState(r)==='nonaktif'}).length,belum=A.filter(asBelumOpname).length;
   root.append(h('div',{class:'grid'},
     kpi('Total aset',String(A.length),'unit terdaftar'),
     kpi('Perlu perhatian',String(perlu),'maintenance, rusak, atau hilang',perlu?'warn':'good'),
     kpi('Tanpa PIC',String(tanpa),'belum ada penanggung jawab',tanpa?'warn':'good'),
     kpi('PIC tidak aktif',String(nonaktif),'karyawan keluar masih pegang aset',nonaktif?'crit':'good'),
-    kpi('Belum diopname',String(belum),'lebih dari 12 bulan',belum?'warn':'good')));
-  var T=[['daftar','Daftar aset'],['pic','Per penanggung jawab'],['mutasi','Riwayat mutasi']];
+    kpi('Belum diopname',String(belum),'lebih dari 12 bulan',belum?'warn':'good'),
+    kpi('Servis berjalan',String(svAktif),'diajukan, disetujui, atau dalam servis',svAktif?'warn':'good')));
+  var T=[['daftar','Daftar aset'],['pic','Per penanggung jawab'],['serah','Serah terima'],['servis','Pengajuan servis'],['mutasi','Riwayat mutasi']];
   var tabs=h('div',{class:'op-tabs',role:'tablist','aria-label':'Aset SITE'},T.map(function(t){
     return h('button',{type:'button',role:'tab',class:'op-tab'+(AS.tab===t[0]?' on':''),'aria-selected':AS.tab===t[0]?'true':'false',onclick:function(){AS.tab=t[0];paint()}},t[1])}));
-  root.append(panel('Register aset',null,tabs,AS.tab==='pic'?asPerPic():AS.tab==='mutasi'?asMutasi():asDaftar()));
+  root.append(panel('Register aset',null,tabs,AS.tab==='pic'?asPerPic():AS.tab==='mutasi'?asMutasi():AS.tab==='serah'?listView('asetserah'):AS.tab==='servis'?listView('asetservis'):asDaftar()));
   return root;
 }
 
@@ -13704,6 +13717,234 @@ function asetView(){
   };
   if(typeof SUB_KUNCI_DASAR!=='undefined'&&SUB_KUNCI_DASAR.indexOf('asetsite')<0)SUB_KUNCI_DASAR.push('asetsite');
 })();
+
+/* ---------- Aset SITE: serah terima ke PIC dan pengajuan servis (v80) ----------
+   Tanpa masa penggantian berkala. Servis diajukan hanya bila aset rusak. */
+var AS_SV=['Diajukan','Disetujui','Dalam servis','Selesai','Ditolak'];
+function asById(id){return (S.asetsite||[]).find(function(x){return x.id===id})||null}
+function asLabel(a){return a?(a.kode||'—')+' · '+(a.nama||''):''}
+function asByLabel(l){return (S.asetsite||[]).find(function(x){return asLabel(x)===l})||null}
+function asLabels(){return (S.asetsite||[]).slice().sort(CFG.asetsite.sort).map(asLabel)}
+function asNo(col,key,prefix,tgl){
+  var y=String(tgl||isoOf(TODAY)).slice(0,4),mx=0;
+  (S[col]||[]).forEach(function(r){var m=String(r[key]||'').match(/\/(\d{4})\/(\d+)$/);if(m&&m[1]===y)mx=Math.max(mx,Number(m[2]))});
+  return prefix+'/SITE/'+y+'/'+String(mx+1).padStart(3,'0');
+}
+function asServisAktif(r){return r.status==='Diajukan'||r.status==='Disetujui'||r.status==='Dalam servis'}
+function asSvTone(s){return s==='Selesai'?'good':s==='Ditolak'?'mute':s==='Diajukan'?'warn':'info'}
+
+CFG.asetserah={key:'asetserah',add:'Serah terima aset',empty:'Belum ada serah terima aset.',title:'Serah terima aset',
+  fields:[
+    {k:'asetLabel',l:'Aset',t:'select',req:1,o:asLabels,sec:'Aset'},
+    {k:'penerima',l:'Nama penerima (PIC)',t:'text',req:1,sec:'Penerima',get dl(){return ivNames()}},
+    {k:'jabatan',l:'Jabatan',t:'text'},
+    {k:'tglSerah',l:'Tanggal serah terima',t:'date',req:1},
+    {k:'kondisiSerah',l:'Kondisi saat diserahkan',t:'select',req:1,o:AS_KOND},
+    {k:'status',l:'Status',t:'select',req:1,o:['Dipegang','Dikembalikan'],sec:'Pengembalian'},
+    {k:'tglKembali',l:'Tanggal pengembalian',t:'date'},
+    {k:'kondisiKembali',l:'Kondisi saat dikembalikan',t:'select',o:AS_KOND},
+    {k:'catatan',l:'Catatan',t:'area'}],
+  defaults:{status:'Dipegang',kondisiSerah:'Baik'},
+  filter:{k:'status',all:'Semua status'},
+  sort:function(a,b){
+    var x=a.status==='Dipegang'?0:1,y=b.status==='Dipegang'?0:1;if(x!==y)return x-y;
+    return String(b.tglSerah||'').localeCompare(String(a.tglSerah||''));
+  },
+  cols:[
+    {l:'Aset',r:function(r){var a=asById(r.asetId);return h('span',null,(a&&a.nama)||r.aset||'—',h('small',{style:'display:block;color:var(--muted)',text:(a&&a.kode)||r.kode||''}))}},
+    {l:'Penerima',r:function(r){return h('span',null,r.penerima||'—',r.jabatan?h('small',{style:'display:block;color:var(--muted)',text:r.jabatan}):null)}},
+    {l:'Diserahkan',r:function(r){return fmt(r.tglSerah)}},
+    {l:'Dikembalikan',r:function(r){return r.status==='Dikembalikan'?fmt(r.tglKembali):'—'}},
+    {l:'Status',r:function(r){return badge(r.status||'—',r.status==='Dipegang'?'good':'mute')}},
+    {l:'Form bertanda tangan',r:function(r){
+      var o=[badge(r.fSerah?'Serah terima ada':'Serah terima belum',r.fSerah?'good':'warn')];
+      if(r.status==='Dikembalikan')o.push(' ',badge(r.fKembali?'Pengembalian ada':'Pengembalian belum',r.fKembali?'good':'warn'));
+      return h('span',null,o);
+    }},
+    {l:'No.',r:function(r){return h('span',{class:'mono',style:'white-space:nowrap',text:r.nomorSerah||'—'})}}]};
+
+CFG.asetservis={key:'asetservis',add:'Ajukan servis',empty:'Belum ada pengajuan servis.',title:'Pengajuan servis aset',
+  fields:[
+    {k:'asetLabel',l:'Aset yang rusak',t:'select',req:1,o:asLabels,sec:'Aset dan kerusakan'},
+    {k:'tglAju',l:'Tanggal pengajuan',t:'date',req:1},
+    {k:'pengaju',l:'Pengaju',t:'text',req:1,get dl(){return ivNames()}},
+    {k:'tingkat',l:'Tingkat kerusakan',t:'select',req:1,o:['Ringan','Sedang','Berat']},
+    {k:'uraian',l:'Uraian kerusakan',t:'area',req:1},
+    {k:'status',l:'Status',t:'select',req:1,o:AS_SV,sec:'Proses servis'},
+    {k:'vendor',l:'Bengkel atau vendor servis',t:'text'},
+    {k:'estimasiBiaya',l:'Perkiraan biaya (Rp)',t:'number',min:0},
+    {k:'tglSelesai',l:'Tanggal selesai servis',t:'date'},
+    {k:'biaya',l:'Biaya servis sebenarnya (Rp)',t:'number',min:0},
+    {k:'catatan',l:'Catatan',t:'area'}],
+  defaults:{status:'Diajukan',tingkat:'Ringan'},
+  filter:{k:'status',all:'Semua status'},
+  sort:function(a,b){
+    var x=asServisAktif(a)?0:1,y=asServisAktif(b)?0:1;if(x!==y)return x-y;
+    return String(b.tglAju||'').localeCompare(String(a.tglAju||''));
+  },
+  cols:[
+    {l:'No.',r:function(r){return h('span',{class:'mono',style:'white-space:nowrap',text:r.nomor||'—'})}},
+    {l:'Aset',r:function(r){var a=asById(r.asetId);return h('span',null,(a&&a.nama)||r.aset||'—',h('small',{style:'display:block;color:var(--muted)',text:(a&&a.kode)||r.kode||''}))}},
+    {l:'Pengaju',r:function(r){return r.pengaju||'—'}},
+    {l:'Diajukan',r:function(r){return fmt(r.tglAju)}},
+    {l:'Tingkat',r:function(r){return badge(r.tingkat||'—',r.tingkat==='Berat'?'crit':r.tingkat==='Sedang'?'warn':'info')}},
+    {l:'Status',r:function(r){return badge(r.status||'—',asSvTone(r.status))}},
+    {l:'Biaya',r:function(r){var v=r.biaya||r.estimasiBiaya;return v?h('span',null,invRp(v),h('small',{style:'display:block;color:var(--muted)',text:r.biaya?'sebenarnya':'perkiraan'})):'—'}}]};
+
+/* ---------- simpan dengan aturan dan sinkron ke register aset ---------- */
+var AS_SAVE2=save;
+save=async function(c,id,data){
+  if(c==='asetserah')return asSimpanSerah(id,data);
+  if(c==='asetservis')return asSimpanServis(id,data);
+  return AS_SAVE2(c,id,data);
+};
+function asCarry(col,id,data,keys){
+  var lama=id?(S[col]||[]).find(function(r){return r.id===id}):null;
+  keys.forEach(function(k){if(data[k]===undefined&&lama&&lama[k]!==undefined)data[k]=lama[k]});
+  return lama;
+}
+async function asSimpanSerah(id,data){
+  data=Object.assign({},data);
+  var hapus=data._hapusF,lewat=!!data._lewat;delete data._hapusF;delete data._lewat;
+  var lama=asCarry('asetserah',id,data,['fSerah','fKembali','nomorSerah','nomorKembali','asetId','aset','kode','asetLabel']);
+  if(hapus)delete data[hapus];
+  if(lewat)return AS_SAVE2('asetserah',id,data);
+  var a=data.asetLabel?asByLabel(data.asetLabel):null;
+  if(a){data.asetId=a.id;data.aset=a.nama;data.kode=a.kode}else a=asById(data.asetId);
+  if(!a)throw new Error('Pilih aset dari daftar Aset SITE.');
+  data.penerima=String(data.penerima||'').trim();
+  if(!data.penerima)throw new Error('Isi nama penerima.');
+  if(!data.tglSerah)throw new Error('Isi tanggal serah terima.');
+  var st=data.status||'Dipegang';data.status=st;
+  if(st==='Dipegang'){
+    var lain=(S.asetserah||[]).find(function(r){return r.id!==id&&r.asetId===a.id&&r.status==='Dipegang'});
+    if(lain)throw new Error(a.nama+' masih dipegang '+lain.penerima+' sejak '+fmt(lain.tglSerah)+'. Catat pengembaliannya lebih dahulu.');
+    delete data.tglKembali;delete data.kondisiKembali;
+  }else{
+    if(!data.tglKembali)throw new Error('Isi tanggal pengembalian.');
+    if(!data.kondisiKembali)throw new Error('Pilih kondisi aset saat dikembalikan.');
+  }
+  if(!data.nomorSerah)data.nomorSerah=asNo('asetserah','nomorSerah','BAST-A',data.tglSerah);
+  if(st==='Dikembalikan'&&!data.nomorKembali)data.nomorKembali=asNo('asetserah','nomorKembali','BPK-A',data.tglKembali);
+  var rid=await AS_SAVE2('asetserah',id,data);
+  var baru=Object.assign({},a);delete baru.id;var ubah=false;
+  if(st==='Dipegang'){
+    if(baru.pic!==data.penerima||baru.tglSerah!==data.tglSerah){baru.pic=data.penerima;baru.tglSerah=data.tglSerah;ubah=true}
+  }else if(a.pic===data.penerima){
+    delete baru.pic;delete baru.tglSerah;ubah=true;
+    if(baru.kondisi!==data.kondisiKembali&&baru.kondisi!=='Hilang')baru.kondisi=data.kondisiKembali;
+  }
+  if(ubah)await save('asetsite',a.id,baru);
+  return rid;
+}
+async function asSimpanServis(id,data){
+  data=Object.assign({},data);
+  var lama=asCarry('asetservis',id,data,['nomor','asetId','aset','kode','asetLabel']);
+  var a=data.asetLabel?asByLabel(data.asetLabel):null;
+  if(a){data.asetId=a.id;data.aset=a.nama;data.kode=a.kode}else a=asById(data.asetId);
+  if(!a)throw new Error('Pilih aset dari daftar Aset SITE.');
+  data.pengaju=String(data.pengaju||'').trim();
+  if(!data.pengaju)throw new Error('Isi nama pengaju.');
+  if(!data.tglAju)throw new Error('Isi tanggal pengajuan.');
+  if(!String(data.uraian||'').trim())throw new Error('Uraikan kerusakan yang terjadi.');
+  var st=data.status||'Diajukan';data.status=st;
+  if(st==='Selesai'&&!data.tglSelesai)throw new Error('Isi tanggal selesai servis.');
+  if(!data.nomor)data.nomor=asNo('asetservis','nomor','SRV',data.tglAju);
+  var rid=await AS_SAVE2('asetservis',id,data);
+  if(!lama||lama.status!==st){
+    var k=(st==='Disetujui'||st==='Dalam servis')?'Maintenance':st==='Selesai'?'Baik':null;
+    if(k&&a.kondisi!==k&&a.kondisi!=='Hilang'){var baru=Object.assign({},a);delete baru.id;baru.kondisi=k;await save('asetsite',a.id,baru)}
+  }
+  return rid;
+}
+
+/* ---------- form PDF ---------- */
+function asDok(kind,r){
+  var P=pgProf(),a=asById(r.asetId)||{},kota=P.kota||'',titik='...........................................';
+  var B=[];
+  if(kind==='servis'){
+    B.push({t:'title',text:'Formulir Pengajuan Servis Aset SITE',sub:'No. '+(r.nomor||titik.slice(0,20))+(kota?' · '+kota:'')+(r.tglAju?', '+fmt(r.tglAju):'')});
+    B.push({t:'kv',rows:[['Aset',(a.nama||r.aset||'-')+' ('+(a.kode||r.kode||'-')+')'],['Kategori',a.kategori||'-'],['Nomor seri atau plat',a.noSeri||'-'],['Lokasi',[a.lokasi,a.detailLokasi].filter(Boolean).join(' · ')||'-'],['Penanggung jawab',a.pic||'-'],['Pengaju',r.pengaju||'-'],['Tanggal pengajuan',fmt(r.tglAju)],['Tingkat kerusakan',r.tingkat||'-']]});
+    B.push({t:'h',text:'Uraian kerusakan'});B.push({t:'p',text:r.uraian||titik});
+    B.push({t:'kv',rows:[['Bengkel atau vendor',r.vendor||titik],['Perkiraan biaya',r.estimasiBiaya?invRp(r.estimasiBiaya):titik],['Status',r.status||'Diajukan']]});
+    B.push({t:'note',text:'Servis dimulai setelah pengajuan ini disetujui. Setelah servis selesai, tanggal selesai dan biaya sebenarnya dicatat pada menu Aset SITE.'});
+    B.push({t:'sign',left:{role:'Pengaju',name:String(r.pengaju||'').toUpperCase(),sub:''},right:{role:'Menyetujui',name:'',sub:'Kepala Teknik Tambang'}});
+    return B;
+  }
+  var ser=kind==='serah',tg=ser?r.tglSerah:r.tglKembali,nomor=ser?r.nomorSerah:r.nomorKembali;
+  B.push({t:'title',text:ser?'Berita Acara Serah Terima Aset SITE':'Berita Acara Pengembalian Aset SITE',sub:'No. '+(nomor||titik.slice(0,20))+(kota?' · '+kota:'')+(tg?', '+fmt(tg):'')});
+  B.push({t:'p',text:ser?'Yang bertanda tangan di bawah ini:':'Yang bertanda tangan di bawah ini, berkaitan dengan serah terima No. '+(r.nomorSerah||'-')+' tanggal '+fmt(r.tglSerah)+':'});
+  B.push({t:'kv',rows:[['Pihak pertama',(ser?'Yang menyerahkan':'Yang menerima kembali')+', '+coName()],['Pihak kedua',r.penerima||'-'],['Jabatan',r.jabatan||'-']]});
+  B.push({t:'p',text:ser?'Pihak pertama menyerahkan aset berikut kepada pihak kedua untuk dipakai dan dipertanggungjawabkan:':'Pihak kedua mengembalikan aset berikut kepada pihak pertama:'});
+  B.push({t:'table',cols:[{h:'Kode',w:16},{h:'Aset',w:30},{h:'Kategori',w:20},{h:'No. seri / plat',w:18},{h:'Kondisi',w:16}],rows:[[a.kode||r.kode||'-',a.nama||r.aset||'-',a.kategori||'-',a.noSeri||'-',ser?(r.kondisiSerah||'-'):(r.status==='Dikembalikan'?(r.kondisiKembali||'-'):'')]]});
+  B.push({t:'kv',rows:ser?[['Tanggal serah terima',fmt(r.tglSerah)],['Lokasi penempatan',[a.lokasi,a.detailLokasi].filter(Boolean).join(' · ')||'-']]:[['Tanggal pengembalian',r.tglKembali?fmt(r.tglKembali):titik],['Kondisi aset',r.status==='Dikembalikan'?(r.kondisiKembali||'-'):'[  ] Baik   [  ] Rusak Ringan   [  ] Rusak Berat   [  ] Hilang']]});
+  B.push({t:'h',text:'Ketentuan'});
+  (ser?['1. Aset dipakai sesuai peruntukannya dan dirawat oleh pihak kedua.','2. Aset tidak dipindahtangankan kepada pihak lain tanpa persetujuan pihak pertama.','3. Bila aset rusak, pihak kedua mengajukan servis melalui menu Aset SITE pada Platform KTT.','4. Bila pihak kedua tidak lagi bertugas, aset dikembalikan kepada pihak pertama.']
+    :['1. Kondisi aset dicatat pada saat pengembalian dan menjadi dasar pengajuan servis bila ada kerusakan.','2. Berita acara ini ditandatangani kedua pihak dan dipindai untuk diunggah pada menu Aset SITE.']).forEach(function(x){B.push({t:'p',text:x})});
+  B.push({t:'sign',left:{role:ser?'Yang menyerahkan':'Yang menerima kembali',name:'',sub:coName()},right:{role:ser?'Yang menerima':'Yang mengembalikan',name:String(r.penerima||'').toUpperCase(),sub:r.jabatan||''}});
+  return B;
+}
+function asPdf(kind,r){
+  if(!r)return;
+  var slug=function(s){return String(s||'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'form'};
+  var judul=kind==='servis'?'Pengajuan servis aset SITE':kind==='serah'?'Serah terima aset SITE':'Pengembalian aset SITE';
+  pgPdf(judul,(kind==='servis'?'pengajuan-servis-':kind==='serah'?'serah-terima-aset-':'pengembalian-aset-')+slug(r.kode||r.aset)+'-'+slug(r.penerima||r.pengaju)+'.pdf',asDok(kind,r));
+}
+
+/* ---------- penyesuaian form ---------- */
+var AS_FORM2=openForm;
+openForm=function(key,row,pre){
+  if((key==='asetserah'||key==='asetservis')){
+    if(row){var a0=asById(row.asetId);if(a0)row=Object.assign({},row,{asetLabel:asLabel(a0)})}
+    else pre=Object.assign({},key==='asetserah'?{tglSerah:isoOf(TODAY)}:{tglAju:isoOf(TODAY)},pre||{});
+  }
+  var res=AS_FORM2.call(this,key,row,pre);
+  if(key==='asetserah'||key==='asetservis'){try{asFormTweak2(key,row)}catch(e){if(window.console)console.error(e)}}
+  return res;
+};
+function asFormTweak2(key,row){
+  var dlg=document.querySelector('#ov .dlg');if(!dlg)return;
+  var form=dlg.querySelector('form');if(!form)return;
+  var F=function(k){return form.querySelector('#m-'+k)},L=function(k){var x=F(k);return x?x.closest('label'):null};
+  var info=h('p',{class:'note info',style:'margin:0 0 10px'});form.insertBefore(info,form.firstChild);
+  var acts=form.querySelector('.acts'),br=F('asetLabel'),box=h('div',{style:'display:flex;flex-direction:column;gap:8px'});
+  if(key==='asetserah'){
+    var st=F('status');
+    function sync(){
+      var s=st.value||'Dipegang';
+      var a=asByLabel(br.value),p=[];
+      if(a){p.push('Kondisi aset: '+(a.kondisi||'-')+'.');var pg=(S.asetserah||[]).find(function(r){return r.asetId===a.id&&r.status==='Dipegang'&&(!row||r.id!==row.id)});if(pg)p.push('Masih dipegang '+pg.penerima+' sejak '+fmt(pg.tglSerah)+'.')}
+      p.push('Tidak ada masa penggantian berkala. Bila aset rusak, ajukan servis.');
+      info.textContent=p.join(' ');
+      var lt=L('tglKembali');if(lt)lt.hidden=(s==='Dipegang');
+      var lk=L('kondisiKembali');if(lk)lk.hidden=(s==='Dipegang');
+      var tg=F('tglKembali');if(s==='Dikembalikan'&&tg&&!tg.value)tg.value=isoOf(TODAY);
+    }
+    [st,br].forEach(function(x){x.addEventListener('change',sync)});sync();
+    var kar=F('penerima');
+    kar.addEventListener('change',function(){
+      var nm=kar.value.trim().toLowerCase(),p=(S.personel||[]).find(function(x){return String(x.nama||'').trim().toLowerCase()===nm});
+      var jb=F('jabatan');if(p&&jb&&!jb.value&&p.jabatan)jb.value=p.jabatan;
+    });
+    box.append(h('p',{class:'fsec',text:'Form serah terima dan pengembalian'}));
+    if(row&&row.id){
+      box.append(ivDokRow(row.id,'serah','asetserah',asPdf),ivDokRow(row.id,'kembali','asetserah',asPdf));
+      if(canWrite&&row.status==='Dipegang')box.append(h('div',{class:'bk-ac',style:'justify-content:flex-start'},h('button',{type:'button',class:'btn',onclick:function(){st.value='Dikembalikan';sync();toast('Isi kondisi aset lalu simpan')}},'Catat pengembalian')));
+      if(canWrite&&row.status==='Dikembalikan'){
+        var a1=asById(row.asetId);
+        box.append(h('div',{class:'bk-ac',style:'justify-content:flex-start;flex-wrap:wrap'},
+          a1&&(a1.kondisi==='Rusak Ringan'||a1.kondisi==='Rusak Berat')?h('button',{type:'button',class:'btn',onclick:function(){closeModal();openForm('asetservis',null,{asetLabel:asLabel(a1),tglAju:isoOf(TODAY),status:'Diajukan',pengaju:row.penerima})}},'Ajukan servis'):null,
+          h('button',{type:'button',class:'btn primary',onclick:function(){closeModal();openForm('asetserah',null,{asetLabel:asLabel(a1),tglSerah:isoOf(TODAY)})}},'Serahkan ke PIC baru')));
+      }
+    }else box.append(h('small',{style:'color:var(--muted)',text:'Setelah disimpan, buka kembali catatan ini untuk mengunduh form dan mengunggah berkas yang sudah ditandatangani. PIC pada register aset ikut diperbarui.'}));
+  }else{
+    info.textContent='Disetujui atau Dalam servis menandai aset Maintenance. Selesai mengembalikan kondisi aset menjadi Baik. Ditolak tidak mengubah kondisi.';
+    box.append(h('p',{class:'fsec',text:'Formulir'}));
+    if(row&&row.id)box.append(h('div',{class:'bk-ac',style:'justify-content:flex-start'},h('button',{type:'button',class:'btn',onclick:function(){asPdf('servis',row)}},'Unduh formulir pengajuan (PDF)')));
+    else box.append(h('small',{style:'color:var(--muted)',text:'Setelah disimpan, formulir pengajuan dapat diunduh dari catatan ini. Lampirkan foto kerusakan pada bagian lampiran.'}));
+  }
+  form.insertBefore(box,acts);
+}
 
 /* ---------- Penyimpanan file besar di Supabase Storage (v77) ----------
    Gambar dan lampiran yang tadinya tersimpan sebagai teks base64 di dalam baris database
