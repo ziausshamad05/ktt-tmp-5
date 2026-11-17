@@ -4778,12 +4778,7 @@ function navSetup(){
   MODS.push({k:'sop',t:'SOP K3 Builder',i:'M7 3h8l4 4v14H7zM15 3v4h4M10 12h6M10 16h4'});
   MODS.push({k:'reklamasi',t:'Reklamasi dan pascatambang',i:'M12 21V11M12 11c0-4 3-7 8-7 0 5-3 8-8 8zM12 14c0-3-2-5-6-5 0 4 2 6 6 6'});
   MODS.push({k:'operasional',t:'Overview Penambangan',i:'M3 20l6-10 4 6 3-4 5 8zM3 20h18'});
-  MODS.push({k:'pgdash',t:'Dashboard Pengapalan',i:'M4 20V10M10 20V4M16 20v-7M22 20H2'});
-  MODS.push({k:'pgship',t:'Shipment dan Dokumen',i:'M3 17l2 3h14l2-3zM6 17V9h12v8M9 9V5h6v4'});
-  MODS.push({k:'pgarsip',t:'Arsip PDF',i:'M4 5h16v4H4zM6 9v10h12V9M10 13h4'});
-  MODS.push({k:'pgmaster',t:'Master Data Pengapalan',i:'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6'});
-  MODS.push({k:'pgset',t:'Pengaturan Pengapalan',i:'M4 7h10M18 7h2M4 17h2M10 17h10M14 5v4M8 15v4'});
-  MODS.push({k:'pgtrack',t:'Pelacakan',i:'M12 21s-6-5.3-6-10a6 6 0 1112 0c0 4.7-6 10-6 10zM12 13a2.5 2.5 0 100-5 2.5 2.5 0 000 5z'});
+  MODS.push({k:'pgdash',t:'Overview Pengapalan',i:'M4 20V10M10 20V4M16 20v-7M22 20H2'});
   MODS.push({k:'kredit',t:'Kredit AI',i:'M12 3l2.4 5.6L20 11l-5.6 2.4L12 19l-2.4-5.6L4 11l5.6-2.4zM19 17l.8 1.7 1.7.8-1.7.8L19 22l-.8-1.7-1.7-.8 1.7-.8z'});
   MODS.push({k:'langganan',t:'Langganan dan paket',i:'M3 7h18v12H3zM3 11h18M7 15h4'});
   MODS.push({k:'panduan',t:'Panduan dan Tutorial',i:'M5 4h10a3 3 0 013 3v13H8a3 3 0 01-3-3zM5 17a3 3 0 013-3h10M9 8h5'});
@@ -6252,7 +6247,7 @@ function navRender(n){
     wrap.append(hd,h('div',{class:'ngl'},h('div',null,g.items.map(function(x){
       var lk=aksLocked(x.k),ik;
       if(lk){ik=h('span',{class:'ak-lk',title:'Perlu paket Profesional'});ik.innerHTML=AKS_LOCK}
-      return h('a',{href:'#'+x.k,class:lk?'ak-l':null,title:x.t+(lk?' (terkunci, perlu paket Profesional)':''),'aria-current':x.k===active?'page':null},icon(x.i),h('span',{class:'nt',text:x.t}),lk?ik:(n[x.k]?h('span',{class:'n',text:n[x.k]}):null))
+      return h('a',{href:'#'+x.k,class:lk?'ak-l':null,title:x.t+(lk?' (terkunci, perlu paket Profesional)':''),'aria-current':(x.k===active||(x.k==='pgdash'&&/^pg(ship|arsip|master|set|track)$/.test(active)))?'page':null},icon(x.i),h('span',{class:'nt',text:x.t}),lk?ik:(n[x.k]?h('span',{class:'n',text:n[x.k]}):null))
     }))));
     return wrap;
   }));
@@ -11819,7 +11814,7 @@ function pgBars(rows,max){
 }
 function pgDash(){
   var L=S.pgship||[],root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),hm=pgHma()[0];
-  root.append(opHead('Dashboard Pengapalan','Ringkasan kontrak penjualan nikel, alur 12 tahap tongkang, dokumen resmi, dan penagihan.'));
+  root.append(opHead('Overview Pengapalan','Ringkasan kontrak penjualan nikel, alur 12 tahap tongkang, dokumen resmi, dan penagihan.'));
   var done=L.filter(function(s){return pgSt(s)[10]==='Selesai'}),act=L.filter(function(s){return pgStatus(s)==='Berjalan'}),
       inl=L.filter(function(s){var c=pgCur(s);return c>=2&&c<=5||c===9||c===10}),inv=L.reduce(function(a,s){return a+pgInv(s).usd},0),
       paid=L.filter(function(s){return pgSt(s)[11]==='Selesai'}).reduce(function(a,s){return a+pgInv(s).usd},0),
@@ -13945,6 +13940,18 @@ function asFormTweak2(key,row){
   }
   form.insertBefore(box,acts);
 }
+/* ===== Overview Pengapalan: satu menu, enam tab (Dashboard, Shipment dan Dokumen, Arsip PDF, Master Data, Pengaturan, Pelacakan) ===== */
+var PG_TABS=[['pgdash','Dashboard'],['pgship','Shipment dan Dokumen'],['pgarsip','Arsip PDF'],['pgmaster','Master Data'],['pgset','Pengaturan'],['pgtrack','Pelacakan']];
+function pgTabsBar(cur){
+  return h('div',{class:'op-tabs',role:'tablist','aria-label':'Overview Pengapalan'},PG_TABS.map(function(t){
+    return h('button',{type:'button',role:'tab',class:'op-tab'+(cur===t[0]?' on':''),'aria-selected':cur===t[0]?'true':'false',onclick:function(){if(cur===t[0])return;if(t[0]==='pgship')PG.sel=null;location.hash=t[0]}},t[1])}));
+}
+function pgTabWrap(k,fn){
+  var box=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
+  box.append(pgTabsBar(k));
+  try{box.append(fn())}catch(e){box.append(h('div',{class:'note warn'},h('p',{text:'Tampilan gagal dimuat: '+(e&&e.message?e.message:'kesalahan tak dikenal')})));if(window.console)console.error(e)}
+  return box;
+}
 
 /* ---------- Penyimpanan file besar di Supabase Storage (v77) ----------
    Gambar dan lampiran yang tadinya tersimpan sebagai teks base64 di dalam baris database
@@ -14956,7 +14963,7 @@ VIEWS.ptw=function(){return ptwView()};
 VIEWS.inventaris=function(){return invView()};
 VIEWS.asetsite=function(){return asetView()};
 VIEWS.operasional=function(){return opView()};
-VIEWS.pgdash=function(){return pgDash()};VIEWS.pgship=function(){return pgShip()};VIEWS.pgarsip=function(){return pgArsip()};VIEWS.pgmaster=function(){return pgMaster()};VIEWS.pgset=function(){return pgSetting()};VIEWS.pgtrack=function(){return pgTrack()};
+VIEWS.pgdash=function(){return pgTabWrap('pgdash',pgDash)};VIEWS.pgship=function(){return pgTabWrap('pgship',pgShip)};VIEWS.pgarsip=function(){return pgTabWrap('pgarsip',pgArsip)};VIEWS.pgmaster=function(){return pgTabWrap('pgmaster',pgMaster)};VIEWS.pgset=function(){return pgTabWrap('pgset',pgSetting)};VIEWS.pgtrack=function(){return pgTabWrap('pgtrack',pgTrack)};
 VIEWS.kredit=function(){return krView()};
 VIEWS.setelan=function(){return setView()};
 VIEWS.kontraktor=function(){
