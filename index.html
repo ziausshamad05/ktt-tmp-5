@@ -3007,12 +3007,12 @@ function pdfBuild(M,meta){
       b.rows.forEach(function(r,ri){
         var bold=b.total&&ri===b.rows.length-1;
         var cl=r.map(function(c,i){return pdfWrap(c,SZ,bold,W[i]-2*PAD)});
-        var rh=Math.max.apply(null,cl.map(function(l){return l.length}))*LD+2*PAD;
+        var rh=Math.max(Math.max.apply(null,cl.map(function(l){return l.length}))*LD+2*PAD,b.minH||0);
         if(y+rh>PH-MB){np();drawHead()}
         if(bold)rc(ML,y,CW,rh,FILL);
         cl.forEach(function(ls,i){ls.forEach(function(l,k){var xx=b.cols[i].a==='r'?X[i]+W[i]-PAD-pdfW(l,bold,SZ):X[i]+PAD;tx(xx,y+PAD+SZ+k*LD,l,SZ,bold,INK)})});
         y+=rh;ln(ML,y,ML+CW,y,0.4,LINE)});
-      y+=8}
+      y+=b.tight?1:8}
     else if(b.t==='sign'){
       ensure(130);y+=10;var half=CW/2;
       [b.left,b.right].forEach(function(s,i){
@@ -14483,6 +14483,7 @@ function plantView(){
   var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),t=PRD.tab.plant;
   root.append(opHead('Overview Plant','Kesiapan alat berat: jadwal perawatan berkala (PM), HM, ketersediaan, breakdown, MTBF, dan MTTR.'));
   var dn=(S.opunit||[]).some(prdDemoRow)?h('div',{class:'note'},h('p',{text:'Data unit di halaman ini masih berupa data contoh (bertanda “contoh”).'})):null;if(dn)root.append(dn);
+  root.append(flBar('plant'));
   root.append(prdTabs('plant',[['dash','Dashboard'],['bd','Breakdown alat'],['unit','Daftar unit alat'],['set','Parameter']]));
   if(t==='dash')root.append(prdSafe(prdPlantDash));
   else if(t==='bd')root.append(panel('Catatan breakdown alat','Satu baris per kejadian: kode (P1, P2, backlog, waiting part, plan service), komponen, masalah, waktu breakdown dan RFU (ready for use). Jam breakdown, MTBF, dan MTTR dihitung otomatis.',listView('opbd')));
@@ -14682,6 +14683,7 @@ function fuelView(){
   var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),t=PRD.tab.fuel;
   root.append(opHead('Overview Fuel','Stok beberapa tangki utama, penerimaan, mutasi antar tangki, pemakaian alat, dan fuel ratio.'));
   var dn=prdDemoNote();if(dn)root.append(dn);
+  root.append(flBar('fuel'));
   root.append(prdTabs('fuel',[['dash','Dashboard'],['stok','Penerimaan dan mutasi'],['tank','Tangki'],['data','Laporan harian alat'],['set','Parameter']]));
   if(t==='dash'){root.append(prdFilter());root.append(prdSafe(prdFuelDash))}
   else if(t==='stok'){root.append(prdMutBtn());root.append(panel('Penerimaan, mutasi, dan opname','Penerimaan menambah stok satu tangki. Mutasi memindahkan fuel dari tangki asal ke tangki tujuan. Opname menetapkan stok terukur hasil ukur tangki. Pemakaian alat dihitung otomatis dari laporan harian alat.',listView('opfuel')))}
@@ -15286,6 +15288,7 @@ function whView(){
   var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),t=WH.tab;
   root.append(opHead('Warehouse','Stok sparepart dan material gudang: barang masuk, barang keluar (store slip), Min-Max order, dan dead stock.'));
   if((S.whitem||[]).some(prdDemoRow))root.append(h('div',{class:'note'},h('p',{text:'Data gudang di halaman ini masih berupa data contoh (bertanda “contoh”). Hapus di tab Parameter, lalu catat stok yang sebenarnya.'})));
+  root.append(flBar('wh'));
   root.append(wdTabs([['dash','Dashboard'],['stok','Stok barang'],['masuk','Barang masuk'],['keluar','Barang keluar'],['minmax','Min-Max order'],['set','Parameter']]));
   if(t==='dash')root.append(prdSafe(wdDash));
   else if(t==='stok')root.append(panel('Stok barang','Stok akhir = stok awal + barang masuk − barang keluar. Status material dihitung otomatis dari transaksi keluar 12 bulan terakhir.',listView('whitem')));
@@ -15368,6 +15371,99 @@ function wdDemo(){
   };
   if(typeof SUB_KUNCI_DASAR!=='undefined'&&SUB_KUNCI_DASAR.indexOf('whov')<0)SUB_KUNCI_DASAR.push('whov');
 })();
+/* ---------- formulir pencatatan lapangan (cetak kosong) ---------- */
+var FL_FUEL=['Solar B40','Biosolar','Dexlite','Pertamina Dex','HSD industri'];
+var FL=[
+ {id:'fuel01',g:'fuel',nm:'Bon pengisian fuel harian',no:'FRM-FUEL-01',sub:'Diisi fuelman setiap pengisian unit. Satu lembar per shift per tangki.',
+  f:['Tanggal','Shift (Day / Night)','Tangki sumber','Nama fuelman','Dip atau flowmeter awal shift (L)','Dip atau flowmeter akhir shift (L)'],
+  t:{c:[['No',4],['Jam',7],['Kode unit',11],['HM unit',9],['Liter',8],['No. tiket / bon',12],['Operator / driver',16],['Paraf operator',9]],n:13},
+  f2:['Total liter keluar','Selisih terhadap bacaan tangki (L)'],cat:'Catatan (pengisian di luar jam, unit sewa, kebocoran)',s:['Fuelman','Pengawas shift','Admin fuel / KTT']},
+ {id:'fuel02',g:'fuel',nm:'BA serah terima fuel (penerimaan)',no:'FRM-FUEL-02',sub:'Diisi saat mobil tangki atau pemasok menyerahkan fuel ke tangki utama.',
+  f:['Tanggal','Jam tiba / mulai bongkar','Nomor BA (kosong = otomatis)','Nomor DO / surat jalan','Nomor PO / kontrak','Pemasok fuel','Unit pengangkut (no. polisi)','Nama sopir','Nomor segel','Tangki tujuan'],
+  o:[['Jenis fuel',FL_FUEL],['Pemeriksaan mutu',['Sesuai spesifikasi','Ada air / endapan','Warna / bau tidak normal','Perlu uji lab']]],
+  h:'Pengukuran',f2:['Dip / flowmeter tangki SEBELUM (L)','Dip / flowmeter tangki SESUDAH (L)','Jumlah di surat jalan (L)','Jumlah diterima (L)','Selisih (L) dan persen','Harga per liter (Rp)'],
+  cat:'Catatan (kondisi segel, temuan, alasan selisih)',s:['Yang menyerahkan (sopir / pemasok)','Yang menerima (fuelman)','Saksi / pengawas','Mengetahui (KTT / PJO)'],
+  note:'Lampirkan foto: surat jalan, segel, bacaan dip atau flowmeter sebelum dan sesudah, serta kondisi tangki.'},
+ {id:'fuel03',g:'fuel',nm:'BA mutasi fuel antar tangki',no:'FRM-FUEL-03',sub:'Diisi setiap fuel dipindahkan dari satu tangki ke tangki lain.',
+  f:['Tanggal','Jam mulai - selesai','Nomor BA (kosong = otomatis)','Jumlah dipindahkan (L)','Tangki ASAL','Tangki TUJUAN','Dip tangki asal sebelum / sesudah (L)','Dip tangki tujuan sebelum / sesudah (L)','Unit atau pompa yang dipakai','Nama operator pemindahan'],
+  o:[['Alasan mutasi',['Isi ulang tangki harian','Tangki asal hampir kosong','Pindah lokasi kerja','Perawatan atau pembersihan tangki','Lainnya']]],
+  cat:'Catatan',s:['Yang menyerahkan (petugas tangki asal)','Yang menerima (petugas tangki tujuan)','Saksi / pengawas'],note:'Lampirkan foto bacaan dip atau flowmeter kedua tangki, sebelum dan sesudah.'},
+ {id:'fuel04',g:'fuel',nm:'Opname stok fuel (dip tangki)',no:'FRM-FUEL-04',sub:'Diisi saat pengukuran fisik tangki, minimal akhir hari atau akhir bulan.',
+  f:['Tanggal','Jam pengukuran','Nomor BA (kosong = otomatis)','Nama pengukur'],
+  t:{c:[['Tangki',16],['Tinggi dip (cm)',10],['Hasil ukur (L)',10],['Stok aplikasi (L)',11],['Selisih (L)',9],['Suhu / mutu',9],['Kondisi tangki',10],['Paraf',7]],n:8},
+  cat:'Catatan selisih (kebocoran, salah catat, penguapan)',s:['Pengukur','Memeriksa (pengawas)','Mengetahui (KTT)']},
+ {id:'fuel05',g:'fuel',nm:'Kartu data tangki fuel',no:'FRM-FUEL-05',sub:'Diisi sekali saat tangki didaftarkan, dan setiap kalibrasi atau perubahan kondisi.',
+  f:['Nama tangki','Urutan (1 = tangki bawaan)','Kapasitas (L)','Stok awal saat pencatatan dimulai (L)','Batas minimum / titik pesan ulang (L)','Lokasi','Penanggung jawab','Tanggal kalibrasi atau tera terakhir'],
+  o:[['Tipe tangki',['Tangki utama','Tangki harian','Fuel truck','ISO tank','Drum / IBC']],['Jenis fuel',FL_FUEL],['Kondisi',['Baik','Perlu perbaikan','Sedang dibersihkan','Tidak dipakai']]],cat:'Catatan',s:['Dibuat oleh','Mengetahui (KTT)']},
+ {id:'plt01',g:'plant',nm:'Laporan harian alat',no:'FRM-PLT-01',sub:'Satu lembar per unit per shift. Diisi operator, diperiksa pengawas.',
+  f:['Tanggal','Shift (Day / Night)','Kode unit','Jenis alat','Operator / driver','Lokasi kerja (pit)'],
+  o:[['Aktivitas',['Loading','Hauling','Dozing','Grading','Road maintenance','Support','Lainnya']]],
+  h:'Jam kerja',f2:['HM awal','HM akhir','EWH (HM akhir - HM awal, jam)','Jam idle','Jam breakdown','Alasan idle / breakdown'],
+  h3:'Produksi dan fuel',f3:['Ritase (rit)','Produksi OB (BCM)','Jarak angkut (m)','Fuel terpakai (L)','Diisi dari tangki','No. tiket / bon fuel','Fuelman'],
+  t:{c:[['Dari jam',12],['Sampai jam',12],['Alasan idle atau delay (hujan, antri, tunggu unit, istirahat)',56],['Lama (jam)',12]],n:3},cat:'Catatan atau temuan kondisi unit',s:['Operator','Pengawas shift','Admin plant']},
+ {id:'plt02',g:'plant',nm:'Laporan breakdown alat',no:'FRM-PLT-02',sub:'Diisi segera saat unit rusak, dilengkapi saat unit siap pakai kembali (RFU).',
+  f:['Tanggal breakdown','Jam breakdown (HH:MM)','Kode unit','Model / merek','HM unit saat breakdown','Nomor work order (WO)'],
+  o:[['Lokasi unit',['PIT','Disposal','Workshop','Jalan angkut','Lainnya']],['Kode breakdown',['BD (rusak)','PS (standby)','SD (terjadwal)','Lainnya']]],
+  f1:['Komponen rusak (engine, hydraulic, undercarriage, ban, kelistrikan)','Uraian masalah','Tindakan dan nomor permintaan part (PP / PB)'],
+  h:'Penyelesaian',f2:['Tanggal RFU','Jam RFU (HH:MM)','Mekanik / tim','Man hour','Biaya part (Rp)','Biaya jasa atau sewa alat (Rp)'],
+  o2:[['Status',['Dalam proses','Tunggu part','Tunggu mekanik / alat','Selesai (RFU)']]],cat:'Akar penyebab dan tindakan pencegahan',s:['Operator / pelapor','Mekanik','Supervisor plant','Mengetahui (KTT)']},
+ {id:'plt03',g:'plant',nm:'Kartu data unit alat',no:'FRM-PLT-03',sub:'Diisi sekali saat unit didaftarkan, diperbarui saat PM atau perubahan status.',
+  f:['Kode unit','Model','Merek','Nomor seri / rangka','Nomor mesin','Tahun pembuatan','Kapasitas (bucket / bak)','Nomor polisi / lambung','Lokasi kerja / pit'],
+  o:[['Jenis alat',['Excavator','Dump truck','Dozer','Grader','Compactor','Wheel loader','Lainnya']],['Kepemilikan',['Milik sendiri','Sewa (rental)']]],
+  f2:['Vendor / pemilik (unit sewa)','Tanggal mulai operasi / sewa','Tanggal akhir kontrak sewa'],o2:[['Status operasi',['Siap operasi','Standby','Breakdown','Maintenance','Off hire']]],
+  h3:'Perawatan berkala (PM)',f3:['HM saat ini','Interval PM (HM)','HM saat PM terakhir','Tanggal PM terakhir','Tipe PM terakhir (PM1 / PM2 / PM3)','Estimasi downtime PM (jam)'],cat:'Catatan',s:['Dibuat oleh (admin plant)','Diperiksa (supervisor plant)']},
+ {id:'wh01',g:'wh',nm:'Receiving report (penerimaan barang)',no:'FRM-WH-01',sub:'Diisi petugas gudang saat barang datang, sebelum diinput ke Warehouse.',
+  f:['Tanggal terima','Nomor surat jalan / DO','Pemasok','Nomor PO / PR','Nomor invoice','Tujuan (stok / backlog / unit)'],
+  t:{c:[['No',4],['Part number',14],['Nama barang',25],['Sat.',5],['Qty PO / SJ',8],['Qty diterima',8],['Harga satuan (Rp)',12],['Kondisi B/R/X',8]],n:10},
+  note:'Kondisi: B = baik, R = rusak sebagian, X = tidak sesuai spesifikasi atau ditolak. Selisih Qty diterima terhadap Qty PO wajib dijelaskan di catatan.',cat:'Catatan (selisih, kemasan rusak, kadaluarsa, lokasi rak)',s:['Pengirim / pemasok','Diterima (gudang)','Diperiksa (QC / supervisor)']},
+ {id:'wh02',g:'wh',nm:'Store slip (pengeluaran barang)',no:'FRM-WH-02',sub:'Diisi mekanik, disetujui supervisor, dikeluarkan petugas gudang.',
+  f:['Tanggal keluar','Nomor store slip (kosong = otomatis)','Kode unit / pemakai','HM unit saat pemasangan','Nomor work order (WO)','Diambil oleh (mekanik)'],
+  o:[['Jenis pekerjaan',['PM (perawatan berkala)','Breakdown','Backlog','Umum / lainnya']]],
+  t:{c:[['No',4],['Part number',15],['Nama barang',27],['Sat.',5],['Qty minta',8],['Qty keluar',8],['Lokasi rak',10],['Ket.',14]],n:10},cat:'Keterangan pekerjaan',s:['Diambil (mekanik)','Disetujui (supervisor / planner)','Dikeluarkan (gudang)']}
+];
+function flGrid(labels,per,minH){
+  var out=[];
+  for(var i=0;i<labels.length;i+=per){
+    var part=labels.slice(i,i+per),cols=part.map(function(l){return {h:l,w:1}}),row=part.map(function(){return ''});
+    out.push({t:'table',cols:cols,rows:[row],minH:minH||22,tight:true});
+  }
+  return out;
+}
+function flBlocks(F){
+  var P=pgProf(),B=[];
+  B.push({t:'title',text:F.nm,sub:'No. formulir '+F.no+' · Revisi 01'});
+  B.push({t:'p',text:F.sub,mute:true,size:8.5});
+  if(F.f)flGrid(F.f,F.f.length>6?2:3).forEach(function(x){B.push(x)});
+  (F.o||[]).forEach(function(o){B.push({t:'kv',rows:[[o[0],o[1].map(function(v){return '[   ] '+v}).join('     ')]]})});
+  if(F.f1)F.f1.forEach(function(l){B.push({t:'table',cols:[{h:l,w:1}],rows:[['']],minH:30,tight:true})});
+  if(F.h&&F.f2){B.push({t:'h',text:F.h});flGrid(F.f2,F.f2.length>6?2:3).forEach(function(x){B.push(x)})}
+  else if(F.f2)flGrid(F.f2,3).forEach(function(x){B.push(x)});
+  (F.o2||[]).forEach(function(o){B.push({t:'kv',rows:[[o[0],o[1].map(function(v){return '[   ] '+v}).join('     ')]]})});
+  if(F.h3&&F.f3){B.push({t:'h',text:F.h3});flGrid(F.f3,F.f3.length>6?4:3).forEach(function(x){B.push(x)})}
+  if(F.t){var rows=[];for(var i=0;i<F.t.n;i++){var r=F.t.c.map(function(c){return ''});if(F.t.c[0][0]==='No')r[0]=String(i+1);rows.push(r)}
+    B.push({t:'gap',n:6});B.push({t:'table',cols:F.t.c.map(function(c){return {h:c[0],w:c[1]}}),rows:rows,minH:F.t.n>12?17:21})}
+  if(F.note)B.push({t:'note',text:F.note});
+  if(F.cat)B.push({t:'table',cols:[{h:F.cat,w:1}],rows:[['']],minH:38,tight:true});
+  if(F.s)B.push({t:'table',cols:F.s.map(function(r){return {h:r,w:1}}),rows:[F.s.map(function(){return ''})],minH:58,tight:true});
+  B.push({t:'p',text:'Nama, tanggal, dan jam diisi di bawah tanda tangan. Setelah ditandatangani: foto atau pindai, lalu input dan lampirkan di Platform KTT. Isian pada formulir ini sama dengan kolom di Platform KTT.',mute:true,size:7.5});
+  return B;
+}
+function flPdf(id){
+  var F=FL.filter(function(x){return x.id===id})[0];if(!F)return;
+  pgPdf(F.nm,'formulir-'+F.no.toLowerCase()+'.pdf',flBlocks(F));
+}
+function flPdfAll(g){
+  var L=FL.filter(function(x){return !g||x.g===g}),all=[],kp=pgKop(pgProf());
+  L.forEach(function(F,i){if(i){all.push({t:'pb'});all.push(kp)}all=all.concat(flBlocks(F))});
+  pgPdf('Formulir lapangan',g?'formulir-lapangan-'+g+'.pdf':'formulir-lapangan.pdf',all);
+}
+function flBar(g){
+  var L=FL.filter(function(x){return x.g===g});
+  return h('div',{class:'note',style:'display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px'},
+    h('b',{text:'Formulir catat di lapangan (cetak kosong):',style:'margin-right:4px'}),
+    L.map(function(F){return h('button',{type:'button',class:'btn',title:F.sub,onclick:function(){flPdf(F.id)}},F.nm)}),
+    h('button',{type:'button',class:'btn primary',onclick:function(){flPdfAll(g)}},'Semua ('+L.length+' lembar)'));
+}
 
 /* ---------- Penyimpanan file besar di Supabase Storage (v77) ----------
    Gambar dan lampiran yang tadinya tersimpan sebagai teks base64 di dalam baris database
