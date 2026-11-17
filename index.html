@@ -12313,7 +12313,7 @@ async function demoFill(){
 /* ===== Peran v73: Direktur Utama, KTT, HSE, PJO, QAQC, Produksi =====
    Server (RLS ktt_kv_boleh) adalah penentu akhir; modul ini menyesuaikan tampilan,
    memberi tag kontraktor, dan mengubah edit menjadi permohonan persetujuan KTT. */
-var PR_L={direktur:'Direktur Utama',ktt:'KTT',hse:'HSE',pjo:'PJO',qaqc:'QAQC',produksi:'Produksi'};
+var PR_L={direktur:'Direktur Utama',ktt:'KTT',hse:'HSE',pjo:'PJO',qaqc:'QAQC',produksi:'Produksi',spv_produksi:'Supervisor Produksi',spv_plant:'Supervisor Plant',admin_gudang:'Admin Gudang'};
 var PR_K3=['insiden','inspeksi','temuan','agenda','inventaris','risiko','jamkerja','minepermit','simper'];
 var PR_RK=['reklamasi','revegetasi','rkgiat','pucuk','bibit','erosi','pasca','rkdok','rkthn'];
 var PR_TAG=PR_K3.concat(PR_RK,['personel','kdok']);
@@ -12321,7 +12321,16 @@ var PR_MENU={
   hse:['kpi','setuju','k3','risiko','sop','inspeksi','temuan','agenda','inventaris','ptw','permit','reklamasi','surat','setelan','panduan'],
   pjo:['ringkasan','setuju','k3','risiko','inspeksi','temuan','agenda','inventaris','ptw','permit','operasional','reklamasi','kontraktor','personel','surat','setelan','panduan'],
   qaqc:['setuju','operasional','panduan','setelan'],
-  produksi:['operasional','panduan','setelan']
+  produksi:['operasional','panduan','setelan'],
+  spv_produksi:['operasional','prodov','panduan','setelan'],
+  spv_plant:['plantov','fuelov','panduan','setelan'],
+  admin_gudang:['whov','inventaris','asetsite','panduan','setelan']
+};
+/* koleksi yang boleh ditambah dan diubah peran baru (cermin RLS ktt_kv_boleh v81); hapus tetap hanya KTT */
+var PR_TULIS={
+  spv_produksi:['opsm','oplog','opalat'],
+  spv_plant:['opalat','opunit','opfuel','optank','opbd'],
+  admin_gudang:['whitem','whin','whout','inventaris','invpakai','asetsite','asetserah','asetservis']
 };
 var PR_AJU=0;
 function prMember(){return (typeof HOST!=='undefined'&&HOST&&HOST.member)?HOST.member:null}
@@ -12336,7 +12345,7 @@ aksPeran=function(){return prPeran()};
 aksPeranBoleh=function(){
   var pl=aksPlan(),r=pl&&pl.peran?pl.peran.slice():['ktt','hse','pjo'];
   if(r.indexOf('direktur')<0)r.unshift('direktur');
-  if(r.indexOf('hse')>=0||r.indexOf('pjo')>=0){if(r.indexOf('qaqc')<0)r.push('qaqc');if(r.indexOf('produksi')<0)r.push('produksi')}
+  if(r.indexOf('hse')>=0||r.indexOf('pjo')>=0){if(r.indexOf('qaqc')<0)r.push('qaqc');if(r.indexOf('produksi')<0)r.push('produksi');['spv_produksi','spv_plant','admin_gudang'].forEach(function(x){if(r.indexOf(x)<0)r.push(x)})}
   return r;
 };
 aksLocked=function(k){
@@ -12386,7 +12395,7 @@ opPeran=function(){
   if(!p||p==='ktt'||p==='direktur')return 'ktt';
   if(p==='qaqc')return prKon()?'kontraktor':'ktt';
   if(p==='pjo')return 'kontraktor';
-  if(p==='produksi')return 'foreman';
+  if(p==='produksi'||PR_TULIS[p])return 'foreman';
   return p;
 };
 opKon=function(){var p=prPeran();if(p==='pjo')return prKon();if(p==='qaqc'||p==='produksi')return prKon()||null;return null};
@@ -12397,12 +12406,13 @@ opRoleName=function(){
   if(p==='direktur')return 'Direktur Utama';
   if(p==='qaqc')return prKon()?'QAQC '+prKon():'QAQC Owner';
   if(p==='produksi')return 'Produksi'+(prKon()?' '+prKon():'');
+  if(PR_L[p]&&PR_TULIS[p])return PR_L[p];
   if(p==='pjo')return 'PJO '+prKon();
   return 'Owner';
 };
 var PR_OPTABS=opSubTabs;
 opSubTabs=function(){
-  if(prPeran()!=='produksi')return PR_OPTABS();
+  if(prPeran()!=='produksi'&&prPeran()!=='spv_produksi')return PR_OPTABS();
   if(OP.tab!=='produksi'&&OP.tab!=='panduan')OP.tab='produksi';
   var T=[['produksi','Produksi Harian'],['panduan','Panduan Lengkap']];
   return h('div',{class:'op-tabs',role:'tablist','aria-label':'Menu Operasional'},T.map(function(t){
@@ -12429,12 +12439,14 @@ function prPerluSetuju(c,row,data){
 }
 function prBolehUbah(c,row){
   var p=prPeran();if(aksKtt())return true;
+  if(PR_TULIS[p])return PR_TULIS[p].indexOf(c)>=0;
   if(p==='hse'){if(c==='jaminan')return false;if(c==='surat'||c==='distribusi')return true;return !(row&&row.kontraktor)}
   if(p==='pjo'){if(c==='surat'||c==='ptw')return false;return true}
   return true;
 }
 function prBolehTambah(c){
   var p=prPeran();if(aksKtt())return true;
+  if(PR_TULIS[p])return PR_TULIS[p].indexOf(c)>=0;
   if(p==='hse')return PR_K3.indexOf(c)>=0||PR_RK.indexOf(c)>=0||['sop','ptw','surat','distribusi'].indexOf(c)>=0;
   if(p==='pjo')return PR_K3.indexOf(c)>=0||PR_RK.indexOf(c)>=0||c==='personel'||c==='kdok';
   return c.indexOf('op')===0;
@@ -15549,11 +15561,12 @@ function blAuto(){
 /* ---------- hosting mandiri: Supabase (aktif hanya di luar claude.ai) ---------- */
 var HOST={sb:null,role:null,member:null,booted:false,rt:'',cache:{}};
 function hostCfg(){var c=window.__KTT_SB;return c&&c.url&&c.key?c:null}
-var HOST_PERAN={direktur:'Direktur Utama',ktt:'KTT',hse:'HSE',pjo:'PJO',qaqc:'QAQC',produksi:'Produksi'};
-var HOST_PERAN_L={direktur:'Direktur Utama',ktt:'KTT (Owner)',hse:'HSE',pjo:'PJO (Penanggung Jawab Operasional)',qaqc:'QAQC',produksi:'Produksi'};
-var HOST_PERAN_ALL=['direktur','ktt','hse','pjo','qaqc','produksi'];
+var HOST_PERAN={direktur:'Direktur Utama',ktt:'KTT',hse:'HSE',pjo:'PJO',qaqc:'QAQC',produksi:'Produksi',spv_produksi:'Supervisor Produksi',spv_plant:'Supervisor Plant',admin_gudang:'Admin Gudang'};
+var HOST_PERAN_L={direktur:'Direktur Utama',ktt:'KTT (Owner)',hse:'HSE',pjo:'PJO (Penanggung Jawab Operasional)',qaqc:'QAQC',produksi:'Produksi',spv_produksi:'Supervisor Produksi (atasan Produksi)',spv_plant:'Supervisor Plant',admin_gudang:'Admin Gudang'};
+var HOST_PERAN_ALL=['direktur','ktt','hse','pjo','qaqc','produksi','spv_produksi','spv_plant','admin_gudang'];
 function hostKonOpts(sel,cur){sel.replaceChildren(h('option',{value:''},'Pilih kontraktor'));(S.kontraktor||[]).map(function(r){return r.nama}).filter(Boolean).sort().forEach(function(n){sel.append(h('option',{value:n,selected:n===cur},n))});sel.value=cur||''}
 function hostIsOps(p){return p==='pjo'||p==='qaqc'||p==='produksi'}
+function hostNoAdm(p){return hostIsOps(p)||p==='spv_produksi'||p==='spv_plant'||p==='admin_gudang'}
 function hostKonLabel(sel,p){if(sel.options[0])sel.options[0].textContent=p==='pjo'?'Pilih kontraktor':'Owner (perusahaan)'}
 var HOST_ROLE={pending:'Menunggu persetujuan',viewer:'Pembaca',editor:'Penyunting',admin:'Admin'};
 function hostErrId(m){
@@ -15880,7 +15893,7 @@ async function hostMembers(box){
   var rows=r.data.map(function(x){
     var self=x.user_id===me,kunciDir=x.peran==='direktur'&&!amDir;
     var sel=h('select',{'aria-label':'Hak akses '+x.email,disabled:self||kunciDir||x.peran==='direktur'},
-      ['pending','viewer','editor','admin'].map(function(k){return h('option',{value:k,selected:x.role===k,disabled:k==='admin'&&hostIsOps(x.peran)},HOST_ROLE[k])}));
+      ['pending','viewer','editor','admin'].map(function(k){return h('option',{value:k,selected:x.role===k,disabled:k==='admin'&&hostNoAdm(x.peran)},HOST_ROLE[k])}));
     sel.addEventListener('change',async function(){
       sel.disabled=true;
       var u=await sb.from('ktt_members').update({role:sel.value}).eq('user_id',x.user_id);
@@ -15897,7 +15910,7 @@ async function hostMembers(box){
       kn.hidden=!hostIsOps(nv);hostKonLabel(kn,nv);
       if(boleh.indexOf(nv)<0){pr.value=old;kn.hidden=!hostIsOps(old);toast('Peran '+HOST_PERAN[nv]+' memerlukan paket Profesional');return}
       if(nv==='direktur'&&!bolehDir){pr.value=old;kn.hidden=!hostIsOps(old);toast('Hanya Direktur Utama yang dapat menetapkan Direktur Utama');return}
-      if(hostIsOps(nv)&&x.role==='admin'){pr.value=old;kn.hidden=!hostIsOps(old);toast('Peran '+HOST_PERAN[nv]+' tidak boleh berhak akses Admin. Ubah hak akses menjadi Penyunting dahulu.');return}
+      if(hostNoAdm(nv)&&x.role==='admin'){pr.value=old;kn.hidden=!hostIsOps(old);toast('Peran '+HOST_PERAN[nv]+' tidak boleh berhak akses Admin. Ubah hak akses menjadi Penyunting dahulu.');return}
       if(nv==='pjo'&&!kn.value){toast('Pilih kontraktor untuk PJO ini, lalu peran akan tersimpan.');kn.focus();return}
       if(nv==='pjo'){var dp=pjoDup(kn.value,x.user_id,x.email);if(dp){pr.value=old;kn.hidden=!hostIsOps(old);toast('Kontraktor '+kn.value+' sudah memiliki PJO ('+dp+'). Satu kontraktor hanya satu PJO.');return}}
       await simpanPeran(nv);
@@ -15941,14 +15954,14 @@ async function hostMembers(box){
   ip.addEventListener('change',function(){
     var p=ip.value;ik.hidden=!hostIsOps(p);hostKonLabel(ik,p);
     if(p==='direktur'){ir.value='admin';ir.disabled=true}else ir.disabled=false;
-    if(hostIsOps(p)&&ir.value==='admin')ir.value='editor';
-    [].slice.call(ir.options).forEach(function(o){if(o.value==='admin')o.disabled=hostIsOps(p)});
+    if(hostNoAdm(p)&&ir.value==='admin')ir.value='editor';
+    [].slice.call(ir.options).forEach(function(o){if(o.value==='admin')o.disabled=hostNoAdm(p)});
   });
   var ib=h('button',{type:'button',class:'btn primary',onclick:async function(){
     var em=ie.value.trim().toLowerCase(),p=ip.value;if(!/^\S+@\S+\.\S+$/.test(em)){toast('Isi email yang valid');return}
     if(boleh.indexOf(p)<0){toast('Peran '+HOST_PERAN[p]+' memerlukan paket Profesional');return}
     if(p==='direktur'&&!bolehDir){toast('Hanya Direktur Utama yang dapat mengundang Direktur Utama');return}
-    if(hostIsOps(p)&&ir.value==='admin'){toast('Peran ini tidak boleh berhak akses Admin.');return}
+    if(hostNoAdm(p)&&ir.value==='admin'){toast('Peran ini tidak boleh berhak akses Admin.');return}
     if(p==='pjo'&&!ik.value){toast('Pilih kontraktor untuk PJO ini.');return}
     if(p==='pjo'){var dz=pjoDup(ik.value,'',em);if(dz){toast('Kontraktor '+ik.value+' sudah memiliki PJO ('+dz+'). Satu kontraktor hanya satu PJO.');return}}
     ib.disabled=true;
