@@ -2005,7 +2005,7 @@ SEED.rkdok=[
 SEED.jamkerja=[{id:'jk01',periode:'2026-01',jam:3080,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk02',periode:'2026-02',jam:2800,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk03',periode:'2026-03',jam:3220,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk04',periode:'2026-04',jam:3150,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk05',periode:'2026-05',jam:3300,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk06',periode:'2026-06',jam:3080,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk07',periode:'2026-07',jam:3260,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk08',periode:'2026-08',jam:3320,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk09',periode:'2026-09',jam:3150,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk10',periode:'2026-10',jam:3400,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk11',periode:'2026-11',jam:1800,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true}];
 SEED.ubah=[];SEED.minepermit=[];SEED.simper=[];SEED.pgship=[];SEED.pgbarge=[];SEED.pgjetty=[];SEED.pgsurv=[];SEED.pgkontrak=[];SEED.pgcust=[];SEED.pgstock=[];SEED.pgset=[];
 SEED.kdok=[];SEED.rkthn=[];SEED.opsm=[];SEED.opcat=[];SEED.opeto=[];SEED.opbarge=[];SEED.opform=[];SEED.oplog=[];SEED.opset=[];SEED.opmaster=[];SEED.opplan=[];SEED.oprkab=[];SEED.opkon=[];
-var __PD=prdDemo();SEED.opalat=__PD.opalat;SEED.opunit=__PD.opunit;SEED.opfuel=__PD.opfuel;SEED.optank=__PD.optank;SEED.invpakai=[];
+var __PD=prdDemo();SEED.opalat=__PD.opalat;SEED.opunit=__PD.opunit;SEED.opfuel=__PD.opfuel;SEED.optank=__PD.optank;SEED.opbd=__PD.opbd;var __WD=wdDemo();SEED.whitem=__WD.whitem;SEED.whin=__WD.whin;SEED.whout=__WD.whout;SEED.invpakai=[];
 SEED.asetsite=[];
 SEED.asetmut=[];
 SEED.asetserah=[];
@@ -14057,7 +14057,7 @@ var PRD_PM=['PM1','PM2','PM3'];
 /* ---------- util ---------- */
 function prdDemoRow(r){return r&&r.demo}
 function prdUnits(){var s={};(S.opunit||[]).forEach(function(u){if(u.kode)s[u.kode]=1});(S.opalat||[]).forEach(function(r){if(r.unit)s[r.unit]=1});return Object.keys(s).sort()}
-function prdPlan(){var p=opSet('prodplan');return {jamShift:Number(p.jamShift)>0?Number(p.jamShift):12,targetBcm:Number(p.targetBcm)||0,targetFuel:Number(p.targetFuel)||0,pmSoon:Number(p.pmSoon)>0?Number(p.pmSoon):50}}
+function prdPlan(){var p=opSet('prodplan');return {jamShift:Number(p.jamShift)>0?Number(p.jamShift):12,targetBcm:Number(p.targetBcm)||0,targetFuel:Number(p.targetFuel)||0,pmSoon:Number(p.pmSoon)>0?Number(p.pmSoon):50,paPlan:Number(p.paPlan)>0?Number(p.paPlan):85}}
 function prdEwh(r){var v=opNum(r.ewh);if(v!=null)return v;var a=opNum(r.hmAwal),b=opNum(r.hmAkhir);return a!=null&&b!=null&&b>=a?b-a:0}
 function prdN(v){return Number(v)||0}
 function prdLatestMonth(){var m='';(S.opalat||[]).forEach(function(r){var x=String(r.tanggal||'').slice(0,7);if(x>m)m=x});return m||opIso().slice(0,7)}
@@ -14169,7 +14169,7 @@ function prdEmpty(){
     canWrite?h('div',{class:'emptyst-a'},h('button',{type:'button',class:'btn primary',onclick:function(){openForm('opalat')}},'+ Laporan harian alat')):null);
 }
 function prdDemoPanel(){
-  var cols=['opalat','opunit','opfuel','optank'],has=cols.some(function(c){return (S[c]||[]).some(prdDemoRow)}),real=cols.some(function(c){return (S[c]||[]).some(function(r){return !r.demo})});
+  var cols=['opalat','opunit','opfuel','optank','opbd'],has=cols.some(function(c){return (S[c]||[]).some(prdDemoRow)}),real=cols.some(function(c){return (S[c]||[]).some(function(r){return !r.demo})});
   var load=h('button',{type:'button',class:'btn primary',onclick:async function(){
     var D=prdDemo();
     try{
@@ -14190,9 +14190,9 @@ function prdDemoPanel(){
 function prdPlanPanel(){
   var P=prdPlan(),F={};
   function fld(k,lbl,v,step){var i=h('input',{type:'number',min:'0',step:step||'any',value:v||''});F[k]=i;return h('label',{class:'fld'},h('span',{text:lbl}),i)}
-  var box=h('div',{class:'prd-sim'},fld('jamShift','Jam per shift (dipakai bila jam idle tidak diisi)',P.jamShift),fld('targetBcm','Target produksi OB per bulan (BCM)',P.targetBcm||''),fld('targetFuel','Batas pemakaian fuel per bulan (L)',P.targetFuel||''),fld('pmSoon','Peringatan PM jatuh tempo (sisa HM)',P.pmSoon));
+  var box=h('div',{class:'prd-sim'},fld('jamShift','Jam per shift (dipakai bila jam idle tidak diisi)',P.jamShift),fld('targetBcm','Target produksi OB per bulan (BCM)',P.targetBcm||''),fld('targetFuel','Batas pemakaian fuel per bulan (L)',P.targetFuel||''),fld('paPlan','Target ketersediaan fisik PA (%)',P.paPlan),fld('pmSoon','Peringatan PM jatuh tempo (sisa HM)',P.pmSoon));
   var b=h('button',{class:'btn primary',type:'button',onclick:async function(){
-    try{await save('opset','prodplan',{jamShift:prdN(F.jamShift.value)||12,targetBcm:prdN(F.targetBcm.value),targetFuel:prdN(F.targetFuel.value),pmSoon:prdN(F.pmSoon.value)||50});toast('Parameter tersimpan');paint()}catch(e){toast('Gagal menyimpan parameter')}}},'Simpan parameter');
+    try{await save('opset','prodplan',{jamShift:prdN(F.jamShift.value)||12,targetBcm:prdN(F.targetBcm.value),targetFuel:prdN(F.targetFuel.value),pmSoon:prdN(F.pmSoon.value)||50,paPlan:prdN(F.paPlan.value)||85});toast('Parameter tersimpan');paint()}catch(e){toast('Gagal menyimpan parameter')}}},'Simpan parameter');
   return panel('Parameter dan target','Dipakai untuk standby bila jam idle kosong, garis target pada grafik, dan peringatan PM.',box,canWrite&&opCan('setting')?h('div',{class:'acts'},b):h('p',{class:'prd-note',text:'Hanya KTT yang dapat mengubah parameter.'}));
 }
 
@@ -14409,6 +14409,53 @@ function prdPmInfo(u){
   return {hm:hm,iv:iv,last:last,target:target,remain:remain,jenis:jenis,st:st,pct:Math.max(0,Math.min(1,(hm-last)/iv))};
 }
 function prdPmTone(s){return s==='Over due'?'crit':s==='Segera PM'?'warn':'good'}
+/* ---------- Breakdown alat: kode, komponen, kategori unit (acuan: format Daily Breakdown Record dan dashboard maintenance performance) ---------- */
+var PRD_BDK=[['P1','Breakdown lapangan (urgent)'],['P2','Breakdown workshop'],['BG1','Backlog urgent'],['BG2','Backlog service'],['WP','Waiting part'],['PS','Plan service']];
+var PRD_BDO=PRD_BDK.map(function(x){return x[0]+' · '+x[1]});
+var PRD_BDS=['Dalam proses','Tunggu barang (part)','Tunggu mekanik','Tunggu alat angkut','Selesai (RFU)'];
+var PRD_BDL=['PIT','Workshop (W/S)','Port','Stockpile','Lainnya'];
+var PRD_BDC=['AC SYSTEM','ACCESSORIES','ACCIDENT','AIR CONDITIONER','AIR SYSTEM','ATTACHMENT','AUTOLUBE','BATTERY','BLADE','BODY / FRAME / GUARD','BRAKE SYSTEM','BUCKET','CABIN','CHASSIS','CLUTCH','COOLING SYSTEM','DIFFERENTIAL','ELECTRICAL SYSTEM','ENGINE','ENGINE RELATED PART','FINAL DRIVE','FRONT AXLE','FUEL SYSTEM','GET','HUB AND WHEELS','HYDRAULIC SYSTEM','MAINTENANCE / SERVICE','OIL LEVEL AND FLUID','OTHER SYSTEM','PNEUMATIC','POWER TRAIN','PROPELLER SHAFT','RADIATOR','REAR AXLE','RIPPER, TOOL BAR AND CONTROLS','STEERING SYSTEM','SUSPENSION','SWING','TANDEM','TIRE','TRANSMISSION','UNDERCARRIAGE','VESSEL'];
+var PRD_KATU=['ADT · Articulated Dump Truck','EXC · Excavator','MGD · Motor Grader','DZR · Bulldozer','OHT · Off Highway Truck','WHL · Wheel Loader','WBT · Wide Body Truck','DTH · Dump Truck','LV · Light Vehicle','BUS · Bus','ELF · Truk ringan','TWL · Tower Lamp','GST · Generator Set','WTP · Water Pump','WTH · Water Truck','FTH · Fuel Truck'];
+var PRD_KEPEM=['Milik sendiri','Sewa (rental)'];
+function prdBdCode(r){return String(r.kode||'').split(' ')[0]}
+function prdBdTs(d,t){if(!d)return null;var m=/^(\d{1,2}):(\d{2})$/.exec(String(t||'').trim()),x=new Date(d+'T'+(m?('0'+m[1]).slice(-2)+':'+m[2]:'00:00')+':00');return isNaN(x.getTime())?null:x.getTime()}
+function prdBdHours(r,now){var a=prdBdTs(r.tanggal,r.jam);if(a==null)return 0;var b=r.tglRfu?prdBdTs(r.tglRfu,r.jamRfu):now;if(b==null||b<a)return 0;return (b-a)/3600000}
+function prdBdTone(st){return st==='Selesai (RFU)'?'good':st==='Dalam proses'?'info':'warn'}
+function prdKatShort(u){return String((u&&u.kategori)||'').split(' · ')[1]||'Belum dikategorikan'}
+function prdBdSection(){
+  var P=prdPlan(),U=S.opunit||[],uk=function(k){return U.find(function(u){return u.kode===k})||{}},now=Date.now(),hrs=function(r){return prdBdHours(r,now)};
+  var all=S.opbd||[],mrows=all.filter(function(r){return String(r.tanggal||'').slice(0,7)===PRD.bulan&&(!PRD.unit||r.unit===PRD.unit)});
+  var ev=mrows.filter(function(r){return prdBdCode(r)!=='PS'}),ps=mrows.length-ev.length,closed=ev.filter(function(r){return r.tglRfu}),
+    rows=prdMonthRows(),A=prdAgg(rows),totH=opSum(ev,hrs),mttr=closed.length?opSum(closed,hrs)/closed.length:null,mtbf=ev.length?A.ewh/ev.length:null,
+    open=all.filter(function(r){return r.status!=='Selesai (RFU)'&&(!PRD.unit||r.unit===PRD.unit)}),wait=open.filter(function(r){return /^Tunggu/.test(r.status||'')}),
+    ach=A.pa!=null?A.pa*10000/P.paPlan:null;
+  var w=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
+  w.append(h('div',{class:'grid'},
+    kpi('Kejadian breakdown',String(ev.length),'bulan terpilih'+(ps?' · plan service '+ps:''),ev.length?'':'good'),
+    kpi('Jam breakdown',opNf(totH,1)+' jam','akumulasi sejak lapor hingga RFU'),
+    kpi('MTTR',mttr==null?'—':opNf(mttr,1)+' jam','rata-rata lama perbaikan (yang sudah RFU)'),
+    kpi('MTBF',mtbf==null?'—':opNf(mtbf,1)+' jam','jam kerja ÷ kejadian breakdown'),
+    kpi('PA aktual',prdPct(A.pa),'target '+opNf(P.paPlan,0)+'%'+(ach==null?'':' · capaian '+opNf(ach,1)+'%'),A.pa==null?'':A.pa*100>=P.paPlan?'good':A.pa*100>=P.paPlan-10?'warn':'crit'),
+    kpi('Breakdown masih terbuka',String(open.length),wait.length?wait.length+' menunggu part, mekanik, atau alat angkut':'belum RFU',open.length?(wait.length?'crit':'warn'):'good')));
+  var byC=prdBy(mrows,function(r){return prdBdCode(r)}),cItems=PRD_BDK.map(function(k,i){return {l:k[0]+' · '+k[1],v:(byC[k[0]]||[]).length,c:PRD_COL[i%6]}}).filter(function(x){return x.v>0});
+  var byK=prdBy(ev,function(r){return r.komponen}),kItems=Object.keys(byK).map(function(k){return {l:k,v:opSum(byK[k],hrs),t:'w'}}).sort(function(a,b){return b.v-a.v}).slice(0,8);
+  w.append(h('div',{class:'prd-2'},panel('Breakdown menurut kode','Jumlah kejadian per kode: P1 lapangan, P2 workshop, backlog, waiting part, dan plan service.',prdDonut(cItems,{center:'kejadian',label:'Breakdown menurut kode'})),
+    panel('Komponen penyebab jam breakdown terbesar','Delapan komponen dengan total jam henti terbanyak.',prdHBars(kItems,{unit:'jam',d:1}))));
+  var dd=prdBy(ev,function(r){return String(r.tanggal).slice(8,10)}),dk=Object.keys(dd).sort(),uu=prdBy(ev,function(r){return r.unit}),uItems=Object.keys(uu).map(function(k){return {l:k,v:opSum(uu[k],hrs),t:'c'}}).sort(function(a,b){return b.v-a.v}).slice(0,8);
+  w.append(h('div',{class:'prd-2'},panel('Jam breakdown harian','Total jam henti alat per hari pada bulan terpilih.',prdBars(dk.map(function(d){return opSum(dd[d],hrs)}),dk,{unit:'jam',color:'var(--crit,#c0392b)',label:'Jam breakdown harian'})),
+    panel('Unit dengan jam breakdown terbesar','Periksa unit teratas untuk perbaikan akar masalah atau penggantian.',prdHBars(uItems,{unit:'jam',d:1}))));
+  var byKat=prdBy(rows,function(r){return prdKatShort(uk(r.unit))}),katAll={};Object.keys(byKat).forEach(function(k){katAll[k]=1});ev.forEach(function(r){katAll[prdKatShort(uk(r.unit))]=1});
+  var tr=Object.keys(katAll).sort().map(function(k){var rr=byKat[k]||[],g=prdAgg(rr),e=ev.filter(function(r){return prdKatShort(uk(r.unit))===k}),c=e.filter(function(r){return r.tglRfu}),
+    bd=opSum(e,hrs),mt=c.length?opSum(c,hrs)/c.length:null,mb=e.length?g.ewh/e.length:null,units={};rr.forEach(function(r){units[r.unit]=1});e.forEach(function(r){units[r.unit]=1});
+    return [k,String(Object.keys(units).length),opNf(g.ewh,0),String(e.length),opNf(bd,1),mb==null?'—':opNf(mb,1),mt==null?'—':opNf(mt,1),g.n?badge(prdPct(g.pa),g.pa*100>=P.paPlan?'good':g.pa*100>=P.paPlan-10?'warn':'crit'):'—']});
+  w.append(panel('MTBF, MTTR, dan PA per kategori alat','Jam kerja (W) dari laporan harian alat; kejadian dan jam breakdown dari catatan breakdown. Plan service tidak dihitung sebagai breakdown.',prdTable(['Kategori','Unit','Jam kerja (W)','Kejadian BD','Jam BD','MTBF (jam)','MTTR (jam)','PA'],tr)));
+  var orow=open.slice().sort(function(a,b){return hrs(b)-hrs(a)}).slice(0,10).map(function(r){return [h('span',{class:'mono',text:r.unit||'—'}),badge(prdBdCode(r)||'—',''),r.komponen||'—',r.masalah?String(r.masalah).slice(0,70):'—',r.tanggal?fmt(r.tanggal):'—',opNf(hrs(r)/24,1)+' hari',badge(r.status||'—',prdBdTone(r.status))]});
+  w.append(panel('Breakdown yang belum RFU','Sepuluh yang paling lama. Perbarui status dan tanggal RFU di tab Breakdown alat setelah unit siap.',prdTable(['Unit','Kode','Komponen','Masalah','Sejak','Umur','Status'],orow)));
+  var kepem=prdBy(U,function(u){return u.kepemilikan||'Belum diisi'}),kpItems=Object.keys(kepem).map(function(k,i){return {l:k,v:kepem[k].length,c:PRD_COL[i%6]}});
+  var kat2=prdBy(U,function(u){return prdKatShort(u)}),ktItems=Object.keys(kat2).sort().map(function(k,i){return {l:k,v:kat2[k].length,c:PRD_COL[i%6]}});
+  w.append(h('div',{class:'prd-2'},panel('Kepemilikan armada','Unit milik sendiri dibanding sewa (rental).',prdDonut(kpItems,{center:'unit',label:'Kepemilikan armada'})),panel('Armada menurut kategori','Jumlah unit per kategori alat.',prdDonut(ktItems,{center:'unit',label:'Armada menurut kategori'}))));
+  return w;
+}
 function prdPlantDash(){
   var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),U=(S.opunit||[]).slice().sort(function(a,b){return String(a.kode).localeCompare(String(b.kode))});
   var I=U.map(function(u){return {u:u,p:prdPmInfo(u)}}),od=I.filter(function(x){return x.p.st==='Over due'}).length,sn=I.filter(function(x){return x.p.st==='Segera PM'}).length,ok=I.length-od-sn;
@@ -14428,14 +14475,17 @@ function prdPlantDash(){
   root.append(h('div',{class:'prd-2'},panel('Status jadwal PM','Jumlah unit menurut kedekatan dengan PM berikutnya.',prdDonut(stItems,{center:'unit',label:'Status PM'})),panel('Komposisi armada','Jumlah unit menurut jenis alat.',prdDonut(jenisItems,{center:'unit',label:'Komposisi armada'}))));
   root.append(h('div',{class:'prd-2'},panel('HM tertinggi','Sepuluh unit dengan jam mesin terbanyak.',prdHBars(hmItems,{unit:'HM',d:0})),panel('Estimasi downtime PM per unit','Jam henti yang direncanakan untuk satu kali PM.',prdHBars(dtItems,{unit:'jam',d:0}))));
   root.append(h('div',{class:'prd-2'},panel('Ketersediaan fisik (PA) per jenis alat','Rata-rata dari seluruh laporan harian.',prdHBars(jItems,{unit:'%',max:100,d:1})),panel('Jam breakdown terbesar','Akumulasi seluruh laporan harian.',prdHBars(bdItems,{unit:'jam'}))));
+  root.append(h('div',{style:'margin-top:8px'},h('h2',{style:'margin:0 0 6px;font-size:18px',text:'Keandalan alat dan breakdown'}),prdFilter()));
+  root.append(prdSafe(prdBdSection));
   return root;
 }
 function plantView(){
   var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),t=PRD.tab.plant;
-  root.append(opHead('Overview Plant','Kesiapan alat berat: jadwal perawatan berkala (PM), HM, ketersediaan, dan downtime.'));
+  root.append(opHead('Overview Plant','Kesiapan alat berat: jadwal perawatan berkala (PM), HM, ketersediaan, breakdown, MTBF, dan MTTR.'));
   var dn=(S.opunit||[]).some(prdDemoRow)?h('div',{class:'note'},h('p',{text:'Data unit di halaman ini masih berupa data contoh (bertanda “contoh”).'})):null;if(dn)root.append(dn);
-  root.append(prdTabs('plant',[['dash','Dashboard'],['unit','Daftar unit alat'],['set','Parameter']]));
+  root.append(prdTabs('plant',[['dash','Dashboard'],['bd','Breakdown alat'],['unit','Daftar unit alat'],['set','Parameter']]));
   if(t==='dash')root.append(prdSafe(prdPlantDash));
+  else if(t==='bd')root.append(panel('Catatan breakdown alat','Satu baris per kejadian: kode (P1, P2, backlog, waiting part, plan service), komponen, masalah, waktu breakdown dan RFU (ready for use). Jam breakdown, MTBF, dan MTTR dihitung otomatis.',listView('opbd')));
   else if(t==='unit')root.append(panel('Daftar unit alat','Isi HM PM terakhir dan interval. Jadwal PM berikutnya dihitung otomatis; HM saat ini mengikuti laporan harian alat.',listView('opunit')));
   else{root.append(prdPlanPanel());root.append(prdDemoPanel())}
   return root;
@@ -14517,6 +14567,7 @@ function prdBaPdf(r){
 }
 var PRD_FORM0=openForm;
 openForm=function(key,row,pre){
+  if(key==='opbd'&&!row)pre=Object.assign({tanggal:isoOf(TODAY)},pre||{});
   var res=PRD_FORM0.call(this,key,row,pre);
   if(key==='opfuel'){try{
     var form=document.querySelector('#ov .dlg form');
@@ -14653,6 +14704,9 @@ CFG.opunit={key:'opunit',add:'Unit alat',empty:'Belum ada unit alat terdaftar.',
     {k:'model',l:'Model',t:'text'},
     {k:'brand',l:'Merek',t:'text'},
     {k:'jenis',l:'Jenis alat',t:'select',req:1,o:PRD_JENIS},
+    {k:'kategori',l:'Kategori unit (kelompok laporan breakdown)',t:'select',o:PRD_KATU},
+    {k:'kepemilikan',l:'Kepemilikan',t:'select',o:PRD_KEPEM},
+    {k:'noSeri',l:'Nomor seri atau rangka',t:'text'},
     {k:'hm',l:'HM saat ini (diperbarui otomatis dari laporan harian bila lebih tinggi)',t:'number',min:0,sec:'Perawatan berkala (PM)'},
     {k:'hmPm',l:'HM saat PM terakhir',t:'number',min:0},
     {k:'tglPm',l:'Tanggal PM terakhir',t:'date'},
@@ -14667,6 +14721,7 @@ CFG.opunit={key:'opunit',add:'Unit alat',empty:'Belum ada unit alat terdaftar.',
     {l:'Unit',r:function(r){return r.kode||'—'}},
     {l:'Model',r:function(r){return (r.model||'—')+(r.brand?' · '+r.brand:'')}},
     {l:'Jenis',r:function(r){return r.jenis||'—'}},
+    {l:'Kategori',r:function(r){return r.kategori?String(r.kategori).split(' · ')[0]:'—'}},
     {l:'HM saat ini',r:function(r){return opNf(prdHmNow(r),0)}},
     {l:'Sisa PM',r:function(r){var p=prdPmInfo(r);return badge(opNf(p.remain,0)+' HM',prdPmTone(p.st))}}]};
 CFG.optank={key:'optank',add:'Tangki utama',empty:'Belum ada tangki utama. Tambahkan minimal satu tangki agar stok fuel dapat dilacak per tangki.',title:'Tangki utama',
@@ -14715,6 +14770,32 @@ CFG.opfuel={key:'opfuel',add:'Catat transaksi fuel',empty:'Belum ada penerimaan,
     {l:'Bukti',r:function(r){if(!r.jenis)return '—';var b=prdBukti(r);return badge(b.ok?'Lengkap':b.txt,b.ok?'good':'warn')}},
     {l:'Catatan',r:function(r){return r.catatan||'—'}}]};
 
+CFG.opbd={key:'opbd',add:'Catat breakdown',empty:'Belum ada catatan breakdown alat.',title:'Breakdown alat',
+  fields:[
+    {k:'tanggal',l:'Tanggal breakdown',t:'date',req:1,sec:'Kejadian'},
+    {k:'jam',l:'Jam breakdown (HH:MM)',t:'text'},
+    {k:'unit',l:'Unit (dari Daftar unit alat)',t:'select',req:1,o:function(){return (S.opunit||[]).map(function(u){return u.kode}).filter(Boolean).sort()}},
+    {k:'kode',l:'Kode breakdown',t:'select',req:1,o:PRD_BDO},
+    {k:'komponen',l:'Komponen',t:'select',req:1,o:PRD_BDC},
+    {k:'masalah',l:'Uraian masalah',t:'area',req:1},
+    {k:'lokasi',l:'Lokasi unit',t:'select',o:PRD_BDL},
+    {k:'status',l:'Status perbaikan',t:'select',req:1,o:PRD_BDS,sec:'Penanganan'},
+    {k:'tglRfu',l:'Tanggal RFU (ready for use)',t:'date'},
+    {k:'jamRfu',l:'Jam RFU (HH:MM)',t:'text'},
+    {k:'tindakan',l:'Tindakan dan nomor permintaan part (PP atau PB)',t:'text'},
+    {k:'catatan',l:'Catatan',t:'area'}],
+  defaults:{status:'Dalam proses',lokasi:'PIT'},
+  filter:{k:'status',all:'Semua status'},
+  sort:function(a,b){return String(b.tanggal||'').localeCompare(String(a.tanggal||''))||String(b.jam||'').localeCompare(String(a.jam||''))},
+  cols:[
+    {l:'Tanggal',r:function(r){return r.tanggal?fmt(r.tanggal)+(r.jam?' '+r.jam:''):'—'}},
+    {l:'Unit',r:function(r){return r.unit||'—'}},
+    {l:'Kode',r:function(r){return badge(prdBdCode(r)||'—','')}},
+    {l:'Komponen',r:function(r){return r.komponen||'—'}},
+    {l:'Masalah',r:function(r){return r.masalah?String(r.masalah).slice(0,60):'—'}},
+    {l:'Status',r:function(r){return badge(r.status||'—',prdBdTone(r.status))}},
+    {l:'Durasi',r:function(r){var x=prdBdHours(r,Date.now());return x>0?opNf(x,1)+' jam':'—'}}]};
+
 /* validasi sederhana saat simpan */
 (function(){
   var S0=save;
@@ -14761,6 +14842,19 @@ CFG.opfuel={key:'opfuel',add:'Catat transaksi fuel',empty:'Belum ada penerimaan,
       delete data.masuk;delete data.stokAwal;
       if(J!==PRD_FJ[1])data.dariTangki='';
     }
+    if(key==='opbd'&&data){
+      var uu=S.opunit||[];
+      if(!uu.length)throw new Error('Daftarkan unit dulu di tab Daftar unit alat.');
+      var un=uu.find(function(x){return x.kode===data.unit});
+      if(!un)throw new Error('Pilih unit dari Daftar unit alat.');
+      var tm={test:function(v){var m=/^(\d{1,2}):(\d{2})$/.exec(String(v).trim());return !!m&&Number(m[1])<24&&Number(m[2])<60}};
+      if(data.jam&&!tm.test(String(data.jam).trim()))throw new Error('Format jam breakdown HH:MM, contoh 14:30.');
+      if(data.jamRfu&&!tm.test(String(data.jamRfu).trim()))throw new Error('Format jam RFU HH:MM, contoh 16:45.');
+      if(data.tglRfu&&data.status!=='Selesai (RFU)')data.status='Selesai (RFU)';
+      if(data.status==='Selesai (RFU)'&&!data.tglRfu)throw new Error('Isi tanggal RFU untuk status Selesai.');
+      if(data.tglRfu){var a1=prdBdTs(data.tanggal,data.jam),b1=prdBdTs(data.tglRfu,data.jamRfu);if(a1!=null&&b1!=null&&b1<a1)throw new Error('Waktu RFU tidak boleh lebih awal dari waktu breakdown.')}
+      data.kategori=un.kategori||'';data.model=un.model||'';
+    }
     if(key==='opunit'&&data&&data.kode){
       var dup=(S.opunit||[]).some(function(x){return x.kode===data.kode&&x.id!==id});
       if(dup)throw new Error('Kode unit '+data.kode+' sudah terdaftar.');
@@ -14777,7 +14871,7 @@ function prdDemo(){
   var seed=7,rnd=function(){seed=(seed*16807)%2147483647;return seed/2147483647},R=function(a,b){return a+(b-a)*rnd()},iso=function(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)};
   var U=[['AEX-301','PC 350-8','KOMATSU','Loader',1490,1380],['AEX-201','PC 210-10','KOMATSU','Loader',1890,1700],['AEX-202','PC 210-10','KOMATSU','Loader',1523,1300],['AMG-01','GD 535-3','KOMATSU','Grader',1525,1350],
     ['ADC-01','FAW 420','FAW','Hauler',810,600],['ADC-02','FAW 420','FAW','Hauler',975,760],['ADC-03','FAW 420','FAW','Hauler',764,740],['ADT-01','FAW 340','FAW','Hauler',1146,900],['ADT-02','FAW 340','FAW','Hauler',1083,850],['ADT-03','FAW 340','FAW','Hauler',990,740],['ADT-04','FAW 340','FAW','Hauler',566,330],['ADT-05','FAW 340','FAW','Hauler',970,760],['DZ-01','D85ESS','KOMATSU','Dozer',3244,3050]];
-  var outU=U.map(function(u,i){var t=new Date();t.setDate(t.getDate()-Math.round(R(10,45)));return {id:'dmu'+i,kode:u[0],model:u[1],brand:u[2],jenis:u[3],hm:u[4]-prdHmBase(u),hmPm:u[4]-[60,120,180,230,20,100,150,210,260,90,140,40,170][i],tglPm:iso(t),tipePm:['PM1','PM2','PM3'][i%3],interval:250,downtime:[8,6,6,6,5,5,5,6,6,6,5,5,8][i],demo:true}});
+  var outU=U.map(function(u,i){var t=new Date();t.setDate(t.getDate()-Math.round(R(10,45)));return {id:'dmu'+i,kode:u[0],model:u[1],brand:u[2],jenis:u[3],kategori:{Loader:'EXC · Excavator',Hauler:'DTH · Dump Truck',Dozer:'DZR · Bulldozer',Grader:'MGD · Motor Grader'}[u[3]],kepemilikan:u[0].indexOf('ADC')===0?'Sewa (rental)':'Milik sendiri',hm:u[4]-prdHmBase(u),hmPm:u[4]-[60,120,180,230,20,100,150,210,260,90,140,40,170][i],tglPm:iso(t),tipePm:['PM1','PM2','PM3'][i%3],interval:250,downtime:[8,6,6,6,5,5,5,6,6,6,5,5,8][i],demo:true}});
   var A=[],F=[],n=0,hm={},TK=[{id:'dmt1',nama:'Tangki Utama 1',urut:1,kapasitas:30000,stokAwal:18000,lokasi:'Fuel station pit selatan',demo:true},{id:'dmt2',nama:'Tangki Utama 2',urut:2,kapasitas:25000,stokAwal:9000,lokasi:'Fuel station pit selatan',demo:true}];U.forEach(function(u){hm[u[0]]=u[4]-prdHmBase(u)});
   var plan={Loader:[['Loading',1.4,80]],Hauler:[['Hauling',1.0,60]],Dozer:[['Dozing',2.6,110]],Grader:[['Road Maintenance',1.2,60]]};
   var reasons=['Waiting hauler','Prepare front','Disposal crowded','Hujan dan licin','Refueling','Istirahat'];
@@ -14797,7 +14891,21 @@ function prdDemo(){
     if(d===10)F.push({id:'dmf10b',tanggal:tg,jenis:FJ[0],tangki:TK[1].nama,dariTangki:'',jumlah:10000,catatan:'DO pemasok A',noBa:'BAF/SITE/2026/090',noDo:'DO-A-8090',pihakSerah:'Rudi (sopir PT Pemasok A)',pihakTerima:'Fajar (fuelman)',saksi:'Anto (pengawas)',kendaraan:'DT 8123 AB',demo:true});
     if(d===6)F.push({id:'dmm6',tanggal:tg,jenis:FJ[1],tangki:TK[1].nama,dariTangki:TK[0].nama,jumlah:5000,catatan:'Penyeimbangan stok untuk alat support',noBa:'BAF/SITE/2026/091',pihakSerah:'Fajar (fuelman tangki 1)',pihakTerima:'Dewi (fuelman tangki 2)',saksi:'Anto (pengawas)',demo:true});
   }
-  return {opalat:A,opunit:outU,opfuel:F,optank:TK};
+  var BD=[],bn=0,KC=[['ENGINE','Engine low power, cek injektor'],['HYDRAULIC SYSTEM','Kebocoran oli hidraulik pada hose'],['TIRE','Ban bocor, perlu ganti'],['ELECTRICAL SYSTEM','Lampu dan wiring bermasalah'],['TRANSMISSION','Transmisi slip saat panas'],['UNDERCARRIAGE','Track longgar'],['BRAKE SYSTEM','Rem kurang pakem'],['COOLING SYSTEM','Temperatur mesin tinggi'],['STEERING SYSTEM','Steering pump bocor'],['GET','Teeth bucket aus dan lepas'],['AIR CONDITIONER','AC tidak dingin'],['FUEL SYSTEM','Filter fuel tersumbat']],
+    CD=['P1 · Breakdown lapangan (urgent)','P1 · Breakdown lapangan (urgent)','P1 · Breakdown lapangan (urgent)','P2 · Breakdown workshop','P2 · Breakdown workshop','BG2 · Backlog service','WP · Waiting part','PS · Plan service','PS · Plan service'];
+  for(var d2=11;d2>=0;d2--){
+    var dt2=new Date(today);dt2.setDate(today.getDate()-d2);
+    var ne=2+Math.floor(rnd()*3);
+    for(var q=0;q<ne;q++){
+      var uu2=U[Math.floor(rnd()*U.length)],kc=KC[Math.floor(rnd()*KC.length)],cd=CD[Math.floor(rnd()*CD.length)],hh=6+Math.floor(rnd()*13),mm=Math.floor(rnd()*4)*15,
+        dur=cd.indexOf('PS')===0?R(2,6):cd.indexOf('WP')===0?R(24,96):R(0.7,7),st0=new Date(dt2);st0.setHours(hh,mm,0,0);
+      var en=new Date(st0.getTime()+dur*3600000),still=d2<=1&&rnd()<0.45||cd.indexOf('WP')===0&&d2<=4,pad=function(n){return ('0'+n).slice(-2)};
+      var stt=still?(cd.indexOf('WP')===0?'Tunggu barang (part)':rnd()<0.5?'Dalam proses':'Tunggu mekanik'):'Selesai (RFU)';
+      BD.push({id:'dmb'+(bn++),tanggal:iso(st0),jam:pad(st0.getHours())+':'+pad(st0.getMinutes()),unit:uu2[0],kode:cd,komponen:cd.indexOf('PS')===0?'MAINTENANCE / SERVICE':kc[0],masalah:cd.indexOf('PS')===0?'Perawatan berkala sesuai jadwal PM':kc[1],lokasi:cd.indexOf('P2')===0||cd.indexOf('PS')===0||cd.indexOf('WP')===0?'Workshop (W/S)':'PIT',status:stt,
+        tglRfu:still?'':iso(en),jamRfu:still?'':pad(en.getHours())+':'+pad(en.getMinutes()),tindakan:cd.indexOf('WP')===0?'PP:'+(7000+bn):'Inspeksi dan perbaikan',kategori:{Loader:'EXC · Excavator',Hauler:'DTH · Dump Truck',Dozer:'DZR · Bulldozer',Grader:'MGD · Motor Grader'}[uu2[3]],model:uu2[1],demo:true});
+    }
+  }
+  return {opalat:A,opunit:outU,opfuel:F,optank:TK,opbd:BD};
 }
 function prdHmBase(u){return 190}
 
@@ -14813,6 +14921,335 @@ function prdHmBase(u){return 190}
     NS();
   };
   ['prodov','plantov','fuelov'].forEach(function(k){if(typeof SUB_KUNCI_DASAR!=='undefined'&&SUB_KUNCI_DASAR.indexOf(k)<0)SUB_KUNCI_DASAR.push(k)});
+})();
+/* ---------- Warehouse: stok sparepart dan material gudang ----------
+   Koleksi: whitem (master barang dan stok awal), whin (barang masuk, receiving report), whout (barang keluar, store slip).
+   Stok akhir = stok awal + masuk - keluar. Status material dihitung dari jumlah transaksi keluar 12 bulan terakhir.
+   Min/Max = jam kerja per hari x lead time x qty rata-rata / life time; Max = Min x faktor. Acuan: template Warehouse Stock Report. */
+var WH={bulan:'',tab:'dash',c:null};
+var WH_KEL=['Lubricant','Coolant','Filter','Ban dan roda','Spare part unit','Consumable','Kelistrikan','Tools dan perlengkapan','ATK dan office','APD dan seragam','Lainnya'];
+var WH_UOM=['Pcs','Ltr','Set','Kg','Roll','Box','Meter','Unit'];
+var WH_STAT=['Consumable Part','Fast Moving','Slow Moving','Non Stock'];
+var WH_BRAND=[['100','BANDO'],['101','BOMAG'],['103','CONSUMABLE'],['104','DONALDSON'],['105','GAJAH TUNGGAL'],['106','GOODYEAR'],['107','HINO'],['108','HONDA'],['109','ISUZU'],['110','KOBELCO'],['111','KOMATSU'],['112','MANN'],['113','MITSUBISHI'],['114','NEW HOLLAND'],['115','ROTARY'],['116','SAKURA'],['117','SKF'],['118','STATIONARY / OFFICE SUPPLIES'],['119','TOTAL'],['120','TOYOTA'],['121','YUASA'],['122','FORD'],['123','DONG FENG'],['124','PROGUARD'],['125','UNION'],['126','APD, SERAGAM'],['127','ASSET'],['128','VOLVO'],['129','SURE'],['130','KS']];
+var WH_KAMUS=[
+  ['Consumable Part','Barang sekali pakai atau tidak ekonomis diperbaiki (oli, kain majun, filter). Lebih dari 3 transaksi keluar dalam 12 bulan.'],
+  ['Fast Moving','Part yang cepat berputar. Tepat 3 transaksi keluar dalam 12 bulan; umur simpan (aging) kurang dari 30 hari.'],
+  ['Slow Moving','Part yang jarang dicari. Tepat 2 transaksi keluar dalam 12 bulan; aging di atas 60 hari. Termasuk part backlog.'],
+  ['Non Stock','Part yang hanya 1 atau tanpa transaksi keluar dalam 12 bulan (part backlog).'],
+  ['Dead stock','Stok masih ada tetapi tidak bergerak (tanpa keluar atau masuk) lebih dari batas hari pada Parameter, bawaan 180 hari.'],
+  ['Qty Min','Jam kerja per hari × lead time order (hari) × qty rata-rata per transaksi ÷ life time (jam). Itulah kebutuhan selama menunggu barang datang.'],
+  ['Qty Max','Qty Min × faktor Max (bawaan 1,5). Saat stok menyentuh Min, pesan sampai Max.'],
+  ['Re-order','Stok akhir sama dengan atau di bawah Qty Min. Qty order = Qty Max − stok akhir, dibulatkan ke atas.'],
+  ['Kode barang','Tiga digit awal sebelum tanda hubung menunjukkan merek atau kelompok, misalnya 111- Komatsu, 107- Hino, 128- Volvo.']];
+
+function wdPlan(){var p=opSet('whplan')||{};return {jam:Number(p.jam)>0?Number(p.jam):20,lead:Number(p.lead)>0?Number(p.lead):14,life:Number(p.life)>0?Number(p.life):250,faktor:Number(p.faktor)>0?Number(p.faktor):1.5,dead:Number(p.dead)>0?Number(p.dead):180}}
+function wdDays(a,b){return Math.round((Date.parse(b)-Date.parse(a))/864e5)}
+function wdBrand(kode){var m=/^(\d{3})-/.exec(String(kode||''));if(!m)return '';var x=WH_BRAND.find(function(b){return b[0]===m[1]});return x?x[1]:''}
+function wdRp(v){v=Number(v)||0;var a=Math.abs(v);return a>=1e9?'Rp '+opNf(v/1e9,2)+' M':a>=1e6?'Rp '+opNf(v/1e6,1)+' jt':'Rp '+opNf(v,0)}
+function wdLabel(it){return it.kode+' · '+it.nama}
+function wdItem(kode){return (S.whitem||[]).find(function(x){return x.kode===kode})}
+function wdStokDi(kode,skipCol,skipId){
+  var it=wdItem(kode);if(!it)return 0;var v=Number(it.stokAwal)||0;
+  (S.whin||[]).forEach(function(r){if(r.partNo===kode&&!(skipCol==='whin'&&r.id===skipId))v+=Number(r.qty)||0});
+  (S.whout||[]).forEach(function(r){if(r.partNo===kode&&!(skipCol==='whout'&&r.id===skipId))v-=Number(r.qty)||0});
+  return v;
+}
+function wdCalc(){
+  if(WH.c)return WH.c;
+  var P=wdPlan(),today=isoOf(new Date()),m={},lim=new Date();lim.setDate(lim.getDate()-365);var l12=isoOf(lim);
+  (S.whitem||[]).forEach(function(it){if(it.kode)m[it.kode]={it:it,masuk:0,keluar:0,lastIn:'',lastOut:'',n12:0,q12:0}});
+  (S.whin||[]).forEach(function(r){var x=m[r.partNo];if(!x)return;x.masuk+=Number(r.qty)||0;if(String(r.tanggal||'')>x.lastIn)x.lastIn=r.tanggal});
+  (S.whout||[]).forEach(function(r){var x=m[r.partNo];if(!x)return;var q=Number(r.qty)||0;x.keluar+=q;if(String(r.tanggal||'')>x.lastOut)x.lastOut=r.tanggal;if(String(r.tanggal||'')>=l12){x.n12++;x.q12+=q}});
+  Object.keys(m).forEach(function(k){
+    var x=m[k],it=x.it;x.awal=Number(it.stokAwal)||0;x.akhir=x.awal+x.masuk-x.keluar;x.harga=Number(it.harga)||0;x.nilai=x.akhir*x.harga;
+    x.status=x.n12>3?WH_STAT[0]:x.n12===3?WH_STAT[1]:x.n12===2?WH_STAT[2]:WH_STAT[3];
+    var ref=x.lastOut>x.lastIn?x.lastOut:(x.lastIn||x.lastOut);x.aging=ref?wdDays(ref,today):null;x.dead=x.akhir>0&&x.aging!=null&&x.aging>P.dead;
+    var life=Number(it.lifeTime)||P.life,lead=Number(it.leadTime)||P.lead;x.avg=x.n12?x.q12/x.n12:0;x.min=P.jam*lead*x.avg/life;x.max=x.min*P.faktor;
+    x.reorder=x.min>0&&x.akhir<=x.min&&!x.dead;x.order=x.reorder?Math.max(0,Math.ceil(x.max-x.akhir)):0;
+  });
+  WH.c={m:m,list:Object.keys(m).map(function(k){return m[k]})};return WH.c;
+}
+function wdTone(s){return s===WH_STAT[0]?'info':s===WH_STAT[1]?'good':s===WH_STAT[2]?'warn':''}
+
+/* ---------- konfigurasi ---------- */
+CFG.whitem={key:'whitem',add:'Barang',empty:'Belum ada barang di gudang. Tambahkan barang beserta stok awalnya.',title:'Barang gudang',
+  fields:[
+    {k:'kode',l:'Part number atau kode barang',t:'text',req:1,sec:'Identitas barang'},
+    {k:'nama',l:'Nama barang (part name)',t:'text',req:1},
+    {k:'kelompok',l:'Kelompok barang',t:'select',o:WH_KEL},
+    {k:'untukUnit',l:'Untuk unit atau alat (misalnya Grader, Exca PC210)',t:'text'},
+    {k:'uom',l:'Satuan (UoM)',t:'select',o:WH_UOM},
+    {k:'lokasi',l:'Lokasi rak (bin location)',t:'text'},
+    {k:'stokAwal',l:'Stok awal',t:'number',min:0,sec:'Stok dan harga'},
+    {k:'harga',l:'Harga satuan (Rp)',t:'number',min:0},
+    {k:'hargaLama',l:'Harga satuan sebelumnya (Rp), untuk membandingkan perubahan harga',t:'number',min:0},
+    {k:'leadTime',l:'Lead time order (hari). Kosong = ikut Parameter',t:'number',min:0},
+    {k:'lifeTime',l:'Life time komponen (jam). Kosong = ikut Parameter',t:'number',min:0},
+    {k:'catatan',l:'Catatan',t:'area'}],
+  defaults:{kelompok:'Spare part unit',uom:'Pcs',stokAwal:0},
+  filter:{k:'kelompok',all:'Semua kelompok'},
+  sort:function(a,b){return String(a.kode||'').localeCompare(String(b.kode||''))},
+  cols:[
+    {l:'Part number',r:function(r){return r.kode||'—'}},
+    {l:'Nama barang',r:function(r){var b=wdBrand(r.kode);return (r.nama||'—')+(b?' · '+b:'')}},
+    {l:'Kelompok',r:function(r){return r.kelompok||'—'}},
+    {l:'Stok akhir',r:function(r){var x=wdCalc().m[r.kode];if(!x)return '—';return badge(opNf(x.akhir,x.akhir%1?1:0)+' '+(r.uom||''),x.akhir<=0?'crit':x.reorder?'warn':'good')}},
+    {l:'Harga satuan',r:function(r){return r.harga?invRp(r.harga):'—'}},
+    {l:'Nilai stok',r:function(r){var x=wdCalc().m[r.kode];return x&&x.harga?invRp(x.nilai):'—'}},
+    {l:'Status material',r:function(r){var x=wdCalc().m[r.kode];return x?badge(x.dead?'Dead stock':x.status,x.dead?'crit':wdTone(x.status)):'—'}},
+    {l:'Aging',r:function(r){var x=wdCalc().m[r.kode];return x&&x.aging!=null?x.aging+' hari':'—'}}]};
+CFG.whin={key:'whin',add:'Barang masuk',empty:'Belum ada barang masuk.',title:'Barang masuk (receiving report)',
+  fields:[
+    {k:'tanggal',l:'Tanggal terima',t:'date',req:1,sec:'Penerimaan'},
+    {k:'noDo',l:'Nomor surat jalan atau DO',t:'text'},
+    {k:'part',l:'Barang (pilih dari daftar barang)',t:'select',req:1,o:function(){return (S.whitem||[]).slice().sort(function(a,b){return String(a.kode).localeCompare(String(b.kode))}).map(wdLabel)}},
+    {k:'qty',l:'Jumlah diterima',t:'number',min:0,req:1},
+    {k:'harga',l:'Harga satuan (Rp). Kosong = harga pada daftar barang',t:'number',min:0},
+    {k:'tujuan',l:'Tujuan atau peruntukan (stok, backlog, unit)',t:'text'},
+    {k:'refPr',l:'Referensi PR atau PO',t:'text'},
+    {k:'penerima',l:'Diterima oleh',t:'text'},
+    {k:'remarks',l:'Catatan',t:'area'}],
+  defaults:{},
+  filter:null,
+  sort:function(a,b){return String(b.tanggal||'').localeCompare(String(a.tanggal||''))},
+  cols:[
+    {l:'Tanggal',r:function(r){return r.tanggal?fmt(r.tanggal):'—'}},
+    {l:'No. DO',r:function(r){return r.noDo||'—'}},
+    {l:'Barang',r:function(r){return (r.partNo||'—')+(r.nama?' · '+r.nama:'')}},
+    {l:'Jumlah',r:function(r){return opNf(r.qty,r.qty%1?1:0)+' '+(r.uom||'')}},
+    {l:'Nilai',r:function(r){return r.harga?invRp((Number(r.harga)||0)*(Number(r.qty)||0)):'—'}},
+    {l:'Tujuan',r:function(r){return r.tujuan||'—'}},
+    {l:'Ref. PR',r:function(r){return r.refPr||'—'}}]};
+CFG.whout={key:'whout',add:'Barang keluar',empty:'Belum ada barang keluar.',title:'Barang keluar (store slip)',
+  fields:[
+    {k:'tanggal',l:'Tanggal keluar',t:'date',req:1,sec:'Pengeluaran'},
+    {k:'noSlip',l:'Nomor store slip (otomatis bila dikosongkan)',t:'text'},
+    {k:'part',l:'Barang (pilih dari daftar barang)',t:'select',req:1,o:function(){return (S.whitem||[]).slice().sort(function(a,b){return String(a.kode).localeCompare(String(b.kode))}).map(wdLabel)}},
+    {k:'qty',l:'Jumlah keluar',t:'number',min:0,req:1},
+    {k:'unit',l:'Kode unit atau pemakai (misalnya ADT-01, GENSET)',t:'text'},
+    {k:'pengambil',l:'Diambil oleh (mekanik)',t:'text'},
+    {k:'harga',l:'Harga satuan (Rp). Kosong = harga pada daftar barang',t:'number',min:0},
+    {k:'keterangan',l:'Keterangan (jenis pekerjaan, nomor WO)',t:'area'}],
+  defaults:{},
+  filter:null,
+  sort:function(a,b){return String(b.tanggal||'').localeCompare(String(a.tanggal||''))},
+  cols:[
+    {l:'Tanggal',r:function(r){return r.tanggal?fmt(r.tanggal):'—'}},
+    {l:'No. slip',r:function(r){return r.noSlip||'—'}},
+    {l:'Barang',r:function(r){return (r.partNo||'—')+(r.nama?' · '+r.nama:'')}},
+    {l:'Jumlah',r:function(r){return opNf(r.qty,r.qty%1?1:0)+' '+(r.uom||'')}},
+    {l:'Unit',r:function(r){return r.unit||'—'}},
+    {l:'Nilai',r:function(r){return r.harga?invRp((Number(r.harga)||0)*(Number(r.qty)||0)):'—'}},
+    {l:'Keterangan',r:function(r){return r.keterangan?String(r.keterangan).slice(0,50):'—'}}]};
+
+/* validasi dan isian otomatis */
+(function(){
+  var S0=save;
+  save=async function(key,id,data){
+    if(key==='whitem'&&data){
+      var kd=String(data.kode||'').trim();if(!kd)throw new Error('Isi part number.');data.kode=kd;
+      if((S.whitem||[]).some(function(x){return x.kode===kd&&x.id!==id}))throw new Error('Part number '+kd+' sudah terdaftar.');
+      var old=id?(S.whitem||[]).find(function(x){return x.id===id}):null;
+      if(old&&old.kode!==kd&&((S.whin||[]).some(function(r){return r.partNo===old.kode})||(S.whout||[]).some(function(r){return r.partNo===old.kode})))throw new Error('Part number sudah dipakai pada transaksi, tidak dapat diubah.');
+    }
+    if((key==='whin'||key==='whout')&&data){
+      var kode=data.partNo||String(data.part||'').split(' · ')[0],it=wdItem(kode);
+      if(!it)throw new Error('Pilih barang dari daftar barang.');
+      var q=Number(data.qty);if(!(q>0))throw new Error('Jumlah harus lebih dari 0.');
+      data.partNo=it.kode;data.nama=it.nama;data.uom=it.uom||'';delete data.part;
+      if(data.harga===''||data.harga==null)data.harga=it.harga||'';
+      if(key==='whout'){
+        var av=wdStokDi(it.kode,'whout',id);
+        if(q>av+0.0001)throw new Error('Stok '+it.nama+' hanya '+opNf(av,av%1?1:0)+' '+(it.uom||'')+', tidak cukup untuk dikeluarkan '+opNf(q,q%1?1:0)+'.');
+        if(!String(data.noSlip||'').trim())data.noSlip=asNo('whout','noSlip','SS',data.tanggal);
+        var un=(S.opunit||[]).find(function(x){return x.kode===data.unit});if(un)data.model=un.model||'';
+      }
+    }
+    return S0(key,id,data);
+  };
+  var F0=openForm;
+  openForm=function(key,row,pre){
+    if((key==='whin'||key==='whout')){
+      if(row&&row.partNo){var it=wdItem(row.partNo);row=Object.assign({},row,{part:it?wdLabel(it):row.partNo+' · '+(row.nama||'')})}
+      else if(!row)pre=Object.assign({tanggal:isoOf(TODAY)},pre||{});
+    }
+    return F0.call(this,key,row,pre);
+  };
+})();
+
+/* ---------- tampilan ---------- */
+function wdTabs(T){
+  return h('div',{class:'op-tabs',role:'tablist'},T.map(function(t){return h('button',{type:'button',role:'tab',class:'op-tab'+(WH.tab===t[0]?' on':''),'aria-selected':WH.tab===t[0]?'true':'false',onclick:function(){WH.tab=t[0];paint()}},t[1])}));
+}
+function wdLatestMonth(){var m='';(S.whin||[]).concat(S.whout||[]).forEach(function(r){var x=String(r.tanggal||'').slice(0,7);if(x>m)m=x});return m||isoOf(new Date()).slice(0,7)}
+function wdFilter(){
+  if(!WH.bulan)WH.bulan=wdLatestMonth();
+  var m=h('input',{type:'month','aria-label':'Filter bulan'});m.value=WH.bulan;m.addEventListener('change',function(){if(m.value){WH.bulan=m.value;paint()}});
+  return h('div',{class:'toolbar',style:'margin:0;flex-wrap:wrap'},h('label',{class:'fld op-inl'},h('span',{text:'Bulan'}),m),h('span',{class:'grow'}),
+    canWrite?h('button',{class:'btn',type:'button',onclick:function(){openForm('whin')}},'+ Barang masuk'):null,
+    canWrite?h('button',{class:'btn primary',type:'button',onclick:function(){openForm('whout')}},'+ Barang keluar'):null);
+}
+function wdDash(){
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),C=wdCalc(),L=C.list,P=wdPlan();
+  var aktif=L.filter(function(x){return x.akhir>0}),nilai=aktif.reduce(function(a,x){return a+x.nilai},0),dead=L.filter(function(x){return x.dead}),deadV=dead.reduce(function(a,x){return a+x.nilai},0),ro=L.filter(function(x){return x.reorder});
+  var inM=(S.whin||[]).filter(function(r){return String(r.tanggal||'').slice(0,7)===WH.bulan}),outM=(S.whout||[]).filter(function(r){return String(r.tanggal||'').slice(0,7)===WH.bulan});
+  var val=function(r){return (Number(r.harga)||0)*(Number(r.qty)||0)},vIn=opSum(inM,val),vOut=opSum(outM,val);
+  var turun=L.filter(function(x){var o=Number(x.it.hargaLama)||0;return o>0&&x.harga<o}).length,naik=L.filter(function(x){var o=Number(x.it.hargaLama)||0;return o>0&&x.harga>o}).length;
+  root.append(wdFilter());
+  root.append(h('div',{class:'grid'},
+    kpi('Item aktif',String(aktif.length),'dari '+L.length+' item terdaftar'),
+    kpi('Nilai persediaan',wdRp(nilai),'stok akhir × harga satuan'),
+    kpi('Dead stock',String(dead.length),dead.length?wdRp(deadV)+' tidak bergerak > '+P.dead+' hari':'tidak ada barang mengendap',dead.length?'warn':'good'),
+    kpi('Perlu re-order',String(ro.length),ro.length?'stok ≤ Qty Min':'stok masih aman',ro.length?'crit':'good'),
+    kpi('Barang masuk',wdRp(vIn),inM.length+' transaksi bulan ini'),
+    kpi('Barang keluar',wdRp(vOut),outM.length+' store slip bulan ini'),
+    kpi('Perubahan harga',turun+naik?turun+' turun · '+naik+' naik':'—',turun+naik?'dibanding harga sebelumnya':'isi harga sebelumnya pada barang')));
+  var sc={};WH_STAT.forEach(function(s){sc[s]=0});aktif.forEach(function(x){sc[x.dead?'Dead stock':x.status]=(sc[x.dead?'Dead stock':x.status]||0)+1});
+  var stItems=Object.keys(sc).map(function(k,i){return {l:k,v:sc[k],c:k==='Dead stock'?'var(--crit,#c0392b)':PRD_COL[i%6]}}).filter(function(x){return x.v>0});
+  var byK={};aktif.forEach(function(x){var k=x.it.kelompok||'Lainnya';byK[k]=(byK[k]||0)+x.nilai});
+  var kItems=Object.keys(byK).map(function(k){return {l:k,v:byK[k]/1e6,t:'n'}}).sort(function(a,b){return b.v-a.v}).slice(0,8);
+  root.append(h('div',{class:'prd-2'},panel('Status material','Jumlah item yang masih ada stoknya, menurut perputaran 12 bulan terakhir.',prdDonut(stItems,{center:'item',label:'Status material'})),
+    panel('Nilai stok per kelompok barang','Dalam juta rupiah.',prdHBars(kItems,{unit:'jt',d:1}))));
+  var dayMap={};inM.forEach(function(r){var d=String(r.tanggal).slice(8,10);(dayMap[d]=dayMap[d]||{i:0,o:0}).i+=val(r)});outM.forEach(function(r){var d=String(r.tanggal).slice(8,10);(dayMap[d]=dayMap[d]||{i:0,o:0}).o+=val(r)});
+  var dk=Object.keys(dayMap).sort();
+  var byU={};outM.forEach(function(r){var u=r.unit||'Tanpa unit';byU[u]=(byU[u]||0)+val(r)});
+  var uItems=Object.keys(byU).map(function(k){return {l:k,v:byU[k]/1e6,t:'w'}}).sort(function(a,b){return b.v-a.v}).slice(0,8);
+  root.append(h('div',{class:'prd-2'},panel('Barang masuk dan keluar harian','Nilai transaksi (juta rupiah) pada bulan terpilih.',prdGrp([{name:'Masuk',vals:dk.map(function(d){return dayMap[d].i/1e6}),color:'var(--info)'},{name:'Keluar',vals:dk.map(function(d){return dayMap[d].o/1e6}),color:'var(--brand)'}],dk,{unit:'jt',label:'Barang masuk dan keluar harian'})),
+    panel('Pemakai terbesar','Unit dengan nilai pengambilan sparepart tertinggi bulan ini (juta rupiah).',prdHBars(uItems,{unit:'jt',d:1}))));
+  var bk=[0,0,0,0,0];aktif.forEach(function(x){var a=x.aging;bk[a==null?4:a<=30?0:a<=60?1:a<=P.dead?2:3]++});
+  var mx=L.filter(function(x){return x.akhir>0}).sort(function(a,b){return b.nilai-a.nilai}).slice(0,8).map(function(x){return {l:x.it.kode,v:x.nilai/1e6,t:'n'}});
+  root.append(h('div',{class:'prd-2'},panel('Umur simpan (aging)','Jumlah item menurut hari sejak transaksi terakhir.',prdBars(bk,['0–30','31–60','61–'+P.dead,'>'+P.dead,'Belum ada'],{unit:'item',label:'Umur simpan barang'})),
+    panel('Nilai stok terbesar','Delapan barang dengan nilai persediaan tertinggi (juta rupiah).',prdHBars(mx,{unit:'jt',d:1}))));
+  var rr=ro.slice().sort(function(a,b){return b.order*b.harga-a.order*a.harga}).slice(0,10).map(function(x){return [x.it.kode,x.it.nama||'—',opNf(x.akhir,x.akhir%1?1:0)+' '+(x.it.uom||''),opNf(x.min,1),opNf(x.max,1),badge(opNf(x.order,0)+' '+(x.it.uom||''),'warn'),x.harga?invRp(x.order*x.harga):'—']});
+  root.append(panel('Rekomendasi re-order','Barang dengan stok di bawah atau sama dengan Qty Min. Rumus dan parameter ada di tab Min-Max order.',prdTable(['Part number','Barang','Stok','Qty Min','Qty Max','Qty order','Estimasi biaya'],rr)));
+  var dd2=dead.slice().sort(function(a,b){return b.nilai-a.nilai}).slice(0,10).map(function(x){return [x.it.kode,x.it.nama||'—',opNf(x.akhir,x.akhir%1?1:0)+' '+(x.it.uom||''),x.aging+' hari',x.harga?invRp(x.nilai):'—']});
+  root.append(panel('Dead stock','Stok yang tidak bergerak lebih dari '+P.dead+' hari. Pertimbangkan dijual kembali (buy back), dipindah ke unit lain, atau dihapus dari rencana belanja.',prdTable(['Part number','Barang','Stok','Aging','Nilai'],dd2)));
+  return root;
+}
+function wdMinMax(){
+  var C=wdCalc(),P=wdPlan(),q='',body=h('div');
+  function fill(){
+    var L=C.list.filter(function(x){return !q||(x.it.kode+' '+x.it.nama).toLowerCase().indexOf(q)>=0}).sort(function(a,b){return (b.reorder?1:0)-(a.reorder?1:0)||b.order*b.harga-a.order*a.harga||String(a.it.kode).localeCompare(String(b.it.kode))});
+    body.replaceChildren(prdTable(['Part number','Barang','Stok akhir','Status','Call (12 bln)','Demand','Qty rata-rata','Min','Max','Rekomendasi','Qty order'],L.slice(0,300).map(function(x){return [x.it.kode,x.it.nama||'—',opNf(x.akhir,x.akhir%1?1:0)+' '+(x.it.uom||''),badge(x.dead?'Dead stock':x.status,x.dead?'crit':wdTone(x.status)),String(x.n12),opNf(x.q12,0),opNf(x.avg,2),opNf(x.min,1),opNf(x.max,1),badge(x.reorder?'Re-order':'Stock normal',x.reorder?'warn':'good'),x.order?opNf(x.order,0):'—']}))
+      ,L.length>300?h('p',{class:'prd-note',text:'Menampilkan 300 baris pertama. Gunakan pencarian untuk mempersempit.'}):null);
+  }
+  var qi=h('input',{type:'search',placeholder:'Cari part number atau nama…','aria-label':'Cari barang',oninput:function(e){q=e.target.value.toLowerCase();fill()}});
+  fill();
+  return panel('Min-Max order','Qty Min = jam kerja per hari ('+P.jam+') × lead time (bawaan '+P.lead+' hari) × qty rata-rata ÷ life time (bawaan '+P.life+' jam). Qty Max = Min × '+P.faktor+'. Qty rata-rata = total keluar ÷ jumlah transaksi keluar 12 bulan.',h('div',{class:'toolbar'},qi),body);
+}
+function wdParam(){
+  var P=wdPlan(),F={};
+  function fld(k,l,v,st){var i=h('input',{type:'number',min:'0',step:st||'any',value:v});F[k]=i;return h('label',{class:'fld'},h('span',{text:l}),i)}
+  var box=h('div',{class:'prd-sim'},fld('jam','Jam kerja operasi per hari',P.jam),fld('lead','Lead time order bawaan (hari)',P.lead),fld('life','Life time bawaan (jam)',P.life),fld('faktor','Faktor Qty Max terhadap Min',P.faktor,'0.1'),fld('dead','Batas dead stock (hari)',P.dead));
+  var b=h('button',{class:'btn primary',type:'button',onclick:async function(){
+    try{await save('opset','whplan',{jam:Number(F.jam.value)||20,lead:Number(F.lead.value)||14,life:Number(F.life.value)||250,faktor:Number(F.faktor.value)||1.5,dead:Number(F.dead.value)||180});toast('Parameter tersimpan');paint()}catch(e){toast('Gagal menyimpan parameter')}}},'Simpan parameter');
+  return panel('Parameter gudang','Dipakai untuk menghitung Qty Min, Qty Max, rekomendasi re-order, dan dead stock.',box,canWrite&&opCan('setting')?h('div',{class:'acts'},b):h('p',{class:'prd-note',text:'Hanya KTT yang dapat mengubah parameter.'}));
+}
+function wdDemoPanel(){
+  var cols=['whitem','whin','whout'],has=cols.some(function(c){return (S[c]||[]).some(prdDemoRow)}),real=cols.some(function(c){return (S[c]||[]).some(function(r){return !r.demo})});
+  var load=h('button',{type:'button',class:'btn primary',onclick:async function(){
+    var D=wdDemo();
+    try{
+      if(MODE==='live'){for(var i=0;i<cols.length;i++){var c=cols[i];await Promise.all(D[c].map(function(d){var x=Object.assign({},d);delete x.id;return DB.collection(c).doc(d.id).set(clean(x))}))}}
+      else{cols.forEach(function(c){S[c]=(S[c]||[]).filter(function(r){return !r.demo}).concat(D[c])});schedule()}
+      toast('Data contoh dimuat');paint();
+    }catch(e){toast('Gagal memuat data contoh'+(e&&e.message?': '+e.message:''))}}},'Muat data contoh');
+  var del=h('button',{type:'button',class:'btn',onclick:async function(){
+    try{
+      for(var i=0;i<cols.length;i++){var c=cols[i],rm=(S[c]||[]).filter(prdDemoRow);
+        if(MODE==='live')await Promise.all(rm.map(function(r){return DB.collection(c).doc(r.id).delete()}));else S[c]=(S[c]||[]).filter(function(r){return !r.demo})}
+      if(MODE!=='live')schedule();toast('Data contoh dihapus');paint();
+    }catch(e){toast('Gagal menghapus data contoh')}}},'Hapus data contoh');
+  return panel('Data contoh','28 barang gudang, barang masuk, dan store slip 12 bulan terakhir agar dashboard dan Min-Max terlihat. Hanya baris bertanda “contoh” yang dihapus.',
+    h('p',{class:'prd-note',text:has?'Data contoh sedang aktif.':(real?'Sudah ada data asli. Data contoh ditambahkan di sampingnya.':'Belum ada data. Dashboard menampilkan grafik kosong.')}),
+    canWrite?h('div',{class:'acts'},load,has?del:null):h('p',{class:'prd-note',text:'Hanya KTT yang dapat memuat atau menghapus data contoh.'}));
+}
+function whView(){
+  WH.c=null;
+  var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),t=WH.tab;
+  root.append(opHead('Warehouse','Stok sparepart dan material gudang: barang masuk, barang keluar (store slip), Min-Max order, dan dead stock.'));
+  if((S.whitem||[]).some(prdDemoRow))root.append(h('div',{class:'note'},h('p',{text:'Data gudang di halaman ini masih berupa data contoh (bertanda “contoh”). Hapus di tab Parameter, lalu catat stok yang sebenarnya.'})));
+  root.append(wdTabs([['dash','Dashboard'],['stok','Stok barang'],['masuk','Barang masuk'],['keluar','Barang keluar'],['minmax','Min-Max order'],['set','Parameter']]));
+  if(t==='dash')root.append(prdSafe(wdDash));
+  else if(t==='stok')root.append(panel('Stok barang','Stok akhir = stok awal + barang masuk − barang keluar. Status material dihitung otomatis dari transaksi keluar 12 bulan terakhir.',listView('whitem')));
+  else if(t==='masuk')root.append(panel('Barang masuk (receiving report)','Catat setiap penerimaan dengan nomor surat jalan atau DO. Foto surat jalan dapat dilampirkan pada bagian lampiran.',listView('whin')));
+  else if(t==='keluar')root.append(panel('Barang keluar (store slip)','Catat setiap pengambilan oleh mekanik. Stok yang tidak cukup akan ditolak.',listView('whout')));
+  else if(t==='minmax')root.append(prdSafe(wdMinMax));
+  else{
+    root.append(wdParam());
+    root.append(panel('Kamus istilah gudang','Definisi yang dipakai dashboard dan Min-Max order.',prdTable(['Istilah','Pengertian'],WH_KAMUS.map(function(k){return [h('b',{text:k[0]}),k[1]]}))));
+    root.append(panel('Kode barang dan merek','Tiga digit awal part number menunjukkan merek atau kelompok (contoh 111-xxx adalah Komatsu).',h('div',{style:'max-height:320px;overflow:auto'},prdTable(['Awalan','Merek atau kelompok'],WH_BRAND.map(function(b){return [b[0]+'-',b[1]]})))));
+    root.append(wdDemoPanel());
+  }
+  return root;
+}
+
+/* ---------- data contoh (hanya literal lokal: dipanggil saat SEED dibuat) ---------- */
+function wdDemo(){
+  var seed=11,rnd=function(){seed=(seed*16807)%2147483647;return seed/2147483647},iso=function(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)};
+  /* kode, nama, kelompok, untuk unit, uom, harga, frekuensi keluar setahun, qty per keluar, stok akhir yang dituju, hari sejak keluar terakhir (0 = acak) */
+  var T=[
+    ['15W-40','OLI MESIN SHELL 15W-40','Lubricant','Semua unit','Ltr',38000,60,20,20,0],
+    ['S2 MX SAE 10','OLI HIDROLIK SHELL TELLUS S2 MX 10','Lubricant','Excavator','Ltr',42000,28,20,300,0],
+    ['S2 A 90','AXLE OIL SHELL S2 A 90','Lubricant','Hauler','Ltr',40000,12,10,60,0],
+    ['CW','COOLANT WATER','Coolant','Semua unit','Ltr',25000,22,10,120,0],
+    ['600-319-3750','FUEL FILTER','Filter','Grader','Pcs',285000,8,1,2,0],
+    ['600-319-3610','FUEL PREFILTER','Filter','Exca PC 210 dan 350','Pcs',310000,9,1,1,0],
+    ['600-411-5110','WATER COOLANT FILTER','Filter','Exca PC 210','Pcs',175000,4,1,1,0],
+    ['600-211-1231','OIL FILTER','Filter','Dozer','Pcs',190000,6,1,1,0],
+    ['600-185-5100','AIR CLEANER ASSY','Filter','Grader','Pcs',1850000,3,1,1,0],
+    ['207-60-71183','HYDRAULIC FILTER ELEMENT','Filter','Exca PC350','Pcs',1250000,3,1,2,0],
+    ['714-07-28713','TRANSMISION FILTER','Filter','Grader','Pcs',640000,2,1,2,0],
+    ['111-421-8802','SEAL KIT BOOM CYLINDER','Spare part unit','Exca PC350','Set',4750000,1,1,1,0],
+    ['111-209-5511','BUSHING BUCKET','Spare part unit','Exca PC210','Pcs',865000,2,2,4,0],
+    ['111-175-3302','TEETH BUCKET','Spare part unit','Exca PC350','Pcs',420000,14,2,10,0],
+    ['111-614-0902','ROD CYLINDER BUCKET','Spare part unit','Exca PC350','Pcs',18500000,1,1,1,280],
+    ['107-FM-0231','KAMPAS REM DEPAN','Spare part unit','Hauler FAW','Set',1350000,3,1,2,0],
+    ['107-FM-0415','V-BELT KIPAS','Spare part unit','Hauler FAW','Pcs',185000,5,2,4,0],
+    ['105-BAN-1000','BAN 1000-20 GAJAH TUNGGAL','Ban dan roda','Hauler FAW','Pcs',6800000,4,1,3,0],
+    ['105-BAN-0825','BAN 825-16','Ban dan roda','Light vehicle','Pcs',3100000,1,1,2,230],
+    ['100-A39-BD','V-BELT A39','Spare part unit','Genset','Pcs',85000,7,2,2,0],
+    ['121-NS70','AKI YUASA NS70','Kelistrikan','Semua unit','Pcs',1450000,4,1,2,0],
+    ['103-WD40','WD-40 450 ML','Consumable','Bengkel','Pcs',68000,16,2,12,0],
+    ['103-MJN','KAIN MAJUN','Consumable','Bengkel','Kg',22000,20,5,40,0],
+    ['103-GRS','GREASE EP2','Consumable','Semua unit','Kg',58000,26,3,20,0],
+    ['103-CC','CONTACT CLEANER','Consumable','Bengkel','Pcs',54000,3,2,3,0],
+    ['126-SRG','SERAGAM KERJA','APD dan seragam','Karyawan','Set',280000,2,6,18,0],
+    ['118-A4','KERTAS A4 80 GSM','ATK dan office','Kantor','Box',52000,10,4,12,0],
+    ['124-LMP','LAMPU TOWER LED 200W','Kelistrikan','Tower lamp','Pcs',950000,1,1,3,320]
+  ];
+  var U=['AEX-301','AEX-201','AEX-202','AMG-01','ADC-01','ADC-02','ADC-03','ADT-01','ADT-02','ADT-03','ADT-04','ADT-05','DZ-01'],MD={'AEX-301':'PC 350-8','AEX-201':'PC 210-10','AEX-202':'PC 210-10','AMG-01':'GD 535-3','DZ-01':'D85ESS'},
+    PN=['Eriko','Suryo','Juli','Fikri','Darus','Maula'],today=new Date(),I=[],N=[],O=[],no=0,ni=0;
+  T.forEach(function(t,k){
+    var outs=[],tot=0,last=t[9]||0;
+    for(var j=0;j<t[6];j++){
+      var ago=last?last+Math.floor(rnd()*10):(j<2?Math.floor(rnd()*25)+1:Math.floor(Math.pow(rnd(),1.6)*360));if(ago>364)ago=364;
+      var d=new Date(today);d.setDate(today.getDate()-ago);
+      var q=t[7]*(t[4]==='Ltr'||t[4]==='Kg'?(0.5+rnd()):1);q=t[4]==='Ltr'||t[4]==='Kg'?Math.max(1,Math.round(q)):Math.max(1,Math.round(q));
+      var u=/Grader/.test(t[3])?'AMG-01':/Dozer/.test(t[3])?'DZ-01':/Exca/.test(t[3])?['AEX-301','AEX-201','AEX-202'][Math.floor(rnd()*3)]:/Hauler/.test(t[3])?U[4+Math.floor(rnd()*8)]:U[Math.floor(rnd()*U.length)];
+      if(/Genset|Bengkel|Kantor|Karyawan|Tower/.test(t[3]))u=/Genset/.test(t[3])?'GENSET':/Tower/.test(t[3])?'TOWER LAMP':/Kantor/.test(t[3])?'KANTOR':'BENGKEL';
+      outs.push({d:d,q:q,u:u});tot+=q;
+    }
+    var ins=[],tin=0;
+    if(t[6]>0&&!last){var nin=Math.max(1,Math.round(t[6]/6));for(var m=0;m<nin;m++){var ago2=(m===0&&k%3===0)?Math.floor(rnd()*18)+1:Math.floor(rnd()*330)+10,d2=new Date(today);d2.setDate(today.getDate()-ago2);var qi=Math.max(1,Math.round(t[7]*(2+rnd()*4)));ins.push({d:d2,q:qi});tin+=qi}}
+    var base=t[8],awal=tot+base-tin;if(awal<0)awal=0;
+    I.push({id:'dmwi'+k,kode:t[0],nama:t[1],kelompok:t[2],untukUnit:t[3],uom:t[4],lokasi:'RAK '+String.fromCharCode(65+(k%6))+'-'+(1+k%5),stokAwal:awal,harga:t[5],hargaLama:k%4===0?Math.round(t[5]*1.08):(k%7===0?Math.round(t[5]*0.95):''),leadTime:14,lifeTime:250,demo:true});
+    ins.forEach(function(x){N.push({id:'dmwn'+(ni++),tanggal:iso(x.d),noDo:'DO-'+(5000+ni),partNo:t[0],nama:t[1],uom:t[4],qty:x.q,harga:t[5],tujuan:'Stok',refPr:'PR-'+(2400+ni),penerima:'Fajar',demo:true})});
+    outs.forEach(function(x){O.push({id:'dmwo'+(no++),tanggal:iso(x.d),noSlip:'SS/SITE/'+x.d.getFullYear()+'/'+('00'+no).slice(-3),partNo:t[0],nama:t[1],uom:t[4],qty:x.q,unit:x.u,model:MD[x.u]||'',pengambil:PN[Math.floor(rnd()*PN.length)],harga:t[5],keterangan:'Perawatan dan perbaikan unit',demo:true})});
+  });
+  return {whitem:I,whin:N,whout:O};
+}
+
+/* ---------- menu ---------- */
+(function(){
+  MGRP.whov='Operasional tambang';
+  var i=MORD.indexOf('fuelov');i=i<0?MORD.length:i+1;MORD.splice(i,0,'whov');
+  var NS=navSetup;
+  navSetup=function(){
+    MODS.push({k:'whov',t:'Warehouse',i:'M3 20V9l9-5 9 5v11M7 20v-6h10v6M7 17h10'});
+    NS();
+  };
+  if(typeof SUB_KUNCI_DASAR!=='undefined'&&SUB_KUNCI_DASAR.indexOf('whov')<0)SUB_KUNCI_DASAR.push('whov');
 })();
 
 /* ---------- Penyimpanan file besar di Supabase Storage (v77) ----------
@@ -15826,7 +16263,7 @@ VIEWS.inventaris=function(){return invView()};
 VIEWS.asetsite=function(){return asetView()};
 VIEWS.operasional=function(){return opView()};
 VIEWS.pgdash=function(){return pgTabWrap('pgdash',pgDash)};VIEWS.pgship=function(){return pgTabWrap('pgship',pgShip)};VIEWS.pgarsip=function(){return pgTabWrap('pgarsip',pgArsip)};VIEWS.pgmaster=function(){return pgTabWrap('pgmaster',pgMaster)};VIEWS.pgset=function(){return pgTabWrap('pgset',pgSetting)};VIEWS.pgtrack=function(){return pgTabWrap('pgtrack',pgTrack)};VIEWS.pgcek=function(){return pgTabWrap('pgcek',pgCek)};
-VIEWS.kredit=function(){return krView()};VIEWS.prodov=function(){return prodView()};VIEWS.plantov=function(){return plantView()};VIEWS.fuelov=function(){return fuelView()};
+VIEWS.kredit=function(){return krView()};VIEWS.prodov=function(){return prodView()};VIEWS.plantov=function(){return plantView()};VIEWS.fuelov=function(){return fuelView()};VIEWS.whov=function(){return whView()};
 VIEWS.setelan=function(){return setView()};
 VIEWS.kontraktor=function(){
   var m=metrics(),root=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
