@@ -52,7 +52,7 @@ h1,h2,h3{font-family:var(--f-head);font-weight:600;margin:0;letter-spacing:.005e
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--brand)}
 :focus-visible{outline:2px solid var(--brand);outline-offset:2px}
-.wrap{max-width:1280px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:none;margin:0 auto;padding-left:max(clamp(16px,1.6vw,32px),env(safe-area-inset-left,0px));padding-right:max(clamp(16px,1.6vw,32px),env(safe-area-inset-right,0px))}
 .mono{font-family:var(--f-mono);font-size:12.5px}
 
 /* header */
@@ -75,7 +75,7 @@ nav#nav a svg{width:18px;height:18px;flex:none}
 nav#nav a[aria-current="page"]{background:var(--brand-soft);color:var(--brand)}
 nav#nav a .n{margin-left:auto;font-family:var(--f-mono);font-size:11.5px;min-width:20px;text-align:center;padding:1px 6px;border-radius:10px;background:var(--crit-soft);color:var(--crit)}
 @media (min-width:960px){
-  .shell{grid-template-columns:240px minmax(0,1fr);gap:24px}
+  .shell{grid-template-columns:250px minmax(0,1fr);gap:36px}
   nav#nav{flex-direction:column;overflow:visible;top:16px;align-self:start;padding:8px}
   nav#nav a{white-space:normal}
 }
