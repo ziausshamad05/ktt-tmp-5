@@ -2005,7 +2005,7 @@ SEED.rkdok=[
 SEED.jamkerja=[{id:'jk01',periode:'2026-01',jam:3080,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk02',periode:'2026-02',jam:2800,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk03',periode:'2026-03',jam:3220,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk04',periode:'2026-04',jam:3150,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk05',periode:'2026-05',jam:3300,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk06',periode:'2026-06',jam:3080,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk07',periode:'2026-07',jam:3260,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk08',periode:'2026-08',jam:3320,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk09',periode:'2026-09',jam:3150,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk10',periode:'2026-10',jam:3400,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true},{id:'jk11',periode:'2026-11',jam:1800,tk:14,catatan:'Personel SSU dan pengamanan di lokasi.',demo:true}];
 SEED.ubah=[];SEED.minepermit=[];SEED.simper=[];SEED.pgship=[];SEED.pgbarge=[];SEED.pgjetty=[];SEED.pgsurv=[];SEED.pgkontrak=[];SEED.pgcust=[];SEED.pgstock=[];SEED.pgset=[];
 SEED.kdok=[];SEED.rkthn=[];SEED.opsm=[];SEED.opcat=[];SEED.opeto=[];SEED.opbarge=[];SEED.opform=[];SEED.oplog=[];SEED.opset=[];SEED.opmaster=[];SEED.opplan=[];SEED.oprkab=[];SEED.opkon=[];
-var __PD=prdDemo();SEED.opalat=__PD.opalat;SEED.opunit=__PD.opunit;SEED.opfuel=__PD.opfuel;SEED.invpakai=[];
+var __PD=prdDemo();SEED.opalat=__PD.opalat;SEED.opunit=__PD.opunit;SEED.opfuel=__PD.opfuel;SEED.optank=__PD.optank;SEED.invpakai=[];
 SEED.asetsite=[];
 SEED.asetmut=[];
 SEED.asetserah=[];
@@ -14039,7 +14039,7 @@ function pgCek(){
 /* ===== Operasional tambang: Overview Produktivitas, Overview Plant, Overview Fuel =====
    Acuan: Dashboard Mining Daily Report, Dashboard Daily Report Activity Based Fuel, Template Dashboard Maintenance Planner,
    dan Mining Tools Production and Fleet Simulator.
-   Koleksi: opalat (laporan harian alat per shift), opunit (master alat dan jadwal PM), opfuel (stok dan penerimaan fuel),
+   Koleksi: opalat (laporan harian alat per shift), opunit (master alat dan jadwal PM), opfuel (penerimaan, mutasi antar tangki, opname fuel), optank (tangki utama),
    parameter target di opset (id 'prodplan'). */
 var PRD={bulan:'',shift:'',unit:'',tab:{prod:'dash',plant:'dash',fuel:'dash'},sim:null};
 var PRD_AKT=['Loading','Hauling','Dozing','Road Maintenance','STP','General'];
@@ -14169,7 +14169,7 @@ function prdEmpty(){
     canWrite?h('div',{class:'emptyst-a'},h('button',{type:'button',class:'btn primary',onclick:function(){openForm('opalat')}},'+ Laporan harian alat')):null);
 }
 function prdDemoPanel(){
-  var cols=['opalat','opunit','opfuel'],has=cols.some(function(c){return (S[c]||[]).some(prdDemoRow)}),real=cols.some(function(c){return (S[c]||[]).some(function(r){return !r.demo})});
+  var cols=['opalat','opunit','opfuel','optank'],has=cols.some(function(c){return (S[c]||[]).some(prdDemoRow)}),real=cols.some(function(c){return (S[c]||[]).some(function(r){return !r.demo})});
   var load=h('button',{type:'button',class:'btn primary',onclick:async function(){
     var D=prdDemo();
     try{
@@ -14351,19 +14351,88 @@ function plantView(){
 }
 
 /* ================= OVERVIEW FUEL ================= */
-function prdFuelDays(){
-  var dates={},pakai={};
-  (S.opalat||[]).forEach(function(r){if(!r.tanggal)return;dates[r.tanggal]=1;var p=pakai[r.tanggal]=pakai[r.tanggal]||{D:0,N:0};p[r.shift==='Night'?'N':'D']+=prdN(r.fuelActual)});
-  var masuk={},awal={},cat={};(S.opfuel||[]).forEach(function(r){if(!r.tanggal)return;dates[r.tanggal]=1;masuk[r.tanggal]=(masuk[r.tanggal]||0)+prdN(r.masuk);if(r.stokAwal!==''&&r.stokAwal!=null&&isFinite(r.stokAwal))awal[r.tanggal]=Number(r.stokAwal)});
-  var out=[],prev=0;Object.keys(dates).sort().forEach(function(d){var a=awal[d]!=null?awal[d]:prev,p=pakai[d]||{D:0,N:0},m=masuk[d]||0,e=a+m-p.D-p.N;out.push({d:d,awal:a,masuk:m,day:p.D,night:p.N,pakai:p.D+p.N,akhir:e});prev=e});
+var PRD_FJ=['Penerimaan','Mutasi antar tangki','Koreksi stok (opname)'];
+function prdTanks(){
+  var T=(S.optank||[]).filter(function(t){return t&&t.nama}).slice().sort(function(a,b){return (prdN(a.urut)-prdN(b.urut))||String(a.nama).localeCompare(String(b.nama))});
+  return T.length?T:[{id:'_',nama:'Tangki utama',kapasitas:0,stokAwal:0,virtual:true}];
+}
+function prdTankNames(){return (S.optank||[]).filter(function(t){return t&&t.nama}).map(function(t){return t.nama})}
+function prdFuelTx(){
+  var T=prdTanks(),t1=T[0].nama,out=[];
+  (S.opfuel||[]).forEach(function(r){
+    if(!r.tanggal)return;
+    if(!r.jenis){
+      if(prdN(r.masuk)>0)out.push({d:r.tanggal,j:'P',ke:t1,jml:prdN(r.masuk),id:r.id});
+      if(r.stokAwal!==''&&r.stokAwal!=null&&isFinite(r.stokAwal))out.push({d:r.tanggal,j:'K',ke:t1,jml:Number(r.stokAwal),id:r.id});
+    }else if(r.jenis===PRD_FJ[0])out.push({d:r.tanggal,j:'P',ke:r.tangki||t1,jml:prdN(r.jumlah),id:r.id});
+    else if(r.jenis===PRD_FJ[1])out.push({d:r.tanggal,j:'M',dari:r.dariTangki,ke:r.tangki,jml:prdN(r.jumlah),id:r.id});
+    else if(r.jenis===PRD_FJ[2])out.push({d:r.tanggal,j:'K',ke:r.tangki||t1,jml:prdN(r.jumlah),id:r.id});
+  });
   return out;
+}
+/* Per hari per tangki: awal, penerimaan, mutasi masuk/keluar, koreksi (opname), pakai, akhir. Urutan transaksi dalam sehari: koreksi, penerimaan, mutasi, pakai. */
+function prdFuelCalc(skip){
+  var T=prdTanks(),names=T.map(function(t){return t.nama}),t1=names[0],dates={},pakai={},tx=prdFuelTx().filter(function(x){return !skip||x.id!==skip});
+  (S.opalat||[]).forEach(function(r){if(!r.tanggal)return;dates[r.tanggal]=1;var tk=(r.tangki&&names.indexOf(r.tangki)>=0)?r.tangki:t1,p=pakai[r.tanggal]=pakai[r.tanggal]||{};var q=p[tk]=p[tk]||{D:0,N:0};q[r.shift==='Night'?'N':'D']+=prdN(r.fuelActual)});
+  tx.forEach(function(x){dates[x.d]=1});
+  var lv={};T.forEach(function(t){lv[t.nama]=prdN(t.stokAwal)});
+  var days=[];
+  Object.keys(dates).sort().forEach(function(d){
+    var row={d:d,t:{},awal:0,masuk:0,mutasi:0,day:0,night:0,pakai:0,akhir:0};
+    names.forEach(function(n){row.t[n]={awal:lv[n],masuk:0,mIn:0,mOut:0,kor:0,pakai:0,akhir:0}});
+    var tx2=tx.filter(function(x){return x.d===d});
+    tx2.filter(function(x){return x.j==='K'&&row.t[x.ke]}).forEach(function(x){var c=row.t[x.ke];c.kor+=x.jml-lv[x.ke];lv[x.ke]=x.jml});
+    tx2.filter(function(x){return x.j==='P'&&row.t[x.ke]}).forEach(function(x){row.t[x.ke].masuk+=x.jml;lv[x.ke]+=x.jml});
+    tx2.filter(function(x){return x.j==='M'&&row.t[x.ke]&&row.t[x.dari]&&x.ke!==x.dari}).forEach(function(x){row.t[x.dari].mOut+=x.jml;row.t[x.ke].mIn+=x.jml;lv[x.dari]-=x.jml;lv[x.ke]+=x.jml;row.mutasi+=x.jml});
+    var p=pakai[d]||{};
+    names.forEach(function(n){var q=p[n]||{D:0,N:0},c=row.t[n];c.pakai=q.D+q.N;row.day+=q.D;row.night+=q.N;lv[n]-=c.pakai;c.akhir=lv[n];row.awal+=c.awal;row.masuk+=c.masuk;row.pakai+=c.pakai;row.akhir+=c.akhir});
+    days.push(row);
+  });
+  return {tanks:T,names:names,days:days,level:lv,tx:tx};
+}
+function prdFuelDays(){return prdFuelCalc().days}
+function prdFuelStokTgl(tgl,nama,skip){var C=prdFuelCalc(skip),v=null;C.days.forEach(function(r){if(r.d<=tgl&&r.t[nama])v=r.t[nama].akhir});if(v==null){var t=C.tanks.filter(function(x){return x.nama===nama})[0];v=t?prdN(t.stokAwal):0}return v}
+function prdMutBtn(){
+  if(!canWrite)return h('span');
+  return h('div',{style:'display:flex;gap:8px;flex-wrap:wrap'},
+    h('button',{type:'button',class:'btn primary',onclick:function(){if(!prdTankNames().length){toast('Daftar tangki dulu di tab Tangki.');return}openForm('opfuel',null,{jenis:PRD_FJ[1],tanggal:isoOf(TODAY)})}},'Mutasi antar tangki'),
+    h('button',{type:'button',class:'btn',onclick:function(){if(!prdTankNames().length){toast('Daftar tangki dulu di tab Tangki.');return}openForm('opfuel',null,{jenis:PRD_FJ[0],tanggal:isoOf(TODAY)})}},'Catat penerimaan'));
+}
+function prdTankSection(FC,D){
+  var wrap=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),last=D.length?D[D.length-1]:null,tot=0;
+  var rows=FC.tanks.map(function(t,k){
+    var c=last?last.t[t.nama]:null,v=c?c.akhir:prdN(t.stokAwal),cap=prdN(t.kapasitas),pc=cap>0?v/cap:null;tot+=v;
+    return {n:t.nama,v:v,cap:cap,pc:pc,c:c,k:k};
+  });
+  var items=rows.map(function(x){return {l:x.n,v:x.pc==null?0:Math.max(0,x.pc*100),t:x.pc==null?'n':x.pc<0.15?'c':x.pc<0.3?'w':x.pc>0.95?'w':''}});
+  var lvl=panel('Level tangki','Stok akhir tiap tangki dibanding kapasitas'+(last?' (per '+fmt(last.d)+')':'')+'.',
+    prdHBars(items,{unit:'%',d:0,max:100}),
+    h('div',{style:'margin-top:12px'},prdTable(['Tangki','Kapasitas (L)','Stok (L)','Terisi','Sisa ruang (L)','Status'],rows.map(function(x){
+      var st=x.v<=0?['Kosong','crit']:x.pc==null?['Kapasitas belum diisi','']:x.pc<0.15?['Rendah','crit']:x.pc<0.3?['Perlu isi','warn']:x.pc>1?['Melebihi kapasitas','crit']:x.pc>0.95?['Hampir penuh','warn']:['Aman','good'];
+      return [x.n,x.cap?opNf(x.cap,0):'—',opNf(x.v,0),x.pc==null?'—':opNf(x.pc*100,0)+'%',x.cap?opNf(Math.max(0,x.cap-x.v),0):'—',badge(st[0],st[1])]
+    }))));
+  var mut=FC.tx.filter(function(x){return x.j==='M'&&x.d.slice(0,7)===PRD.bulan}).sort(function(a,b){return b.d.localeCompare(a.d)});
+  var mp=panel('Mutasi antar tangki','Perpindahan fuel dari satu tangki utama ke tangki lain bulan ini.',
+    prdTable(['Tanggal','Dari','Ke','Jumlah (L)'],mut.slice(0,12).map(function(x){return [fmt(x.d),x.dari||'—',x.ke||'—',opNf(x.jml,0)]})),
+    h('div',{style:'margin-top:10px'},prdMutBtn()));
+  wrap.append(h('div',{class:'prd-2'},lvl,mp));
+  var pk=FC.names.map(function(n,k){return {l:n,v:opSum(D,function(x){return x.t[n].pakai}),c:PRD_COL[k%6]}}).filter(function(x){return x.v>0});
+  wrap.append(h('div',{class:'prd-2'},
+    panel('Pemakaian per tangki','Fuel yang dikeluarkan dari tiap tangki untuk alat bulan ini.',prdDonut(pk,{unit:'L',center:'liter',label:'Pemakaian per tangki'})),
+    panel('Masuk, mutasi, dan keluar per tangki','Penerimaan, mutasi masuk, mutasi keluar, dan pemakaian bulan ini.',prdGrp([
+      {name:'Penerimaan',vals:FC.names.map(function(n){return opSum(D,function(x){return x.t[n].masuk})}),color:'var(--info)'},
+      {name:'Mutasi masuk',vals:FC.names.map(function(n){return opSum(D,function(x){return x.t[n].mIn})}),color:'var(--good,#2e8b57)'},
+      {name:'Mutasi keluar',vals:FC.names.map(function(n){return opSum(D,function(x){return x.t[n].mOut})}),color:'var(--warn)'},
+      {name:'Dipakai alat',vals:FC.names.map(function(n){return opSum(D,function(x){return x.t[n].pakai})}),color:'var(--brand)'}],FC.names,{unit:'L',label:'Arus fuel per tangki'}))));
+  return wrap;
 }
 function prdFuelDash(){
   var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),rows=prdMonthRows(),P=prdPlan();
-  var A=prdAgg(rows),D=prdFuelDays().filter(function(x){return x.d.slice(0,7)===PRD.bulan}),last=D.length?D[D.length-1]:null,masuk=opSum(D,function(x){return x.masuk});
+  var FC=prdFuelCalc(),A=prdAgg(rows),D=FC.days.filter(function(x){return x.d.slice(0,7)===PRD.bulan}),last=D.length?D[D.length-1]:null,masuk=opSum(D,function(x){return x.masuk});
   var sel=A.fuelStd>0?A.fuel-A.fuelStd:null;
   root.append(h('div',{class:'grid'},
-    kpi('Stok fuel akhir',last?opNf(last.akhir,0)+' L':'—',last?'per '+fmt(last.d):'belum ada data',last&&last.akhir<=0?'crit':''),
+    kpi('Stok fuel total',last?opNf(last.akhir,0)+' L':'—',last?'semua tangki per '+fmt(last.d):'belum ada data',last&&last.akhir<=0?'crit':''),
+    kpi('Mutasi antar tangki',opNf(opSum(D,function(x){return x.mutasi}),0)+' L','dipindahkan bulan ini'),
     kpi('Fuel masuk',opNf(masuk,0)+' L','penerimaan bulan ini'),
     kpi('Fuel terpakai',opNf(A.fuel,0)+' L',P.targetFuel?'batas '+opNf(P.targetFuel,0)+' L':'aktual dari laporan alat',P.targetFuel?prdToneHi(1-A.fuel/P.targetFuel+0.1,0.1,0):''),
     kpi('Fuel ratio',A.fr==null?'—':opNf(A.fr,3)+' L/BCM','fuel terpakai per BCM'),
@@ -14372,8 +14441,9 @@ function prdFuelDash(){
   var acts=prdBy(rows,function(r){return r.aktivitas}),aItems=['Loading','Hauling'].filter(function(a){return acts[a]}).map(function(a){var g=prdAgg(acts[a]);return {l:a,v:g.fr||0,t:'n'}}),
     bItems=PRD_AKT.filter(function(a){return acts[a]&&a!=='Loading'&&a!=='Hauling'}).map(function(a){var g=prdAgg(acts[a]);return {l:a,v:g.fbr||0,t:'n'}});
   var ld=prdBy(rows.filter(function(r){return r.jenis==='Loader'}),function(r){return r.unit}),lItems=Object.keys(ld).map(function(u){var g=prdAgg(ld[u]);return {l:u,v:g.fr||0,t:'w'}}).sort(function(a,b){return b.v-a.v});
+  root.append(prdTankSection(FC,D));
   root.append(h('div',{class:'prd-2'},
-    panel('Stok fuel harian','Stok akhir pit setelah penerimaan dan pemakaian alat.',prdLine(D.map(function(x){return x.akhir}),D.map(function(x){return x.d.slice(8,10)}),{unit:'L',label:'Stok fuel harian'})),
+    panel('Stok fuel harian per tangki','Stok akhir tiap tangki setelah penerimaan, mutasi, dan pemakaian alat.',prdMulti(FC.names.map(function(n,k){return {name:n,vals:D.map(function(x){return x.t[n].akhir}),color:PRD_COL[k%6]}}),D.map(function(x){return x.d.slice(8,10)}),{unit:'L',label:'Stok fuel harian per tangki'})),
     panel('Fuel ratio per aktivitas','Loading dan hauling: liter per BCM. Makin kecil makin hemat.',prdHBars(aItems,{unit:'L/BCM',d:3}),h('h3',{style:'margin:14px 0 6px;font-size:13px',text:'Aktivitas pendukung (liter per jam kerja)'}),prdHBars(bItems,{unit:'L/jam',d:1}))));
   var fdays=Object.keys(prdBy(rows,function(r){return String(r.tanggal).slice(8,10)})).sort(),
     fd=fdays.map(function(d){return prdAgg(rows.filter(function(r){return String(r.tanggal).slice(8,10)===d}))}),
@@ -14394,12 +14464,13 @@ function prdFuelDash(){
 }
 function fuelView(){
   var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),t=PRD.tab.fuel;
-  root.append(opHead('Overview Fuel','Stok, penerimaan, dan pemakaian fuel alat, beserta fuel ratio per aktivitas dan per unit.'));
+  root.append(opHead('Overview Fuel','Stok beberapa tangki utama, penerimaan, mutasi antar tangki, pemakaian alat, dan fuel ratio.'));
   var dn=prdDemoNote();if(dn)root.append(dn);
-  root.append(prdTabs('fuel',[['dash','Dashboard'],['stok','Stok fuel'],['data','Laporan harian alat'],['set','Parameter']]));
+  root.append(prdTabs('fuel',[['dash','Dashboard'],['stok','Penerimaan dan mutasi'],['tank','Tangki'],['data','Laporan harian alat'],['set','Parameter']]));
   if(t==='dash'){root.append(prdFilter());root.append(prdSafe(prdFuelDash))}
-  else if(t==='stok')root.append(panel('Stok dan penerimaan fuel','Isi stok awal hanya pada hari pertama atau saat koreksi. Pemakaian dihitung otomatis dari laporan harian alat.',listView('opfuel')));
-  else if(t==='data')root.append(panel('Laporan harian alat','Satu baris per unit per shift. Isi kolom fuel aktual dan fuel standar.',listView('opalat')));
+  else if(t==='stok'){root.append(prdMutBtn());root.append(panel('Penerimaan, mutasi, dan opname','Penerimaan menambah stok satu tangki. Mutasi memindahkan fuel dari tangki asal ke tangki tujuan. Opname menetapkan stok terukur hasil ukur tangki. Pemakaian alat dihitung otomatis dari laporan harian alat.',listView('opfuel')))}
+  else if(t==='tank')root.append(panel('Tangki utama','Daftarkan tiap tangki utama beserta kapasitas dan stok awal saat pencatatan dimulai. Urutan terkecil menjadi tangki bawaan bila laporan alat tidak memilih tangki.',listView('optank')));
+  else if(t==='data')root.append(panel('Laporan harian alat','Satu baris per unit per shift. Isi fuel aktual, fuel standar, dan tangki sumber pengisian.',listView('opalat')));
   else{root.append(prdPlanPanel());root.append(prdDemoPanel())}
   return root;
 }
@@ -14424,6 +14495,7 @@ CFG.opalat={key:'opalat',add:'Laporan harian alat',empty:'Belum ada laporan hari
     {k:'produksi',l:'Produksi OB (BCM)',t:'number',min:0},
     {k:'jarak',l:'Jarak angkut (m)',t:'number',min:0},
     {k:'fuelActual',l:'Fuel aktual terpakai (L)',t:'number',min:0},
+    {k:'tangki',l:'Diisi dari tangki (kosong = tangki pertama)',t:'select',o:function(){return prdTankNames()}},
     {k:'fuelStd',l:'Fuel standar atau plan (L)',t:'number',min:0},
     {k:'catatan',l:'Catatan',t:'area'}],
   defaults:{shift:'Day',aktivitas:'Hauling',jenis:'Hauler'},
@@ -14459,19 +14531,40 @@ CFG.opunit={key:'opunit',add:'Unit alat',empty:'Belum ada unit alat terdaftar.',
     {l:'Jenis',r:function(r){return r.jenis||'—'}},
     {l:'HM saat ini',r:function(r){return opNf(prdHmNow(r),0)}},
     {l:'Sisa PM',r:function(r){var p=prdPmInfo(r);return badge(opNf(p.remain,0)+' HM',prdPmTone(p.st))}}]};
-CFG.opfuel={key:'opfuel',add:'Catatan stok fuel',empty:'Belum ada catatan stok atau penerimaan fuel.',title:'Stok fuel',
+CFG.optank={key:'optank',add:'Tangki utama',empty:'Belum ada tangki utama. Tambahkan minimal satu tangki agar stok fuel dapat dilacak per tangki.',title:'Tangki utama',
+  fields:[
+    {k:'nama',l:'Nama tangki',t:'text',req:1,sec:'Tangki'},
+    {k:'urut',l:'Urutan (1 = tangki bawaan)',t:'number',min:1},
+    {k:'kapasitas',l:'Kapasitas (L)',t:'number',min:0},
+    {k:'stokAwal',l:'Stok awal saat pencatatan dimulai (L)',t:'number',min:0},
+    {k:'lokasi',l:'Lokasi',t:'text'},
+    {k:'catatan',l:'Catatan',t:'area'}],
+  defaults:{urut:1},
+  filter:null,
+  sort:function(a,b){return prdN(a.urut)-prdN(b.urut)||String(a.nama||'').localeCompare(String(b.nama||''))},
+  cols:[
+    {l:'Tangki',r:function(r){return r.nama||'—'}},
+    {l:'Kapasitas (L)',r:function(r){return r.kapasitas?opNf(r.kapasitas,0):'—'}},
+    {l:'Stok awal (L)',r:function(r){return opNf(r.stokAwal,0)}},
+    {l:'Stok saat ini (L)',r:function(r){var C=prdFuelCalc(),v=C.level[r.nama];return v==null?'—':opNf(v,0)}},
+    {l:'Lokasi',r:function(r){return r.lokasi||'—'}}]};
+CFG.opfuel={key:'opfuel',add:'Catat transaksi fuel',empty:'Belum ada penerimaan, mutasi, atau opname fuel.',title:'Transaksi fuel',
   fields:[
     {k:'tanggal',l:'Tanggal',t:'date',req:1},
-    {k:'masuk',l:'Fuel masuk pit (L)',t:'number',min:0},
-    {k:'stokAwal',l:'Stok awal (L), isi hanya untuk hari pertama atau koreksi',t:'number',min:0},
-    {k:'catatan',l:'Catatan (nomor DO, pemasok, dan lain-lain)',t:'area'}],
-  defaults:{},
-  filter:null,
+    {k:'jenis',l:'Jenis transaksi',t:'select',req:1,o:PRD_FJ},
+    {k:'tangki',l:'Tangki tujuan (penerimaan, mutasi) atau tangki yang diukur (opname)',t:'select',o:function(){return prdTankNames()}},
+    {k:'dariTangki',l:'Tangki asal (khusus mutasi)',t:'select',o:function(){return prdTankNames()}},
+    {k:'jumlah',l:'Jumlah (L). Untuk opname isi stok hasil ukur',t:'number',min:0},
+    {k:'catatan',l:'Catatan (nomor DO, pemasok, alasan mutasi, dan lain-lain)',t:'area'}],
+  defaults:{jenis:'Penerimaan'},
+  filter:{k:'jenis',all:'Semua jenis'},
   sort:function(a,b){return String(b.tanggal||'').localeCompare(String(a.tanggal||''))},
   cols:[
     {l:'Tanggal',r:function(r){return r.tanggal?fmt(r.tanggal):'—'}},
-    {l:'Fuel masuk (L)',r:function(r){return r.masuk?opNf(r.masuk,0):'—'}},
-    {l:'Stok awal (L)',r:function(r){return r.stokAwal!==''&&r.stokAwal!=null?opNf(r.stokAwal,0):'otomatis'}},
+    {l:'Jenis',r:function(r){var j=r.jenis||(prdN(r.masuk)>0?PRD_FJ[0]:PRD_FJ[2]);return badge(j,j===PRD_FJ[1]?'warn':j===PRD_FJ[0]?'good':'')}},
+    {l:'Dari',r:function(r){return r.jenis===PRD_FJ[1]?(r.dariTangki||'—'):'—'}},
+    {l:'Ke / tangki',r:function(r){return r.tangki||(r.jenis?'—':'tangki pertama')}},
+    {l:'Jumlah (L)',r:function(r){var v=r.jenis?r.jumlah:(prdN(r.masuk)>0?r.masuk:r.stokAwal);return v!==''&&v!=null?opNf(v,0):'—'}},
     {l:'Catatan',r:function(r){return r.catatan||'—'}}]};
 
 /* validasi sederhana saat simpan */
@@ -14483,21 +14576,53 @@ CFG.opfuel={key:'opfuel',add:'Catatan stok fuel',empty:'Belum ada catatan stok a
       if(a!=null&&b!=null&&b<a)throw new Error('HM akhir tidak boleh lebih kecil dari HM awal.');
       if(data.unit&&!(data.jenis)){var u=(S.opunit||[]).find(function(x){return x.kode===data.unit});if(u)data.jenis=u.jenis}
     }
+    if(key==='optank'&&data){
+      var nm=String(data.nama||'').trim();if(!nm)throw new Error('Nama tangki wajib diisi.');data.nama=nm;
+      if((S.optank||[]).some(function(x){return x.nama===nm&&x.id!==id}))throw new Error('Nama tangki '+nm+' sudah dipakai.');
+      var old=id?(S.optank||[]).find(function(x){return x.id===id}):null;
+      if(old&&old.nama!==nm&&(prdFuelTx().some(function(x){return x.ke===old.nama||x.dari===old.nama})||(S.opalat||[]).some(function(r){return r.tangki===old.nama})))throw new Error('Tangki sudah dipakai pada transaksi atau laporan alat, nama tidak dapat diubah.');
+      if(prdN(data.kapasitas)>0&&prdN(data.stokAwal)>prdN(data.kapasitas))throw new Error('Stok awal melebihi kapasitas tangki.');
+    }
+    var warnTank=null;
+    if(key==='opfuel'&&data){
+      var names=prdTankNames(),J=data.jenis,jm=Number(data.jumlah);
+      if(!J)throw new Error('Pilih jenis transaksi (penerimaan, mutasi, atau opname).');
+      if(!names.length)throw new Error('Daftarkan tangki dulu di tab Tangki.');
+      if(!data.tangki||names.indexOf(data.tangki)<0)throw new Error('Pilih tangki '+(J===PRD_FJ[1]?'tujuan':'')+'.');
+      if(data.jumlah===''||data.jumlah==null||!isFinite(jm))throw new Error('Isi jumlah dalam liter.');
+      if(J!==PRD_FJ[2]&&jm<=0)throw new Error('Jumlah harus lebih dari 0 liter.');
+      if(jm<0)throw new Error('Jumlah tidak boleh negatif.');
+      if(J===PRD_FJ[1]){
+        if(!data.dariTangki||names.indexOf(data.dariTangki)<0)throw new Error('Pilih tangki asal untuk mutasi.');
+        if(data.dariTangki===data.tangki)throw new Error('Tangki asal dan tujuan harus berbeda.');
+        var av=prdFuelStokTgl(data.tanggal,data.dariTangki,id);
+        if(jm>av+0.0001)throw new Error('Stok '+data.dariTangki+' pada '+data.tanggal+' hanya '+opNf(av,0)+' L, tidak cukup untuk memindahkan '+opNf(jm,0)+' L.');
+      }
+      if(J!==PRD_FJ[2]){
+        var tk=(prdTanks().find(function(x){return x.nama===data.tangki})||{}),cap=prdN(tk.kapasitas);
+        if(cap>0){var cur=prdFuelStokTgl(data.tanggal,data.tangki,id);if(cur+jm>cap+0.0001)warnTank=data.tangki+' akan melebihi kapasitas ('+opNf(cur+jm,0)+' dari '+opNf(cap,0)+' L).'}
+      }
+      delete data.masuk;delete data.stokAwal;
+      if(J!==PRD_FJ[1])data.dariTangki='';
+    }
     if(key==='opunit'&&data&&data.kode){
       var dup=(S.opunit||[]).some(function(x){return x.kode===data.kode&&x.id!==id});
       if(dup)throw new Error('Kode unit '+data.kode+' sudah terdaftar.');
     }
-    return S0(key,id,data);
+    var rs=await S0(key,id,data);
+    if(warnTank)toast('Peringatan: '+warnTank);
+    return rs;
   };
 })();
 
 /* ---------- data contoh ---------- */
 function prdDemo(){
+  var FJ=['Penerimaan','Mutasi antar tangki','Koreksi stok (opname)'];
   var seed=7,rnd=function(){seed=(seed*16807)%2147483647;return seed/2147483647},R=function(a,b){return a+(b-a)*rnd()},iso=function(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)};
   var U=[['AEX-301','PC 350-8','KOMATSU','Loader',1490,1380],['AEX-201','PC 210-10','KOMATSU','Loader',1890,1700],['AEX-202','PC 210-10','KOMATSU','Loader',1523,1300],['AMG-01','GD 535-3','KOMATSU','Grader',1525,1350],
     ['ADC-01','FAW 420','FAW','Hauler',810,600],['ADC-02','FAW 420','FAW','Hauler',975,760],['ADC-03','FAW 420','FAW','Hauler',764,740],['ADT-01','FAW 340','FAW','Hauler',1146,900],['ADT-02','FAW 340','FAW','Hauler',1083,850],['ADT-03','FAW 340','FAW','Hauler',990,740],['ADT-04','FAW 340','FAW','Hauler',566,330],['ADT-05','FAW 340','FAW','Hauler',970,760],['DZ-01','D85ESS','KOMATSU','Dozer',3244,3050]];
   var outU=U.map(function(u,i){var t=new Date();t.setDate(t.getDate()-Math.round(R(10,45)));return {id:'dmu'+i,kode:u[0],model:u[1],brand:u[2],jenis:u[3],hm:u[4]-prdHmBase(u),hmPm:u[4]-[60,120,180,230,20,100,150,210,260,90,140,40,170][i],tglPm:iso(t),tipePm:['PM1','PM2','PM3'][i%3],interval:250,downtime:[8,6,6,6,5,5,5,6,6,6,5,5,8][i],demo:true}});
-  var A=[],F=[],n=0,hm={};U.forEach(function(u){hm[u[0]]=u[4]-prdHmBase(u)});
+  var A=[],F=[],n=0,hm={},TK=[{id:'dmt1',nama:'Tangki Utama 1',urut:1,kapasitas:30000,stokAwal:18000,lokasi:'Fuel station pit selatan',demo:true},{id:'dmt2',nama:'Tangki Utama 2',urut:2,kapasitas:25000,stokAwal:9000,lokasi:'Fuel station pit selatan',demo:true}];U.forEach(function(u){hm[u[0]]=u[4]-prdHmBase(u)});
   var plan={Loader:[['Loading',1.4,80]],Hauler:[['Hauling',1.0,60]],Dozer:[['Dozing',2.6,110]],Grader:[['Road Maintenance',1.2,60]]};
   var reasons=['Waiting hauler','Prepare front','Disposal crowded','Hujan dan licin','Refueling','Istirahat'];
   var today=new Date(),stok=18000;
@@ -14510,11 +14635,13 @@ function prdDemo(){
         a0=hm[u[0]];hm[u[0]]=Math.round((a0+ew)*10)/10;
       var ak=plan[jn][0],std=Math.round(ak[2]*ew/8),act=Math.round(std*R(0.9,1.3));
       A.push({id:'dma'+(n++),tanggal:tg,shift:sh,unit:u[0],jenis:jn,operator:['ERIKO','SURYO','JULI','FIKRI','DARUS','MARTUNIS','SAFII','MAULA'][Math.floor(rnd()*8)],lokasi:'PIT SELATAN',aktivitas:ak[0],hmAwal:a0,hmAkhir:hm[u[0]],idle:idle,breakdown:bd,
-        idleReason:idle>=1?reasons[Math.floor(rnd()*reasons.length)]:'',ritase:jn==='Hauler'?rt:0,produksi:pr,jarak:jn==='Hauler'?Math.round(R(800,1300)):'',fuelActual:act,fuelStd:std,demo:true});
+        idleReason:idle>=1?reasons[Math.floor(rnd()*reasons.length)]:'',ritase:jn==='Hauler'?rt:0,produksi:pr,jarak:jn==='Hauler'?Math.round(R(800,1300)):'',fuelActual:act,fuelStd:std,tangki:jn==='Hauler'?TK[0].nama:TK[1].nama,demo:true});
     })});
-    if(d%3===0||d===11)F.push({id:'dmf'+d,tanggal:tg,masuk:d%3===0?10000:0,stokAwal:d===11?stok:'',demo:true});
+    if(d%3===0)F.push({id:'dmf'+d,tanggal:tg,jenis:FJ[0],tangki:TK[0].nama,dariTangki:'',jumlah:6000,catatan:'DO pemasok A',demo:true});
+    if(d===10)F.push({id:'dmf10b',tanggal:tg,jenis:FJ[0],tangki:TK[1].nama,dariTangki:'',jumlah:10000,catatan:'DO pemasok A',demo:true});
+    if(d===6)F.push({id:'dmm6',tanggal:tg,jenis:FJ[1],tangki:TK[1].nama,dariTangki:TK[0].nama,jumlah:5000,catatan:'Penyeimbangan stok untuk alat support',demo:true});
   }
-  return {opalat:A,opunit:outU,opfuel:F};
+  return {opalat:A,opunit:outU,opfuel:F,optank:TK};
 }
 function prdHmBase(u){return 190}
 
