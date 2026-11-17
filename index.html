@@ -5668,9 +5668,11 @@ function bkBytes(b64){var s=atob(b64),u=new Uint8Array(s.length);for(var i=0;i<s
 function bkIsImg(it){return /^image\//.test(it.tipe||'')}
 function bkDownload(it){
   if(!DL){toast('Unduhan tidak tersedia di tampilan ini');return}
+  if(!it.b64&&it.b64ref&&typeof bkFull==='function'){bkFull(it).then(function(f){if(f.b64)bkDownload(f);else toast('Berkas tidak dapat dimuat')});return}
   try{DL.save({filename:it.nama||'lampiran',data:bkBytes(it.b64)}).then(function(){toast('Berkas disimpan')}).catch(function(e){if(!e||e.code!=='declined')toast('Gagal menyimpan berkas')})}catch(e){toast('Gagal menyimpan berkas')}
 }
 function bkLight(it){
+  if(!it.b64&&it.b64ref&&typeof bkFull==='function'){bkFull(it).then(function(f){if(f.b64)bkLight(f);else toast('Gambar tidak dapat dimuat')});return}
   var ov=h('div',{class:'bk-lb',role:'dialog','aria-modal':'true','aria-label':it.nama||'Lampiran',onclick:function(){close()}},
     h('img',{src:'data:'+it.tipe+';base64,'+it.b64,alt:it.nama||'Lampiran'}),
     h('button',{type:'button',class:'x','aria-label':'Tutup pratinjau',onclick:function(e){e.stopPropagation();close()}},'×'));
@@ -5699,8 +5701,10 @@ function bkField(key,row,ro){
   function draw(){
     var L=items();
     list.replaceChildren.apply(list,L.map(function(x,i){
-      var it=x.it,view=bkIsImg(it)
-        ?h('button',{type:'button',class:'bk-th','aria-label':'Lihat '+it.nama,onclick:function(){bkLight(it)}},h('img',{src:'data:'+it.tipe+';base64,'+it.b64,alt:''}))
+      var it=x.it;
+      if(!it.b64&&it.b64ref&&!it._gagal&&typeof bkFull==='function'&&!it._muat){it._muat=true;bkFull(it).then(function(){draw()})}
+      var view=bkIsImg(it)
+        ?h('button',{type:'button',class:'bk-th','aria-label':'Lihat '+it.nama,onclick:function(){bkLight(it)}},it.b64?h('img',{src:'data:'+it.tipe+';base64,'+it.b64,alt:''}):h('small',{text:it._gagal?'!':'…'}))
         :h('span',{class:'bk-fi','aria-hidden':'true'},(/pdf/i.test(it.tipe)?'PDF':((it.nama||'').split('.').pop()||'FILE').slice(0,4).toUpperCase()));
       return h('div',{class:'bk-it'},view,
         h('div',{class:'bk-nm'},h('b',{text:it.nama}),h('small',{text:bkKb(it.ukuran||0)+(x.st?' · belum disimpan':'')})),
@@ -12519,7 +12523,7 @@ function prSuratKtt(){return aksKtt()}
 /* ---------- persetujuan perubahan ---------- */
 function prUbah(){return (S.ubah||[]).slice().sort(function(a,b){return String(b.ts||'').localeCompare(String(a.ts||''))})}
 function prFieldLabel(c,k){var C=CFG[c],f=C&&C.fields?C.fields.find(function(x){return x.k===k}):null;return f?f.l.replace(/\s*\(.*\)$/,''):k}
-function prVal(v){if(v==null||v==='')return '—';if(v&&v.b64)return 'Foto';if(typeof v==='object'){var s=JSON.stringify(v);return s.length>140?s.slice(0,138)+'…':s}return String(v)}
+function prVal(v){if(v==null||v==='')return '—';if(v&&(v.b64||v.b64ref))return 'Foto';if(typeof v==='object'){var s=JSON.stringify(v);return s.length>140?s.slice(0,138)+'…':s}return String(v)}
 function prDiff(u){
   var a=u.lama||{},b=u.baru||{},skip={id:1,demo:1,log:1,updated_at:1,kontraktor:1},keys={};
   Object.keys(a).concat(Object.keys(b)).forEach(function(k){if(!skip[k])keys[k]=1});
@@ -13112,6 +13116,87 @@ var KT_CLOSE=closeModal;
 closeModal=function(){KT_FOTO=null;return KT_CLOSE.apply(this,arguments)};
 ['minepermit','simper'].forEach(function(c){var C=CFG[c];if(C&&C.cols)C.cols.unshift({l:'Foto',r:function(r){return r.foto&&r.foto.b64?h('img',{class:'kt-mini',alt:'Foto '+(r.nama||''),src:'data:image/jpeg;base64,'+r.foto.b64}):h('span',{class:'kt-mini kt-mini0','aria-label':'Belum ada foto'})}})});
 
+/* ---------- Penyimpanan file besar di Supabase Storage (v77) ----------
+   Gambar dan lampiran yang tadinya tersimpan sebagai teks base64 di dalam baris database
+   dipindahkan ke bucket privat "ktt-berkas". Baris hanya menyimpan alamat file (b64ref, kopImgRef).
+   Di memori aplikasi tetap tersedia b64 seperti biasa, sehingga menu lain tidak perlu diubah. */
+var BL={bucket:'ktt-berkas',min:3000,keys:{b64:'b64ref',kopImg:'kopImgRef'},cache:new Map(),inflight:new Map(),byB64:new Map()};
+function blSb(){return (typeof HOST!=='undefined'&&HOST&&HOST.sb&&HOST.member)?HOST.sb:null}
+function blWalk(o,fn,dep){dep=dep||0;if(!o||typeof o!=='object'||dep>6)return;Object.keys(o).forEach(function(k){var v=o[k];fn(o,k);if(v&&typeof v==='object')blWalk(v,fn,dep+1)})}
+function blBytes(b64){var s=atob(b64),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}
+function blToB64(blob){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(String(r.result).split(',')[1]||'')};r.onerror=function(){rej(r.error)};r.readAsDataURL(blob)})}
+function blInline(d){var f=false;blWalk(d,function(o,k){if(BL.keys[k]&&typeof o[k]==='string'&&o[k].length>BL.min)f=true});return f}
+function blHasRef(d){var f=false;blWalk(d,function(o,k){if((k==='b64ref'||k==='kopImgRef')&&typeof o[k]==='string')f=true});return f}
+async function blPut(b64){
+  var sb=blSb();if(!sb)throw new Error('tidak terhubung');
+  var path=HOST.member.org_id+'/'+Date.now().toString(36)+Math.random().toString(36).slice(2,12);
+  var r=await sb.storage.from(BL.bucket).upload(path,new Blob([blBytes(b64)],{type:'application/octet-stream'}),{contentType:'application/octet-stream',upsert:false});
+  if(r.error)throw r.error;
+  BL.cache.set(path,b64);return path;
+}
+function blGet(path){
+  if(BL.cache.has(path))return Promise.resolve(BL.cache.get(path));
+  if(BL.inflight.has(path))return BL.inflight.get(path);
+  var sb=blSb();if(!sb)return Promise.reject(new Error('tidak terhubung'));
+  var p=sb.storage.from(BL.bucket).download(path).then(function(r){if(r.error||!r.data)throw (r.error||new Error('kosong'));return blToB64(r.data)}).then(function(b){BL.cache.set(path,b);BL.inflight.delete(path);return b},function(e){BL.inflight.delete(path);throw e});
+  BL.inflight.set(path,p);return p;
+}
+/* salinan untuk disimpan ke database: b64 besar diganti alamat file; gagal unggah berarti tetap tersimpan utuh */
+async function blOut(d){
+  if(!blSb()||!blInline(d))return d;
+  var copy=JSON.parse(JSON.stringify(d)),jobs=[];
+  blWalk(copy,function(o,k){
+    var rk=BL.keys[k],v=o[k];if(!rk||typeof v!=='string'||v.length<=BL.min)return;
+    jobs.push((async function(){
+      var p=BL.byB64.get(v);
+      if(!p){try{p=await blPut(v);BL.byB64.set(v,p)}catch(e){if(window.console)console.error(e);return}}
+      o[rk]=p;delete o[k];
+    })());
+  });
+  await Promise.all(jobs);return copy;
+}
+/* pulihkan b64 di memori dari alamat file */
+async function blHydrate(d){
+  var jobs=[];
+  blWalk(d,function(o,k){
+    var base=k==='b64ref'?'b64':k==='kopImgRef'?'kopImg':null;
+    if(!base||typeof o[k]!=='string'||o[base])return;
+    var path=o[k];
+    jobs.push(blGet(path).then(function(b){o[base]=b;BL.byB64.set(b,path);delete o[k]},function(e){if(window.console)console.error(e)}));
+  });
+  await Promise.all(jobs);return jobs.length;
+}
+async function blHydrateCol(m,done){
+  var ids=[];m.forEach(function(d,id){if(blHasRef(d))ids.push(id)});
+  var i=0;
+  async function w(){while(i<ids.length){var id=ids[i++];try{var n=await blHydrate(m.get(id));if(n)done(id)}catch(e){}}}
+  await Promise.all([w(),w(),w(),w()]);
+}
+/* hapus file saat lampiran dihapus (hanya koleksi berkas, yang tidak pernah disalin antar baris) */
+function blDrop(cur){
+  var sb=blSb();if(!sb||!cur)return;
+  var p=cur.b64ref||(cur.b64&&BL.byB64.get(cur.b64));if(!p)return;
+  try{sb.storage.from(BL.bucket).remove([p]).then(function(){BL.cache.delete(p)},function(){})}catch(e){}
+}
+/* pemuatan lampiran secara malas untuk daftar lampiran (koleksi berkas) */
+function bkFull(it){
+  if(!it||it.b64||!it.b64ref)return Promise.resolve(it);
+  return blGet(it.b64ref).then(function(b){it.b64=b;return it},function(){it._gagal=true;return it});
+}
+/* pindahkan data lama otomatis, hanya oleh Direktur Utama atau KTT */
+function blAuto(){
+  setTimeout(async function(){
+    try{
+      if(!blSb()||!HOST.migrasi)return;
+      if(!(HOST.role==='admin'||HOST.role==='editor'))return;
+      var p=typeof aksPeran==='function'?aksPeran():'';
+      if(p&&p!=='ktt'&&p!=='direktur')return;
+      var n=await HOST.migrasi();
+      if(n)toast(n+' lampiran dipindahkan ke penyimpanan file');
+    }catch(e){if(window.console)console.error(e)}
+  },8000);
+}
+
 /* ---------- hosting mandiri: Supabase (aktif hanya di luar claude.ai) ---------- */
 var HOST={sb:null,role:null,member:null,booted:false,rt:'',cache:{}};
 function hostCfg(){var c=window.__KTT_SB;return c&&c.url&&c.key?c:null}
@@ -13286,6 +13371,7 @@ async function hostEnter(ses){
   init();
   try{hostMountLogout()}catch(e){if(window.console)console.error(e)}
   try{chStart()}catch(e){if(window.console)console.error(e)}
+  try{if(typeof blAuto==='function')blAuto()}catch(e){if(window.console)console.error(e)}
   try{hostAfterPay()}catch(e){if(window.console)console.error(e)}
 }
 function hostAfterPay(){
@@ -13320,6 +13406,7 @@ function hostInstall(){
         if(r.data.length<step)break;from+=step;
       }
       k.map=m;k.ready=true;
+      if(c!=='berkas'&&typeof blHydrateCol==='function')blHydrateCol(m,function(id){notify(c,id)});
     })();
     k.loading=p;p.then(function(){k.loading=null},function(){k.loading=null});return p;
   }
@@ -13335,8 +13422,9 @@ function hostInstall(){
         if(p.eventType==='DELETE'){del(c,id);return}
         if(n.data==null||p.errors){
           var r=await sb.from('ktt_kv').select('data').eq('collection',c).eq('id',id).maybeSingle();
-          if(r.data)put(c,id,r.data.data);return}
+          if(r.data){put(c,id,r.data.data);if(c!=='berkas'&&typeof blHydrate==='function')blHydrate(r.data.data).then(function(x){if(x)notify(c,id)})}return}
         put(c,id,n.data);
+        if(c!=='berkas'&&typeof blHydrate==='function')blHydrate(n.data).then(function(x){if(x)notify(c,id)});
       }catch(e){if(window.console)console.error(e)}
     }).subscribe(function(st){
       HOST.rt=st;
@@ -13350,13 +13438,16 @@ function hostInstall(){
   function docRef(c,id){
     return{id:id,
       set:async function(d){
-        var r=await sb.from('ktt_kv').upsert({org_id:HOST.member.org_id,collection:c,id:id,data:d},{onConflict:'org_id,collection,id'});
+        var out=typeof blOut==='function'?await blOut(d):d;
+        var r=await sb.from('ktt_kv').upsert({org_id:HOST.member.org_id,collection:c,id:id,data:out},{onConflict:'org_id,collection,id'});
         if(r.error)throw perr(r.error);put(c,id,d);
       },
       update:async function(patch){var k=col(c);await load(c);var cur=k.map.get(id)||{};var d=Object.assign({},cur,patch);await this.set(d)},
       delete:async function(){
+        var cur=C[c]&&C[c].map.get(id);
         var r=await sb.from('ktt_kv').delete().eq('collection',c).eq('id',id);
         if(r.error)throw perr(r.error);del(c,id);
+        if(c==='berkas'&&typeof blDrop==='function')blDrop(cur);
       },
       get:async function(){var k=col(c);await load(c);return snapOne(k,id)},
       onSnapshot:function(fn,efn){
@@ -13373,6 +13464,15 @@ function hostInstall(){
       load(c).then(function(){if(k.subs.indexOf(s)>=0)fn(snapAll(k))},function(e){if(efn)efn({code:(e&&e.code)||'unavailable'})});
       return function(){var i=k.subs.indexOf(s);if(i>=0)k.subs.splice(i,1)};
     }}}};
+  HOST.migrasi=async function(){
+    var n=0,cs=Object.keys(C);
+    for(var i=0;i<cs.length;i++){
+      var c=cs[i],k=C[c];if(!k.ready)continue;
+      var ids=[];k.map.forEach(function(d,id){if(typeof blInline==='function'&&blInline(d))ids.push(id)});
+      for(var j=0;j<ids.length;j++){var d=k.map.get(ids[j]);try{await docRef(c,ids[j]).set(d);n++}catch(e){}}
+    }
+    return n;
+  };
   var role=HOST.role,uid=HOST.member.user_id;
   var USERX={
     can:async function(n){return n==='data.write'?(role==='editor'||role==='admin'):null},
