@@ -14392,6 +14392,52 @@ function prdFuelCalc(skip){
 }
 function prdFuelDays(){return prdFuelCalc().days}
 function prdFuelStokTgl(tgl,nama,skip){var C=prdFuelCalc(skip),v=null;C.days.forEach(function(r){if(r.d<=tgl&&r.t[nama])v=r.t[nama].akhir});if(v==null){var t=C.tanks.filter(function(x){return x.nama===nama})[0];v=t?prdN(t.stokAwal):0}return v}
+function prdBukti(r){
+  var f=bkCount('opfuel',r.id),miss=[];
+  if(!r.noBa)miss.push('no. BA');
+  if(!r.pihakSerah||!r.pihakTerima)miss.push('penandatangan');
+  if(!f)miss.push('foto');
+  return {ok:!miss.length,foto:f,txt:'Kurang '+miss.join(', ')};
+}
+function prdBaDok(r){
+  var P=pgProf(),kota=P.kota||'',t=r.jenis,B=[],mut=t===PRD_FJ[1],kor=t===PRD_FJ[2],titik='...........................................';
+  var ju=mut?'Berita Acara Mutasi Fuel Antar Tangki':kor?'Berita Acara Opname Stok Fuel':'Berita Acara Serah Terima Fuel';
+  B.push({t:'title',text:ju,sub:'No. '+(r.noBa||titik.slice(0,20))+(kota?' · '+kota:'')+(r.tanggal?', '+fmt(r.tanggal):'')});
+  B.push({t:'p',text:'Pada tanggal '+fmt(r.tanggal)+' telah dilakukan '+(mut?'pemindahan fuel dari '+(r.dariTangki||'-')+' ke '+(r.tangki||'-'):kor?'pengukuran stok fisik '+(r.tangki||'-'):'penerimaan fuel ke '+(r.tangki||'-'))+' dengan rincian berikut:'});
+  var rows=[['Jenis transaksi',t||'-'],['Tangki '+(mut?'tujuan':kor?'yang diukur':'penerima'),r.tangki||'-']];
+  if(mut)rows.push(['Tangki asal',r.dariTangki||'-']);
+  rows.push([kor?'Stok hasil ukur':'Jumlah',opNf(r.jumlah,0)+' L']);
+  if(!kor&&r.noDo)rows.push(['Nomor DO atau surat jalan',r.noDo]);
+  if(r.kendaraan)rows.push(['Unit pengangkut',r.kendaraan]);
+  if(r.bacaAwal!==''&&r.bacaAwal!=null)rows.push(['Bacaan sebelum',opNf(r.bacaAwal,0)+' L']);
+  if(r.bacaAkhir!==''&&r.bacaAkhir!=null)rows.push(['Bacaan sesudah',opNf(r.bacaAkhir,0)+' L']);
+  if(r.bacaAwal!==''&&r.bacaAwal!=null&&r.bacaAkhir!==''&&r.bacaAkhir!=null&&!kor){var sl=(Number(r.bacaAkhir)-Number(r.bacaAwal))-prdN(r.jumlah);rows.push(['Selisih bacaan terhadap jumlah',(sl>0?'+':'')+opNf(sl,0)+' L']);}
+  rows.push(['Lampiran foto',prdN(bkCount('opfuel',r.id))+' berkas (tersimpan di Platform KTT)']);
+  B.push({t:'kv',rows:rows});
+  if(r.catatan){B.push({t:'h',text:'Catatan'});B.push({t:'p',text:r.catatan})}
+  B.push({t:'note',text:'Berita acara ini dicetak dari Platform KTT, ditandatangani kedua belah pihak, lalu dipindai dan diunggah pada lampiran transaksi.'});
+  B.push({t:'sign',left:{role:kor?'Pengukur':'Yang menyerahkan',name:String(r.pihakSerah||'').toUpperCase(),sub:mut?r.dariTangki||'':coName()},right:{role:kor?'Memeriksa':'Yang menerima',name:String(r.pihakTerima||'').toUpperCase(),sub:r.saksi?'Saksi: '+r.saksi:''}});
+  return B;
+}
+function prdBaPdf(r){
+  if(!r)return;
+  var sl=function(x){return String(x||'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'fuel'};
+  pgPdf(r.jenis===PRD_FJ[1]?'Mutasi fuel antar tangki':r.jenis===PRD_FJ[2]?'Opname stok fuel':'Serah terima fuel','ba-fuel-'+sl(r.noBa||r.tanggal)+'.pdf',prdBaDok(r));
+}
+var PRD_FORM0=openForm;
+openForm=function(key,row,pre){
+  var res=PRD_FORM0.call(this,key,row,pre);
+  if(key==='opfuel'){try{
+    var form=document.querySelector('#ov .dlg form');
+    if(form){
+      var box=h('div',{style:'display:flex;flex-direction:column;gap:8px;margin:0 0 10px;grid-column:1/-1'});
+      box.append(h('p',{class:'note info',style:'margin:0',text:'Setiap penerimaan, mutasi, dan opname wajib dilengkapi penandatangan, nomor BA, dan foto bukti (surat jalan, bacaan dip atau flowmeter, serta kondisi tangki) pada bagian Lampiran di bawah.'}));
+      if(row&&row.id&&row.jenis){var b=prdBukti(row);box.append(h('div',{class:'bk-ac',style:'justify-content:flex-start;align-items:center;gap:8px'},badge(b.ok?'Bukti lengkap':b.txt,b.ok?'good':'warn'),h('button',{type:'button',class:'btn',onclick:function(){prdBaPdf(row)}},'Unduh BA serah terima (PDF)')))}
+      else box.append(h('small',{style:'color:var(--muted)',text:'Setelah disimpan, BA serah terima dapat diunduh dari catatan ini untuk ditandatangani.'}));
+      form.insertBefore(box,form.firstChild);
+    }}catch(e){if(window.console)console.error(e)}}
+  return res;
+};
 function prdMutBtn(){
   if(!canWrite)return h('span');
   return h('div',{style:'display:flex;gap:8px;flex-wrap:wrap'},
@@ -14433,6 +14479,7 @@ function prdFuelDash(){
   root.append(h('div',{class:'grid'},
     kpi('Stok fuel total',last?opNf(last.akhir,0)+' L':'—',last?'semua tangki per '+fmt(last.d):'belum ada data',last&&last.akhir<=0?'crit':''),
     kpi('Mutasi antar tangki',opNf(opSum(D,function(x){return x.mutasi}),0)+' L','dipindahkan bulan ini'),
+    (function(){var T=(S.opfuel||[]).filter(function(r){return r.jenis&&String(r.tanggal||'').slice(0,7)===PRD.bulan}),k=T.filter(function(r){return !prdBukti(r).ok}).length;return kpi('Bukti serah terima',T.length?(T.length-k)+' / '+T.length:'—',T.length?(k?k+' transaksi belum lengkap (BA, tanda tangan, foto)':'semua transaksi bulan ini lengkap'):'belum ada transaksi',k?'warn':T.length?'good':'')})(),
     kpi('Fuel masuk',opNf(masuk,0)+' L','penerimaan bulan ini'),
     kpi('Fuel terpakai',opNf(A.fuel,0)+' L',P.targetFuel?'batas '+opNf(P.targetFuel,0)+' L':'aktual dari laporan alat',P.targetFuel?prdToneHi(1-A.fuel/P.targetFuel+0.1,0.1,0):''),
     kpi('Fuel ratio',A.fr==null?'—':opNf(A.fr,3)+' L/BCM','fuel terpakai per BCM'),
@@ -14555,7 +14602,15 @@ CFG.opfuel={key:'opfuel',add:'Catat transaksi fuel',empty:'Belum ada penerimaan,
     {k:'tangki',l:'Tangki tujuan (penerimaan, mutasi) atau tangki yang diukur (opname)',t:'select',o:function(){return prdTankNames()}},
     {k:'dariTangki',l:'Tangki asal (khusus mutasi)',t:'select',o:function(){return prdTankNames()}},
     {k:'jumlah',l:'Jumlah (L). Untuk opname isi stok hasil ukur',t:'number',min:0},
-    {k:'catatan',l:'Catatan (nomor DO, pemasok, alasan mutasi, dan lain-lain)',t:'area'}],
+    {k:'noBa',l:'Nomor BA serah terima (otomatis bila dikosongkan)',t:'text',sec:'Bukti serah terima'},
+    {k:'noDo',l:'Nomor DO atau surat jalan pemasok',t:'text'},
+    {k:'pihakSerah',l:'Yang menyerahkan (pemasok, sopir, atau petugas tangki asal)',t:'text'},
+    {k:'pihakTerima',l:'Yang menerima (petugas fuel station atau tangki tujuan)',t:'text'},
+    {k:'saksi',l:'Saksi atau pengawas',t:'text'},
+    {k:'kendaraan',l:'Unit pengangkut (nomor polisi truk tangki)',t:'text'},
+    {k:'bacaAwal',l:'Bacaan dip atau flowmeter tangki tujuan sebelum (L)',t:'number',min:0},
+    {k:'bacaAkhir',l:'Bacaan dip atau flowmeter tangki tujuan sesudah (L)',t:'number',min:0},
+    {k:'catatan',l:'Catatan (alasan mutasi, kondisi fuel, dan lain-lain)',t:'area'}],
   defaults:{jenis:'Penerimaan'},
   filter:{k:'jenis',all:'Semua jenis'},
   sort:function(a,b){return String(b.tanggal||'').localeCompare(String(a.tanggal||''))},
@@ -14565,6 +14620,8 @@ CFG.opfuel={key:'opfuel',add:'Catat transaksi fuel',empty:'Belum ada penerimaan,
     {l:'Dari',r:function(r){return r.jenis===PRD_FJ[1]?(r.dariTangki||'—'):'—'}},
     {l:'Ke / tangki',r:function(r){return r.tangki||(r.jenis?'—':'tangki pertama')}},
     {l:'Jumlah (L)',r:function(r){var v=r.jenis?r.jumlah:(prdN(r.masuk)>0?r.masuk:r.stokAwal);return v!==''&&v!=null?opNf(v,0):'—'}},
+    {l:'No. BA',r:function(r){return r.noBa||'—'}},
+    {l:'Bukti',r:function(r){if(!r.jenis)return '—';var b=prdBukti(r);return badge(b.ok?'Lengkap':b.txt,b.ok?'good':'warn')}},
     {l:'Catatan',r:function(r){return r.catatan||'—'}}]};
 
 /* validasi sederhana saat simpan */
@@ -14602,6 +14659,14 @@ CFG.opfuel={key:'opfuel',add:'Catat transaksi fuel',empty:'Belum ada penerimaan,
         var tk=(prdTanks().find(function(x){return x.nama===data.tangki})||{}),cap=prdN(tk.kapasitas);
         if(cap>0){var cur=prdFuelStokTgl(data.tanggal,data.tangki,id);if(cur+jm>cap+0.0001)warnTank=data.tangki+' akan melebihi kapasitas ('+opNf(cur+jm,0)+' dari '+opNf(cap,0)+' L).'}
       }
+      {
+        if(!String(data.pihakSerah||'').trim()||!String(data.pihakTerima||'').trim())throw new Error('Isi nama yang menyerahkan dan yang menerima (penandatangan BA).');
+      }
+      if(!String(data.noBa||'').trim())data.noBa=asNo('opfuel','noBa','BAF',data.tanggal);
+      if(data.bacaAwal!==''&&data.bacaAwal!=null&&data.bacaAkhir!==''&&data.bacaAkhir!=null&&J!==PRD_FJ[2]){
+        var sb=(Number(data.bacaAkhir)-Number(data.bacaAwal))-jm;
+        if(Math.abs(sb)>Math.max(20,jm*0.01))warnTank=(warnTank?warnTank+' ':'')+'Selisih bacaan dan jumlah '+(sb>0?'+':'')+opNf(sb,0)+' L (lebih dari 1%).';
+      }
       delete data.masuk;delete data.stokAwal;
       if(J!==PRD_FJ[1])data.dariTangki='';
     }
@@ -14637,9 +14702,9 @@ function prdDemo(){
       A.push({id:'dma'+(n++),tanggal:tg,shift:sh,unit:u[0],jenis:jn,operator:['ERIKO','SURYO','JULI','FIKRI','DARUS','MARTUNIS','SAFII','MAULA'][Math.floor(rnd()*8)],lokasi:'PIT SELATAN',aktivitas:ak[0],hmAwal:a0,hmAkhir:hm[u[0]],idle:idle,breakdown:bd,
         idleReason:idle>=1?reasons[Math.floor(rnd()*reasons.length)]:'',ritase:jn==='Hauler'?rt:0,produksi:pr,jarak:jn==='Hauler'?Math.round(R(800,1300)):'',fuelActual:act,fuelStd:std,tangki:jn==='Hauler'?TK[0].nama:TK[1].nama,demo:true});
     })});
-    if(d%3===0)F.push({id:'dmf'+d,tanggal:tg,jenis:FJ[0],tangki:TK[0].nama,dariTangki:'',jumlah:6000,catatan:'DO pemasok A',demo:true});
-    if(d===10)F.push({id:'dmf10b',tanggal:tg,jenis:FJ[0],tangki:TK[1].nama,dariTangki:'',jumlah:10000,catatan:'DO pemasok A',demo:true});
-    if(d===6)F.push({id:'dmm6',tanggal:tg,jenis:FJ[1],tangki:TK[1].nama,dariTangki:TK[0].nama,jumlah:5000,catatan:'Penyeimbangan stok untuk alat support',demo:true});
+    if(d%3===0)F.push({id:'dmf'+d,tanggal:tg,jenis:FJ[0],tangki:TK[0].nama,dariTangki:'',jumlah:6000,catatan:'DO pemasok A',noBa:'BAF/SITE/2026/'+('00'+(100+d)).slice(-3),noDo:'DO-A-'+(8100+d),pihakSerah:'Rudi (sopir PT Pemasok A)',pihakTerima:'Fajar (fuelman)',saksi:'Anto (pengawas)',kendaraan:'DT 8123 AB',demo:true});
+    if(d===10)F.push({id:'dmf10b',tanggal:tg,jenis:FJ[0],tangki:TK[1].nama,dariTangki:'',jumlah:10000,catatan:'DO pemasok A',noBa:'BAF/SITE/2026/090',noDo:'DO-A-8090',pihakSerah:'Rudi (sopir PT Pemasok A)',pihakTerima:'Fajar (fuelman)',saksi:'Anto (pengawas)',kendaraan:'DT 8123 AB',demo:true});
+    if(d===6)F.push({id:'dmm6',tanggal:tg,jenis:FJ[1],tangki:TK[1].nama,dariTangki:TK[0].nama,jumlah:5000,catatan:'Penyeimbangan stok untuk alat support',noBa:'BAF/SITE/2026/091',pihakSerah:'Fajar (fuelman tangki 1)',pihakTerima:'Dewi (fuelman tangki 2)',saksi:'Anto (pengawas)',demo:true});
   }
   return {opalat:A,opunit:outU,opfuel:F,optank:TK};
 }
