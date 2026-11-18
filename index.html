@@ -15586,6 +15586,59 @@ function flBar(g){
     if(C.cols&&!C.cols.some(function(x){return x.l==='Kontraktor'}))C.cols.push({l:'Kontraktor',r:function(r){return r.kontraktor||'Perusahaan'}});
   });
 })();
+/* ---------- Overview Fuel: Owner mengatur fuel kontraktor tersinkron dengan Owner atau tidak ----------
+   Pengaturan disimpan di opset 'fuelsync' ({map:{<kontraktor>:true}}). Bawaan: tidak tersinkron.
+   Tersinkron: tangki, transaksi, dan pemakaian fuel kontraktor ikut dihitung pada Overview Fuel milik Owner.
+   Tidak tersinkron: Owner hanya menghitung data Owner; data kontraktor tetap dapat dilihat lewat pilihan Sumber data. */
+var FS_O={tanks:prdTanks,names:prdTankNames,tx:prdFuelTx,calc:prdFuelCalc,dash:prdFuelDash,view:fuelView};
+function fsMap(){var o=opSet('fuelsync');return (o&&o.map)||{}}
+function fsOwner(){return prPeran()!=='pjo'}
+function fsOk(r){
+  var k=(r&&r.kontraktor)||'',src=PRD.fsrc||'';
+  if(src==='__owner')return !k;
+  if(src)return k===src;
+  return !k||fsMap()[k]===true;
+}
+function fsRun(fn,args,cols){
+  var bak={};cols.forEach(function(c){bak[c]=S[c];S[c]=(S[c]||[]).filter(fsOk)});
+  try{return fn.apply(null,args)}finally{cols.forEach(function(c){S[c]=bak[c]})}
+}
+function fsAktif(){return fsOwner()&&location.hash==='#fuelov'}
+prdTanks=function(){return fsAktif()?fsRun(FS_O.tanks,arguments,['optank']):FS_O.tanks.apply(null,arguments)};
+prdTankNames=function(){return fsAktif()?fsRun(FS_O.names,arguments,['optank']):FS_O.names.apply(null,arguments)};
+prdFuelTx=function(){return fsAktif()?fsRun(FS_O.tx,arguments,['optank','opfuel']):FS_O.tx.apply(null,arguments)};
+prdFuelCalc=function(){return fsAktif()?fsRun(FS_O.calc,arguments,['optank','opfuel','opalat']):FS_O.calc.apply(null,arguments)};
+prdFuelDash=function(){return fsOwner()?fsRun(FS_O.dash,arguments,['optank','opfuel','opalat','opunit']):FS_O.dash.apply(null,arguments)};
+function fsKon(){
+  var s={};(S.kontraktor||[]).forEach(function(r){if(r.nama)s[r.nama]=1});
+  ['optank','opfuel','opalat'].forEach(function(c){(S[c]||[]).forEach(function(r){if(r.kontraktor)s[r.kontraktor]=1})});
+  return Object.keys(s).sort();
+}
+function fsPanel(){
+  var L=fsKon(),M=fsMap(),box={},boleh=canWrite&&opCan('setting');
+  if(prPeran()==='pjo'){
+    var on=M[prKon()]===true;
+    return panel('Sinkronisasi dengan Owner',null,h('p',{class:'prd-note',text:on?'Fuel kontraktor Anda tersinkron: Owner ikut menghitung tangki, penerimaan, dan pemakaian fuel Anda pada Overview Fuel Owner.':'Fuel kontraktor Anda tidak tersinkron: data ini hanya dipakai di sisi Anda dan tidak digabung ke Overview Fuel Owner. Pengaturan ini ditentukan oleh Owner.'}));
+  }
+  var list=L.length?h('div',{class:'prd-sim'},L.map(function(k){
+    var c=h('input',{type:'checkbox',disabled:!boleh});c.checked=M[k]===true;box[k]=c;
+    var n=['optank','opfuel','opalat'].reduce(function(a,col){return a+(S[col]||[]).filter(function(r){return r.kontraktor===k}).length},0);
+    return h('label',{class:'fld',style:'flex-direction:row;align-items:center;gap:10px'},c,h('span',null,h('b',{text:k}),h('small',{style:'display:block;color:var(--muted)',text:n+' baris data fuel, tangki, dan laporan alat'})));
+  })):h('p',{class:'prd-note',text:'Belum ada kontraktor. Tambahkan di menu Kontraktor.'});
+  var b=h('button',{class:'btn primary',type:'button',onclick:async function(){
+    var m={};Object.keys(box).forEach(function(k){if(box[k].checked)m[k]=true});
+    try{await save('opset','fuelsync',{map:m});toast('Pengaturan sinkronisasi tersimpan');paint()}catch(e){toast('Gagal menyimpan pengaturan')}}},'Simpan pengaturan');
+  return panel('Sinkronisasi fuel kontraktor dengan Owner','Centang kontraktor yang fuel-nya digabung ke Overview Fuel Owner (stok tangki, penerimaan, pemakaian, dan fuel ratio). Yang tidak dicentang dihitung terpisah dan tidak masuk angka Owner. Disarankan memberi nama tangki yang unik tiap kontraktor, misalnya dengan awalan inisial.',list,boleh?h('div',{class:'acts'},b):h('p',{class:'prd-note',text:'Hanya KTT yang dapat mengubah pengaturan ini.'}));
+}
+fuelView=function(){
+  var root=FS_O.view.apply(null,arguments),t=PRD.tab.fuel;
+  if(fsOwner()&&t==='dash'){
+    var tb=root.querySelector('.toolbar'),opts=[['','Owner + kontraktor tersinkron'],['__owner','Owner saja']].concat(fsKon().map(function(k){return [k,'Hanya '+k+(fsMap()[k]===true?' (tersinkron)':' (terpisah)')]}));
+    if(tb){var sel=h('select',{'aria-label':'Sumber data fuel',onchange:function(e){PRD.fsrc=e.target.value;paint()}},opts.map(function(o){return h('option',{value:o[0],selected:(PRD.fsrc||'')===o[0]},o[1])}));tb.insertBefore(sel,tb.querySelector('.grow'))}
+  }
+  if(t==='set')root.append(fsPanel());
+  return root;
+};
 /* ---------- Settling Pond (Reklamasi dan lingkungan) ----------
    Koleksi: spond (parameter desain per kolam), sppantau (logsheet pH, TSS, debit), spkeruk (catatan pengerukan).
    Rumus mengikuti Template Excel Desain Kompartemen Settling Pond (7 modul): hidrologi rasional + Kirpich + Mononobe,
