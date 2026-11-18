@@ -12346,7 +12346,7 @@ var PR_RK=['reklamasi','revegetasi','rkgiat','pucuk','bibit','erosi','pasca','rk
 var PR_TAG=PR_K3.concat(PR_RK,['personel','kdok']);
 var PR_MENU={
   hse:['kpi','setuju','k3','risiko','sop','inspeksi','temuan','agenda','inventaris','ptw','permit','reklamasi','surat','setelan','panduan'],
-  pjo:['ringkasan','setuju','k3','risiko','inspeksi','temuan','agenda','inventaris','ptw','permit','operasional','reklamasi','kontraktor','personel','surat','setelan','panduan'],
+  pjo:['ringkasan','setuju','k3','risiko','inspeksi','temuan','agenda','inventaris','ptw','permit','operasional','prodov','plantov','fuelov','whov','reklamasi','kontraktor','personel','surat','setelan','panduan'],
   qaqc:['setuju','operasional','panduan','setelan'],
   produksi:['operasional','panduan','setelan'],
   spv_produksi:['operasional','prodov','panduan','setelan'],
@@ -12360,6 +12360,8 @@ var PR_TULIS={
   admin_gudang:['whitem','whin','whout','inventaris','invpakai','asetsite','asetserah','asetservis']
 };
 var PR_SPC=['spond','sppantau','spkeruk'];
+/* operasional milik kontraktor: PJO mengelola data kontraktornya sendiri tanpa persetujuan KTT (cermin ktt_kv_boleh v85) */
+var PR_OPK=['opalat','opunit','opfuel','optank','opbd','whitem','whin','whout'];
 var PR_AJU=0;
 function prMember(){return (typeof HOST!=='undefined'&&HOST&&HOST.member)?HOST.member:null}
 function prPeran(){var m=prMember();return m&&m.peran?m.peran:null}
@@ -12479,14 +12481,14 @@ function prBolehTambah(c){
   if(PR_TULIS[p])return PR_TULIS[p].indexOf(c)>=0;
   if(p==='hse'&&PR_SPC.indexOf(c)>=0)return false;
   if(p==='hse')return PR_K3.indexOf(c)>=0||PR_RK.indexOf(c)>=0||['sop','ptw','surat','distribusi'].indexOf(c)>=0;
-  if(p==='pjo')return PR_K3.indexOf(c)>=0||PR_RK.indexOf(c)>=0||c==='personel'||c==='kdok';
+  if(p==='pjo')return PR_K3.indexOf(c)>=0||PR_RK.indexOf(c)>=0||c==='personel'||c==='kdok'||PR_OPK.indexOf(c)>=0;
   return c.indexOf('op')===0;
 }
 function prBolehHapus(c,row){
   var p=prPeran();if(aksKtt())return true;
   if(c==='ubah')return !!row&&row.status==='menunggu';
   if(c.indexOf('op')===0)return p==='pjo'||p==='qaqc';
-  if(p==='pjo'&&c==='kdok')return true;
+  if(p==='pjo'&&(c==='kdok'||PR_OPK.indexOf(c)>=0))return true;
   return false;
 }
 function prJudul(c,r){var t=r&&(r.nama||r.judul||r.objek||r.perihal||r.no||r.uraian||r.lokasi||r.pekerjaan)||(r&&r.id)||'';t=String(t);return t.length>70?t.slice(0,68)+'…':t}
@@ -15507,6 +15509,17 @@ function flBar(g){
     L.map(function(F){return h('button',{type:'button',class:'btn',title:F.sub,onclick:function(){flPdf(F.id)}},F.nm)}),
     h('button',{type:'button',class:'btn primary',onclick:function(){flPdfAll(g)}},'Semua ('+L.length+' lembar)'));
 }
+/* ---------- PJO: Overview Produktivitas, Plant, Fuel, dan Warehouse untuk kontraktornya sendiri ----------
+   Setiap baris diberi nama kontraktor pemiliknya. PJO hanya membaca dan mengubah baris miliknya,
+   tanpa persetujuan KTT. Baris tanpa kontraktor adalah milik perusahaan dan tidak tampil bagi PJO. */
+(function(){
+  PR_OPK.forEach(function(c){
+    if(PR_TAG.indexOf(c)<0)PR_TAG.push(c);
+    var C=CFG[c];if(!C||!C.fields)return;
+    if(!C.fields.some(function(f){return f.k==='kontraktor'}))C.fields.push({k:'kontraktor',l:'Kontraktor (kosongkan bila milik perusahaan)',t:'select',o:prKonNames,sec:'Kepemilikan data'});
+    if(C.cols&&!C.cols.some(function(x){return x.l==='Kontraktor'}))C.cols.push({l:'Kontraktor',r:function(r){return r.kontraktor||'Perusahaan'}});
+  });
+})();
 /* ---------- Settling Pond (Reklamasi dan lingkungan) ----------
    Koleksi: spond (parameter desain per kolam), sppantau (logsheet pH, TSS, debit), spkeruk (catatan pengerukan).
    Rumus mengikuti Template Excel Desain Kompartemen Settling Pond (7 modul): hidrologi rasional + Kirpich + Mononobe,
