@@ -5657,7 +5657,7 @@ function pcBlock(mk){
 }
 
 /* ---------- Lampiran pada setiap catatan (surat, izin, insiden, temuan, dan lainnya) ---------- */
-var BERKAS=[],BK_MAX=6,BK_BYTES=450000;
+var BERKAS=[],BK_MAX=6,BK_BYTES=10485760;
 function bkFor(kol,rid){return BERKAS.filter(function(b){return b.kol===kol&&b.rid===rid}).sort(function(a,b){return (a.ts||0)-(b.ts||0)})}
 function bkCount(kol,rid){var n=0;BERKAS.forEach(function(b){if(b.kol===kol&&b.rid===rid)n++});return n}
 async function bkSave(d){
@@ -5701,7 +5701,7 @@ async function bkPrep(file){
     out.tipe='image/jpeg';out.nama=out.nama.replace(/\.[^.]+$/,'')+'.jpg';out.w=f.w;out.h=f.h;out.b64=f.b64;out.ukuran=Math.round(f.b64.length*3/4);
     return out;
   }
-  if(file.size>BK_BYTES)throw new Error('Berkas '+out.nama+' berukuran '+bkKb(file.size)+'. Batas '+bkKb(BK_BYTES)+'. Kecilkan atau ubah menjadi gambar.');
+  if(file.size>BK_BYTES)throw new Error('Berkas '+out.nama+' berukuran '+bkKb(file.size)+'. Batas '+bkKb(BK_BYTES)+'. Kecilkan dulu atau ubah menjadi gambar.');
   out.b64=await lampB64(file);out.ukuran=file.size;return out;
 }
 function bkField(key,row,ro){
@@ -6992,7 +6992,7 @@ var GD_FAQ=[
  ['Cara memakai tombol Menu','Di ponsel, ketuk Menu untuk membuka daftar modul; daftar menutup sendiri setelah Anda memilih modul. Di layar lebar, tombol Menu menciutkan sidebar menjadi deretan ikon (arahkan kursor untuk melihat nama). Judul kelompok seperti Keselamatan dan kesehatan kerja dapat dilipat dan pilihan Anda diingat di perangkat ini. Angka merah pada kelompok yang dilipat menjumlahkan butir yang perlu tindakan.'],
  ['Cara membaca Dashboard','Dashboard dibagi empat tab: Ringkasan, Perhatian, Grafik, dan Modul. Pada Ringkasan, klik kartu indikator untuk membuka modulnya, dan pakai penyaring di atas indikator, misalnya Perlu tindakan, untuk hanya melihat yang kuning atau merah. Tombol Catat cepat membuka menu pencatatan semua modul.'],
  ['Memilih tahun kerja di Setelan','Buka menu Setelan atau pakai pilihan Tahun di header. Pilih tahun, maka catatan bertanggal (insiden, produksi, agenda, surat, reklamasi, dan sejenisnya) serta RKAB tampil untuk tahun itu saja. Data tahun lain tetap tersimpan di basis data dan muncul lagi saat tahunnya dipilih. Catatan baru memakai tahun terpilih. Tahun arsip memakai tanggal acuan 31 Desember. Di Setelan juga ada tema, efek gerak, dan unduh cadangan JSON.'],
- ['Melampirkan berkas pada catatan','Buka catatan apa pun (surat, perizinan, insiden, temuan, kontraktor, dokumen reklamasi, dan lainnya), lalu gulir ke bagian Lampiran di bawah form. Pilih atau tarik foto, hasil pindai, atau PDF. Foto dikecilkan otomatis, berkas lain maksimal 450 KB. Satu catatan dapat memiliki sampai 6 lampiran. Lampiran baru disimpan saat Anda menekan Simpan. Klik Lihat atau Unduh untuk membukanya lagi. Lampiran ikut terhapus bila catatannya dihapus.'],
+ ['Melampirkan berkas pada catatan','Buka catatan apa pun (surat, perizinan, insiden, temuan, kontraktor, dokumen reklamasi, dan lainnya), lalu gulir ke bagian Lampiran di bawah form. Pilih atau tarik foto, hasil pindai, atau PDF. Foto dikecilkan otomatis, berkas lain maksimal 10 MB. Satu catatan dapat memiliki sampai 6 lampiran. Lampiran baru disimpan saat Anda menekan Simpan. Klik Lihat atau Unduh untuk membukanya lagi. Lampiran ikut terhapus bila catatannya dihapus.'],
  ['Mengisi data kontraktor dan sertifikat','Buka Kontraktor dan CSMS, klik baris kontraktor, lalu isi PJO, petugas K3, nomor dan masa berlaku kontrak. Gulir ke Kelengkapan sertifikat dan dokumen wajib, klik sel (misalnya SMK3 atau SIO) untuk mengisi nomor, penerbit, dan masa berlaku. Hijau berarti berlaku, kuning berakhir dalam 90 hari, merah kedaluwarsa. Pindaian dokumen dapat dilampirkan pada form yang sama.'],
  ['Melihat contoh peta untuk matriks yang memerlukan peta','Buka formulir matriks yang bertanda Perlu peta, lalu klik Contoh peta dan isi yang diharapkan di bagian Lampiran peta. Tersedia gambar contoh dan daftar isi yang perlu ada di peta (judul, utara, skala, grid koordinat, legenda, batas WIUP, sumber data dan pengesahan) serta isi khusus tiap matriks. Klik gambar untuk memperbesar atau Unduh contoh (PNG) untuk disimpan. Contoh hanya ilustrasi skematik dan tidak ikut masuk ke PDF. Susun peta asli dari data survei lalu unggah sebagai lampiran.'],
  ['Memilih dan membeli paket langganan','Buka menu Langganan dan paket. Pilih Bulanan (harga promo berlaku sampai 20 November) atau Sekali beli untuk akses seumur hidup, klik tombol paket, isi data penagihan lalu Buat pesanan. Paket Dasar yang dibeli sekali dapat ditingkatkan ke Profesional, dan harganya dipotong sebesar harga Dasar yang sudah dibayar. Harga diskon seumur hidup berlaku sampai akhir tahun. Transfer sesuai nominal (termasuk kode unik) ke rekening yang tampil, kemudian unggah bukti transfer di jendela pesanan. Admin memeriksa bukti dan menekan Terima dan aktifkan, sehingga paket dan masa berlakunya muncul di bagian Paket Anda. Admin mengatur harga, tanggal promo, isi paket, rekening, PPN dan QRIS lewat Kelola paket dan rekening.'],
@@ -7965,14 +7965,14 @@ var PTW_TPL={
 };
 
 /* ---------- Lampiran tertanam pada surat dan izin kerja (PJO tidak menulis ke koleksi berkas) ---------- */
-var LP_MAX=4,LP_BYTES=204800;
-var LP_TIPS='Kompres dulu sebelum diunggah. Foto: perkecil resolusi (lebar sekitar 1200 px) atau simpan sebagai JPG kualitas sedang. PDF atau scan: pindai 150 dpi, atau pakai fitur kompres PDF (Reduce file size). Gabungkan halaman dalam satu PDF bila perlu.';
+var LP_MAX=4,LP_BYTES=10485760;
+var LP_TIPS='Foto, scan, atau PDF. Bila lebih dari 10 MB, kecilkan dulu: perkecil resolusi foto atau pakai fitur kompres PDF (Reduce file size).';
 function lpBatas(kol){return kol==='surat'||kol==='ptw'}
 async function lpPrep(file){
   var nama=file.name||'lampiran',tipe=file.type||'';
   if(!tipe){var ext=(nama.split('.').pop()||'').toLowerCase();tipe={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',xls:'application/vnd.ms-excel',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}[ext]||'application/octet-stream'}
   if(!file.size)throw new Error('Berkas '+nama+' kosong.');
-  if(file.size>LP_BYTES)throw new Error('Berkas '+nama+' berukuran '+bkKb(file.size)+', melebihi batas '+bkKb(LP_BYTES)+'. Kompres dulu lalu unggah lagi (lihat keterangan di bawah).');
+  if(file.size>LP_BYTES)throw new Error('Berkas '+nama+' berukuran '+bkKb(file.size)+', melebihi batas '+bkKb(LP_BYTES)+'. Kecilkan dulu lalu unggah lagi (lihat keterangan di bawah).');
   if(/^image\//.test(tipe)&&!/^image\/(jpeg|png|webp)$/.test(tipe))throw new Error('Format gambar '+nama+' tidak didukung. Ubah ke JPG atau PNG, lalu kompres.');
   return {nama:nama,tipe:tipe,ukuran:file.size,ts:Date.now(),b64:await lampB64(file)};
 }
@@ -13148,7 +13148,7 @@ closeModal=function(){KT_FOTO=null;return KT_CLOSE.apply(this,arguments)};
    form PDF dapat diunduh, dan berkas yang sudah ditandatangani diunggah ke catatan yang sama.
    Aturan: diganti unit baru tiap 6 bulan (unit lama wajib kembali dulu); bila hilang dan minta unit baru,
    denda 30% dari harga pasar. */
-var INV_BULAN=6,INV_DENDA=0.3,INV_PDF_MAX=1500000;
+var INV_BULAN=6,INV_DENDA=0.3,INV_PDF_MAX=10485760;
 function invRp(v){return 'Rp '+Math.round(Number(v)||0).toLocaleString('id-ID')}
 function invLabel(it){
   if(!it)return '';
