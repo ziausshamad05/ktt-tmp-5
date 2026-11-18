@@ -13015,6 +13015,9 @@ function kartuPdf(jenis,rows,opt){
   return {bytes:u,pages:pages.length};
 }
 
+/* kartu baru dari PJO baru boleh dicetak setelah disetujui KTT */
+function ktBolehCetak(r){return r.persetujuan!=='menunggu'&&r.persetujuan!=='ditolak'}
+
 /* ---------- jendela pilih kartu ---------- */
 function kartuDialog(jenis0){
   ktLoad();
@@ -13023,31 +13026,31 @@ function kartuDialog(jenis0){
   function data(){return (S[jenis]||[]).slice().sort(CFG[jenis].sort)}
   function cocok(r){if(!q)return true;var s=[r.nama,r.idpekerja,r.noid,r.nolisensi,r.kontraktor,r.departemen,r.jenis].join(' ').toLowerCase();return s.indexOf(q)>=0}
   function draw(){
-    var all=data(),vis=all.filter(cocok),n=all.filter(function(r){return pilih[r.id]}).length;
+    var all=data(),vis=all.filter(cocok),n=all.filter(function(r){return pilih[r.id]&&ktBolehCetak(r)}).length;
     var tabs=h('div',{class:'op-tabs',role:'tablist','aria-label':'Jenis kartu'},[['minepermit','Mine Permit'],['simper','SIMPER']].map(function(t){
       return h('button',{type:'button',role:'tab',class:'op-tab'+(jenis===t[0]?' on':''),'aria-selected':jenis===t[0]?'true':'false',onclick:function(){if(jenis!==t[0]){jenis=t[0];pilih={};q='';draw()}}},t[1]+' ('+(S[t[0]]||[]).length+')')}));
     var cari=h('input',{type:'search',placeholder:'Cari nama, ID, kontraktor…','aria-label':'Cari kartu',value:q,oninput:function(e){q=e.target.value.toLowerCase();var p=e.target.selectionStart;draw();var c=box.querySelector('input[type=search]');c.focus();try{c.setSelectionRange(p,p)}catch(x){}}});
-    var semua=h('input',{type:'checkbox','aria-label':'Pilih semua yang tampil'});semua.checked=vis.length>0&&vis.every(function(r){return pilih[r.id]});semua.indeterminate=!semua.checked&&vis.some(function(r){return pilih[r.id]});
-    semua.addEventListener('change',function(){vis.forEach(function(r){if(semua.checked)pilih[r.id]=1;else delete pilih[r.id]});draw()});
+    var visOk=vis.filter(ktBolehCetak),semua=h('input',{type:'checkbox','aria-label':'Pilih semua yang tampil',disabled:!visOk.length});semua.checked=visOk.length>0&&visOk.every(function(r){return pilih[r.id]});semua.indeterminate=!semua.checked&&visOk.some(function(r){return pilih[r.id]});
+    semua.addEventListener('change',function(){visOk.forEach(function(r){if(semua.checked)pilih[r.id]=1;else delete pilih[r.id]});draw()});
     var list=h('div',{class:'kt-list',role:'group','aria-label':'Daftar kartu'});
     if(!vis.length)list.append(h('p',{class:'empty',text:all.length?'Tidak ada yang cocok dengan pencarian.':'Belum ada data '+(jenis==='simper'?'SIMPER':'Mine Permit')+'.'}));
     vis.forEach(function(r){
-      var cb=h('input',{type:'checkbox'});cb.checked=!!pilih[r.id];cb.addEventListener('change',function(){if(cb.checked)pilih[r.id]=1;else delete pilih[r.id];draw()});
+      var ok=ktBolehCetak(r),cb=h('input',{type:'checkbox',disabled:!ok});cb.checked=ok&&!!pilih[r.id];cb.addEventListener('change',function(){if(cb.checked)pilih[r.id]=1;else delete pilih[r.id];draw()});
       var st=pmStatus(r);
-      list.append(h('label',{class:'kt-row'+(pilih[r.id]?' on':'')},cb,
-        h('span',{class:'kt-who'},h('b',{text:r.nama||'—'}),h('small',{text:[jenis==='simper'?r.nolisensi:r.noid,r.kontraktor||'Perusahaan'].filter(Boolean).join(' · ')})),
+      list.append(h('label',{class:'kt-row'+(pilih[r.id]?' on':''),style:ok?'':'opacity:.65'},cb,
+        h('span',{class:'kt-who'},h('b',{text:r.nama||'—'}),h('small',{text:[jenis==='simper'?r.nolisensi:r.noid,r.kontraktor||'Perusahaan'].filter(Boolean).join(' · ')+(ok?'':' · belum dapat dicetak sebelum disetujui KTT')})),
         jenis==='simper'?spChip(r.jenis):null,badge(st[0],st[1])));
     });
     var blk=h('input',{type:'checkbox'});blk.checked=bel;blk.addEventListener('change',function(){bel=blk.checked;draw()});
     var buat=h('button',{type:'button',class:'btn primary',disabled:!n,onclick:function(){
-      var rows=all.filter(function(r){return pilih[r.id]});if(!rows.length)return;
+      var rows=all.filter(function(r){return pilih[r.id]&&ktBolehCetak(r)});if(!rows.length)return;
       var lewat=rows.filter(function(r){return pmStatus(r)[1]==='crit'}).length;
       try{var b=kartuPdf(jenis,rows,{belakang:bel});opSave('kartu-'+(jenis==='simper'?'simper':'mine-permit')+'-'+rows.length+'-orang.pdf',b.bytes);
         if(lewat)toast(lewat+' kartu yang dicetak sudah kedaluwarsa dan ditandai merah')}
       catch(e){err.textContent='Gagal membuat PDF: '+(e&&e.message?e.message:'kesalahan tak dikenal');err.hidden=false}
     }},n?'Buat PDF ('+n+' kartu, '+(bel?n*2:n)+' halaman)':'Pilih kartu dahulu');
     box.replaceChildren(tabs,
-      h('div',{class:'kt-bar'},h('label',{class:'kt-all'},semua,h('span',{text:'Pilih semua ('+vis.length+')'})),cari),
+      h('div',{class:'kt-bar'},h('label',{class:'kt-all'},semua,h('span',{text:'Pilih semua ('+visOk.length+')'})),cari),
       list,
       h('label',{class:'kt-opt'},blk,h('span',{text:'Sertakan sisi belakang (ketentuan dan aturan)'})),
       h('p',{class:'sub',style:'margin:0',text:'Ukuran kartu B1 55 × 85 mm portrait (setara kartu ID 85 × 55 mm). Tiap kartu menjadi halaman depan lalu belakang, jadi cetak bolak-balik dengan balik pada sisi panjang dan skala 100%.'}),
@@ -13101,10 +13104,10 @@ function ktItems(kind){
   return o;
 }
 /* kode perusahaan pada nomor: inisial kontraktor (diisi di data kontraktor, atau diambil dari huruf awal nama), atau kode perusahaan sendiri */
-function ktInisial(nama){return String(nama||'').replace(/[.,()]/g,' ').split(/\s+/).filter(function(w){return w&&!/^(pt|cv|ud|koperasi|tbk)$/i.test(w)}).map(function(w){return w.charAt(0)}).join('')}
+function ktInisialNama(nama){return String(nama||'').replace(/[.,()]/g,' ').split(/\s+/).filter(function(w){return w&&!/^(pt|cv|ud|koperasi|tbk)$/i.test(w)}).map(function(w){return w.charAt(0)}).join('')}
 function ktKode(kon){
   var s='';
-  if(kon){var r=(S.kontraktor||[]).find(function(x){return x.nama===kon});s=(r&&r.inisial)||ktInisial(kon)}
+  if(kon){var r=(S.kontraktor||[]).find(function(x){return x.nama===kon});s=(r&&r.inisial)||ktInisialNama(kon)}
   else if(typeof pgProf==='function'){try{s=pgProf().kode||''}catch(e){}}
   return String(s).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
 }
