@@ -12660,7 +12660,7 @@ function pmStatus(r){var d=daysTo(r.berlaku);if(d==null)return ['Belum diisi','m
 function spButuhAlat(j){var k=spKode(j);return k==='res'||k==='pro'}
 CFG.minepermit={key:'minepermit',add:'Tambah Mine Permit',empty:'Belum ada Mine Permit tercatat.',title:'Mine Permit',
   fields:[
-    {k:'nama',l:'Nama karyawan',t:'text',req:1,sec:'Identitas karyawan'},
+    {k:'nama',l:'Nama karyawan (pilih dari daftar Personel)',t:'select',req:1,o:function(){return ktPersNama()},sec:'Identitas karyawan'},
     {k:'idpekerja',l:'ID pekerja',t:'text',req:1},
     {k:'noid',l:'No ID Mine Permit',t:'text',req:1},
     {k:'kontraktor',l:'Kontraktor (kosongkan bila karyawan perusahaan)',t:'select',o:prKonNames},
@@ -12676,7 +12676,7 @@ CFG.minepermit={key:'minepermit',add:'Tambah Mine Permit',empty:'Belum ada Mine 
     {l:'Status',r:function(r){var s=pmStatus(r);return badge(s[0],s[1])}}]};
 CFG.simper={key:'simper',add:'Tambah SIMPER',empty:'Belum ada SIMPER tercatat.',title:'SIMPER',
   fields:[
-    {k:'nama',l:'Nama pekerja',t:'text',req:1,sec:'Identitas pekerja'},
+    {k:'nama',l:'Nama pekerja (pilih dari daftar Personel)',t:'select',req:1,o:function(){return ktPersNama()},sec:'Identitas pekerja'},
     {k:'noid',l:'No ID',t:'text',req:1},
     {k:'kontraktor',l:'Kontraktor (kosongkan bila pekerja perusahaan)',t:'select',o:prKonNames},
     {k:'departemen',l:'Departemen',t:'text',dl:['Produksi','Hauling','Mining Support','Plant dan Maintenance','HSE','Survey','Geologi','Logistik']},
@@ -13085,6 +13085,27 @@ function ktKode(kon){
   else if(typeof pgProf==='function'){try{s=pgProf().kode||''}catch(e){}}
   return String(s).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
 }
+/* nama karyawan dipilih dari daftar Personel yang masih bekerja */
+function ktPersNama(){
+  var seen={},o=[];(S.personel||[]).forEach(function(r){var n=String(r.nama||'').trim();if(n&&r.kerja!=='Tidak aktif'&&!seen[n]){seen[n]=1;o.push(n)}});
+  return o.sort(function(a,b){return a.localeCompare(b)});
+}
+function ktPilihNama(form,key,row){
+  var sel=form.querySelector('#m-nama');if(!sel||sel.tagName!=='SELECT')return;
+  var cur=row&&row.nama?String(row.nama):'';
+  if(cur&&![].some.call(sel.options,function(o){return o.value===cur}))sel.append(h('option',{value:cur},cur+' (belum ada di Personel)'));
+  if(!sel.options.length||sel.options[0].value!=='')sel.insertBefore(h('option',{value:''},ktPersNama().length?'Pilih dari daftar Personel':'Belum ada personel, isi dulu di menu Personel'),sel.firstChild);
+  sel.value=cur;
+  var idf=form.querySelector('#m-'+(key==='minepermit'?'idpekerja':'noid'));
+  sel.addEventListener('change',function(){
+    var p=(S.personel||[]).find(function(r){return String(r.nama||'').trim()===sel.value});
+    if(!p)return;
+    if(idf&&!idf.disabled&&p.idpekerja){idf.value=p.idpekerja;idf.dispatchEvent(new Event('input',{bubbles:true}))}
+    var ks=form.querySelector('#m-kontraktor');
+    if(ks&&!ks.disabled&&p.kontraktor!=null){if(p.kontraktor&&![].some.call(ks.options,function(o){return o.value===p.kontraktor}))ks.append(h('option',{value:p.kontraktor},p.kontraktor));ks.value=p.kontraktor||''}
+  });
+  if(!ktPersNama().length&&!cur){var lab=sel.closest('label');if(lab)lab.append(h('small',{class:'sub',text:'Tambahkan karyawan di menu Personel terlebih dahulu.'}))}
+}
 function ktSaran(kind,ctx){
   var kode=spKode(ctx.jenis),tahun=new Date(TODAY).getFullYear();
   var all=ktItems(kind).filter(function(x){return !(x.c===ctx.col&&x.r.id===ctx.rid)});
@@ -13155,7 +13176,7 @@ openForm=function(key,row,pre){
   if(key==='personel'){try{var fp=document.querySelector('#ov .dlg form');if(fp)ktGenBtn(fp,key,'idpekerja','pekerja',row)}catch(e){if(window.console)console.error(e)}}
   if(key==='minepermit'||key==='simper'){
     try{var form=document.querySelector('#ov .dlg form');if(form){
-      ktFotoWidget(form,key,row);
+      ktPilihNama(form,key,row);ktFotoWidget(form,key,row);
       if(key==='minepermit'){ktGenBtn(form,key,'idpekerja','pekerja',row);ktGenBtn(form,key,'noid','permit',row)}
       else{ktGenBtn(form,key,'noid','pekerja',row);ktGenBtn(form,key,'nolisensi','lisensi',row)}
     }}catch(e){if(window.console)console.error(e)}
