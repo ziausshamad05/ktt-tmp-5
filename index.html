@@ -2277,6 +2277,7 @@ var CFG={
  personel:{key:'personel',add:'Tambah personel',empty:'Belum ada personel.',title:'Personel',
   fields:[
    {k:'nama',l:'Nama',t:'text',req:1},
+   {k:'idpekerja',l:'ID pekerja',t:'text'},
    {k:'jabatan',l:'Jabatan',t:'text',req:1},
    {k:'sertifikat',l:'Sertifikat atau kompetensi',t:'text'},
    {k:'berlaku',l:'Berlaku sampai',t:'date'},
@@ -2286,6 +2287,7 @@ var CFG={
   sort:function(a,b){return String(a.nama||'').localeCompare(String(b.nama||''))},
   cols:[
    {l:'Nama',r:function(r){return r.nama}},
+   {l:'ID pekerja',r:function(r){return h('span',{class:'mono',style:'white-space:nowrap',text:r.idpekerja||'—'})}},
    {l:'Jabatan',r:function(r){return r.jabatan||'—'}},
    {l:'Keterangan kerja',r:function(r){return r.kerja==='Tidak aktif'?badge('Tidak aktif','crit'):r.kerja==='Masih bekerja'?badge('Masih bekerja','good'):badge('Belum diisi','')}},
    {l:'Sertifikat',r:function(r){return r.sertifikat||'—'}},
@@ -13070,7 +13072,7 @@ function ktValid(r){var d=daysTo(r.berlaku);return d==null||d>=0}
 function ktPola(v){var m=/^(.*?)(\d+)$/.exec(String(v||'').trim());return m?{p:m[1],n:parseInt(m[2],10),w:m[2].length}:null}
 function ktItems(kind){
   var o=[];
-  if(kind==='pekerja'){(S.minepermit||[]).forEach(function(r){if(r.idpekerja)o.push({v:r.idpekerja,r:r,c:'minepermit'})});(S.simper||[]).forEach(function(r){if(r.noid)o.push({v:r.noid,r:r,c:'simper'})})}
+  if(kind==='pekerja'){(S.personel||[]).forEach(function(r){if(r.idpekerja)o.push({v:r.idpekerja,r:r,c:'personel'})});(S.minepermit||[]).forEach(function(r){if(r.idpekerja)o.push({v:r.idpekerja,r:r,c:'minepermit'})});(S.simper||[]).forEach(function(r){if(r.noid)o.push({v:r.noid,r:r,c:'simper'})})}
   else if(kind==='permit')(S.minepermit||[]).forEach(function(r){if(r.noid)o.push({v:r.noid,r:r,c:'minepermit'})});
   else (S.simper||[]).forEach(function(r){if(r.nolisensi)o.push({v:r.nolisensi,r:r,c:'simper'})});
   return o;
@@ -13100,7 +13102,7 @@ function ktSaran(kind,ctx){
   if(!nums.length)all.forEach(function(x){var q=ktPola(x.v);if(q&&q.p===pola.p)nums.push(q.n)});
   nums.sort(function(a,b){return a-b});
   var out=[];
-  if(kind==='pekerja'&&ctx.nama){var sm=all.find(function(x){return String(x.r.nama||'').trim().toLowerCase()===ctx.nama.trim().toLowerCase()});if(sm)out.push({v:sm.v,t:'ID yang sudah dipakai '+sm.r.nama})}
+  if(kind==='pekerja'&&ctx.nama){var nm=ctx.nama.trim().toLowerCase(),cocok=all.filter(function(x){return String(x.r.nama||'').trim().toLowerCase()===nm}),sm=cocok.find(function(x){return x.c==='personel'})||cocok[0];if(sm)out.push({v:sm.v,t:sm.c==='personel'?'ID dari data Personel '+sm.r.nama:'ID yang sudah dipakai '+sm.r.nama})}
   if(nums.length>1){for(var n=nums[0]+1;n<nums[nums.length-1];n++){var v=fmtN(n);if(!dipakai[v.toLowerCase()]){out.push({v:v,t:'Nomor kosong di urutan'});break}}}
   var nx=(nums.length?nums[nums.length-1]:0)+1;while(dipakai[fmtN(nx).toLowerCase()])nx++;
   out.push({v:fmtN(nx),t:'Nomor berikutnya'});
@@ -13150,6 +13152,7 @@ function ktFotoWidget(form,key,row){
 var KT_FORM=openForm;
 openForm=function(key,row,pre){
   var res=KT_FORM.apply(this,arguments);
+  if(key==='personel'){try{var fp=document.querySelector('#ov .dlg form');if(fp)ktGenBtn(fp,key,'idpekerja','pekerja',row)}catch(e){if(window.console)console.error(e)}}
   if(key==='minepermit'||key==='simper'){
     try{var form=document.querySelector('#ov .dlg form');if(form){
       ktFotoWidget(form,key,row);
@@ -16031,7 +16034,7 @@ function spDemo(){
     NS();
   };
   if(typeof SUB_KUNCI_DASAR!=='undefined'&&SUB_KUNCI_DASAR.indexOf('settling')<0)SUB_KUNCI_DASAR.push('settling');
-  if(typeof PR_RK!=='undefined'){['spond','sppantau','spkeruk'].forEach(function(c){if(PR_RK.indexOf(c)<0)PR_RK.push(c)});PR_TAG=PR_K3.concat(PR_RK,['personel','kdok'])}
+  if(typeof PR_RK!=='undefined'){['spond','sppantau','spkeruk'].forEach(function(c){if(PR_RK.indexOf(c)<0)PR_RK.push(c)});PR_TAG=PR_K3.concat(PR_RK,['personel','kdok'],PR_OPK)}
   if(typeof PR_MENU!=='undefined'){['hse','pjo'].forEach(function(r){if(PR_MENU[r]&&PR_MENU[r].indexOf('settling')<0)PR_MENU[r].splice(PR_MENU[r].indexOf('reklamasi')+1,0,'settling')})}
   if(typeof AKS_HSE!=='undefined'&&AKS_HSE.indexOf('settling')<0)AKS_HSE.push('settling');
 })();
