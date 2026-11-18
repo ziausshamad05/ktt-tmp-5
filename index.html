@@ -5852,6 +5852,7 @@ function kontIssue(r){
 
 CFG.kontraktor.fields=[
  {k:'nama',l:'Nama kontraktor',t:'text',req:1,sec:'Identitas perusahaan'},
+ {k:'inisial',l:'Inisial untuk nomor ID (kosongkan: diambil dari huruf awal nama)',t:'text'},
  {k:'bidang',l:'Bidang pekerjaan',t:'text',dl:KD_BIDANG},
  {k:'alamat',l:'Alamat kantor',t:'text'},
  {k:'kontak',l:'Telepon atau email kantor',t:'text'},
@@ -13074,6 +13075,14 @@ function ktItems(kind){
   else (S.simper||[]).forEach(function(r){if(r.nolisensi)o.push({v:r.nolisensi,r:r,c:'simper'})});
   return o;
 }
+/* kode perusahaan pada nomor: inisial kontraktor (diisi di data kontraktor, atau diambil dari huruf awal nama), atau kode perusahaan sendiri */
+function ktInisial(nama){return String(nama||'').replace(/[.,()]/g,' ').split(/\s+/).filter(function(w){return w&&!/^(pt|cv|ud|koperasi|tbk)$/i.test(w)}).map(function(w){return w.charAt(0)}).join('')}
+function ktKode(kon){
+  var s='';
+  if(kon){var r=(S.kontraktor||[]).find(function(x){return x.nama===kon});s=(r&&r.inisial)||ktInisial(kon)}
+  else if(typeof pgProf==='function'){try{s=pgProf().kode||''}catch(e){}}
+  return String(s).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+}
 function ktSaran(kind,ctx){
   var kode=spKode(ctx.jenis),tahun=new Date(TODAY).getFullYear();
   var all=ktItems(kind).filter(function(x){return !(x.c===ctx.col&&x.r.id===ctx.rid)});
@@ -13081,7 +13090,9 @@ function ktSaran(kind,ctx){
   var pola=null,hit={};
   grup.forEach(function(x){var q=ktPola(x.v);if(!q)return;var k=q.p+'|'+q.w;hit[k]=(hit[k]||0)+1});
   var top=Object.keys(hit).sort(function(a,b){return hit[b]-hit[a]})[0];
-  if(top){var s=top.split('|');pola={p:s[0],w:Number(s[1])}}
+  var kd=ktKode(ctx.kon);
+  if(kd)pola=kind==='pekerja'?{p:(ctx.kon?'KTR-':'EMP-')+kd+'-',w:4}:kind==='permit'?{p:'MP-'+kd+'-',w:4}:{p:'SMP-'+({ins:'INS',res:'RES',pro:'PRO',ful:'FUL'}[kode]||'SMP')+'-'+kd+'-',w:3};
+  else if(top){var s=top.split('|');pola={p:s[0],w:Number(s[1])}}
   else pola=kind==='pekerja'?{p:ctx.kon?'KTR-':'EMP-',w:4}:kind==='permit'?{p:'MP-'+tahun+'-',w:4}:{p:'SMP-'+({ins:'INS',res:'RES',pro:'PRO',ful:'FUL'}[kode]||'SMP')+'-',w:3};
   function fmtN(n){var s=String(n);while(s.length<pola.w)s='0'+s;return pola.p+s}
   var dipakai={};all.forEach(function(x){dipakai[String(x.v).toLowerCase()]=1});
