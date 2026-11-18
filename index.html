@@ -15018,7 +15018,7 @@ CFG.opbd={key:'opbd',add:'Catat breakdown',empty:'Belum ada catatan breakdown al
       {
         if(!String(data.pihakSerah||'').trim()||!String(data.pihakTerima||'').trim())throw new Error('Isi nama yang menyerahkan dan yang menerima (penandatangan BA).');
       }
-      if(!String(data.noBa||'').trim())data.noBa=asNo('opfuel','noBa','BAF',data.tanggal);
+      if(!String(data.noBa||'').trim())data.noBa=asNoK('opfuel','noBa','BAF',data.tanggal,data.kontraktor||(prPeran()==='pjo'?prKon():''));
       if(data.bacaAwal!==''&&data.bacaAwal!=null&&data.bacaAkhir!==''&&data.bacaAkhir!=null&&J!==PRD_FJ[2]){
         var sb=(Number(data.bacaAkhir)-Number(data.bacaAwal))-jm;
         if(Math.abs(sb)>Math.max(20,jm*0.01))warnTank=(warnTank?warnTank+' ':'')+'Selisih bacaan dan jumlah '+(sb>0?'+':'')+opNf(sb,0)+' L (lebih dari 1%).';
@@ -15272,7 +15272,7 @@ CFG.whout={key:'whout',add:'Barang keluar',empty:'Belum ada barang keluar.',titl
       if(key==='whout'){
         var av=wdStokDi(it.kode,'whout',id);
         if(q>av+0.0001)throw new Error('Stok '+it.nama+' hanya '+opNf(av,av%1?1:0)+' '+(it.uom||'')+', tidak cukup untuk dikeluarkan '+opNf(q,q%1?1:0)+'.');
-        if(!String(data.noSlip||'').trim())data.noSlip=asNo('whout','noSlip','SS',data.tanggal);
+        if(!String(data.noSlip||'').trim())data.noSlip=asNoK('whout','noSlip','SS',data.tanggal,data.kontraktor||(prPeran()==='pjo'?prKon():''));
         var un=(S.opunit||[]).find(function(x){return x.kode===data.unit});if(un)data.model=un.model||'';
         if(data.jenisKerja==='Breakdown'&&!String(data.woNo||'').trim())throw new Error('Isi nomor WO untuk pengeluaran barang pada breakdown.');
       }
@@ -15664,6 +15664,42 @@ fuelView=function(){
   if(fsOwner()&&t==='dash'){var tb=root.querySelector('.toolbar');if(tb)tb.insertBefore(fsPilih(PRD.fsrc,'fuelsync',['optank','opfuel','opalat'],function(v){PRD.fsrc=v}),tb.querySelector('.grow'))}
   if(t==='set')root.append(fsPanel());
   return root;
+};
+/* ---------- Kode standar dengan inisial perusahaan di depan (Warehouse dan Fuel) ----------
+   Inisial: kolom Inisial pada data kontraktor (atau huruf awal nama), atau kode perusahaan sendiri di Pengaturan Pengapalan.
+   Contoh: kode barang MBP-0001, nama tangki MBP-TK-01, store slip MBP/SS/2026/001, BA fuel MBP/BAF/2026/001. */
+function asNoK(col,key,prefix,tgl,kon){
+  var kd=ktKode(kon);if(!kd)return asNo(col,key,prefix,tgl);
+  var y=String(tgl||isoOf(TODAY)).slice(0,4),re=new RegExp('^'+kd+'/'+prefix+'/(\\d{4})/(\\d+)$'),mx=0;
+  (S[col]||[]).forEach(function(r){var m=re.exec(String(r[key]||''));if(m&&m[1]===y)mx=Math.max(mx,Number(m[2]))});
+  return kd+'/'+prefix+'/'+y+'/'+String(mx+1).padStart(3,'0');
+}
+function kdNext(kd,mid,col,key,lebar){
+  var pre=kd+'-'+(mid?mid+'-':''),re=new RegExp('^'+pre.replace(/[-]/g,'\\-')+'(\\d+)$'),mx=0;
+  (S[col]||[]).forEach(function(r){var m=re.exec(String(r[key]||''));if(m)mx=Math.max(mx,Number(m[1]))});
+  return pre+String(mx+1).padStart(lebar,'0');
+}
+function kdGenBtn(form,fid,mid,col,lebar){
+  var inp=form.querySelector('#m-'+fid);if(!inp||inp.disabled)return;
+  var wrap=h('span',{class:'kt-genrow'});inp.replaceWith(wrap);wrap.append(inp);
+  wrap.append(h('button',{type:'button',class:'btn sm',title:'Isi otomatis dengan kode standar: inisial perusahaan di depan, lalu nomor urut',onclick:function(e){
+    e.preventDefault();
+    var ks=form.querySelector('#m-kontraktor'),kon=ks?ks.value:(prPeran()==='pjo'?prKon():''),kd=ktKode(kon);
+    if(!kd){toast(kon?'Isi inisial kontraktor di data Kontraktor':'Isi kode atau inisial perusahaan di Pengaturan Pengapalan');return}
+    inp.value=kdNext(kd,mid,col,fid,lebar);inp.dispatchEvent(new Event('input',{bubbles:true}));inp.focus();
+  }},'Generate'));
+}
+var KD_FORM=openForm;
+openForm=function(key,row,pre){
+  var res=KD_FORM.apply(this,arguments);
+  try{
+    var form=document.querySelector('#ov .dlg form');
+    if(form&&!row){
+      if(key==='whitem')kdGenBtn(form,'kode','','whitem',4);
+      else if(key==='optank')kdGenBtn(form,'nama','TK','optank',2);
+    }
+  }catch(e){if(window.console)console.error(e)}
+  return res;
 };
 /* ---------- Settling Pond (Reklamasi dan lingkungan) ----------
    Koleksi: spond (parameter desain per kolam), sppantau (logsheet pH, TSS, debit), spkeruk (catatan pengerukan).
