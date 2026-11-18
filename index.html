@@ -12364,8 +12364,10 @@ var PR_TULIS={
 };
 var PR_SPC=['spond','sppantau','spkeruk'];
 /* operasional milik kontraktor: PJO mengelola data kontraktornya sendiri tanpa persetujuan KTT (cermin ktt_kv_boleh v85) */
+/* Mine Permit dan SIMPER baru dari PJO baru berlaku setelah disetujui KTT */
+var PR_MINTA=['minepermit','simper'];
 var PR_OPK=['opalat','opunit','opfuel','optank','opbd','whitem','whin','whout'];
-var PR_AJU=0;
+var PR_AJU=0,PR_BARU=0;
 function prMember(){return (typeof HOST!=='undefined'&&HOST&&HOST.member)?HOST.member:null}
 function prPeran(){var m=prMember();return m&&m.peran?m.peran:null}
 function prKon(){var m=prMember();return m&&m.kontraktor?String(m.kontraktor):''}
@@ -12507,6 +12509,14 @@ save=async function(c,id,data){
     else if(p==='hse'&&!lama)delete data.kontraktor;
     else if(lama&&lama.kontraktor&&data.kontraktor==null&&!prFormHas(c))data.kontraktor=lama.kontraktor;
   }
+  if(PR_MINTA.indexOf(c)>=0&&!(data.nama&&(c==='minepermit'?data.idpekerja:data.noid)))throw new Error('ID pekerja belum ada. Pilih nama dari daftar Personel yang sudah punya ID pekerja.');
+  if(!lama&&p==='pjo'&&PR_MINTA.indexOf(c)>=0){
+    id=id||('m'+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
+    data.persetujuan='menunggu';
+    await PR_SAVE(c,id,data);
+    await prAjukanBaru(c,id,data);
+    return id;
+  }
   if(c==='kontraktor'&&p==='pjo'&&lama){['nama','status','skor','evaluasi','berikut'].forEach(function(k){if(lama[k]!=null)data[k]=lama[k];else delete data[k]})}
   if(lama&&prPerluSetuju(c,lama,data)){await prAjukan(c,lama,data);return id}
   if(lama&&!prBolehUbah(c,lama))throw new Error('Data ini hanya dapat dilihat oleh peran Anda');
@@ -12518,9 +12528,16 @@ remove=async function(c,id){
   return PR_REMOVE(c,id);
 };
 toast=function(m){
+  if(PR_BARU&&Date.now()-PR_BARU<4000&&(m==='Tersimpan'||m==='Pengaturan tersimpan')){PR_BARU=0;m='Pengajuan dikirim ke KTT. Data berlaku setelah KTT menyetujui.'}
   if(PR_AJU&&Date.now()-PR_AJU<4000&&(m==='Tersimpan'||m==='Pengaturan tersimpan'||m==='PSI tersimpan')){PR_AJU=0;m='Perubahan dikirim ke KTT untuk disetujui. Data lama tetap berlaku sampai disetujui.'}
   return PR_TOAST(m);
 };
+async function prAjukanBaru(c,id,data){
+  var m=prMember()||{},b=Object.assign({},data,{persetujuan:'disetujui'});delete b.id;
+  var rec={kol:c,rid:id,judul:prJudul(c,data),baru:b,lama:{},buat:true,oleh:m.user_id||'lokal',nama:m.nama||m.email||'Pengguna',peran:prPeran()||'',kontraktor:prKon(),status:'menunggu',ts:new Date().toISOString()};
+  await PR_SAVE('ubah','ub'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),rec);
+  PR_BARU=Date.now();
+}
 async function prAjukan(c,row,baru){
   var m=prMember()||{},lama=Object.assign({},row);delete lama.id;var b=Object.assign({},baru);delete b.id;
   var rec={kol:c,rid:row.id,judul:prJudul(c,row),baru:b,lama:lama,oleh:m.user_id||'lokal',nama:m.nama||m.email||'Pengguna',peran:prPeran()||'',kontraktor:prKon(),status:'menunggu',ts:new Date().toISOString()};
@@ -12590,8 +12607,14 @@ async function prPutus(u,setuju,cat){
     if(!t&&!live)throw new Error('Catatan asal sudah tidak ada');
     b=Object.assign({},u.baru||{});delete b.id;
     if(t&&t.kontraktor)b.kontraktor=t.kontraktor;else delete b.kontraktor;
+    if(PR_MINTA.indexOf(u.kol)>=0)b.persetujuan='disetujui';
     if(live){if(t){var i=S[u.kol].indexOf(t);S[u.kol][i]=Object.assign({id:t.id},b)}}
     else await PR_SAVE(u.kol,u.rid,b);
+  }
+  if(!setuju&&u.buat&&PR_MINTA.indexOf(u.kol)>=0){
+    var t2=(S[u.kol]||[]).find(function(x){return x.id===u.rid});
+    if(t2){var nb=Object.assign({},t2,{persetujuan:'ditolak',catatan_tolak:cat||''});delete nb.id;
+      if(live){var i2=S[u.kol].indexOf(t2);S[u.kol][i2]=Object.assign({id:t2.id},nb)}else await PR_SAVE(u.kol,u.rid,nb)}
   }
   var d=Object.assign({},u);delete d.id;d.status=setuju?'disetujui':'ditolak';d.putus_oleh=nm;d.putus_ts=ts;if(cat)d.catatan_putus=cat;
   if(live){var j=(S.ubah||[]).findIndex(function(x){return x.id===u.id});if(j>=0)S.ubah[j]=Object.assign({id:u.id},d)}
@@ -12618,7 +12641,7 @@ function prSetujuView(){
 function prCard(u,ktt){
   var st=u.status==='menunggu'?badge('Menunggu','warn'):u.status==='disetujui'?badge('Disetujui','good'):badge('Ditolak','crit');
   var now=(S[u.kol]||[]).find(function(x){return x.id===u.rid}),df=prDiff(u),err=h('p',{class:'err',hidden:true});
-  var berubah=now&&u.status==='menunggu'&&JSON.stringify(Object.assign({},now,{id:undefined,kontraktor:undefined}))!==JSON.stringify(Object.assign({},u.lama||{},{id:undefined,kontraktor:undefined}));
+  var berubah=now&&u.status==='menunggu'&&!u.buat&&JSON.stringify(Object.assign({},now,{id:undefined,kontraktor:undefined}))!==JSON.stringify(Object.assign({},u.lama||{},{id:undefined,kontraktor:undefined}));
   var card=h('article',{class:'pr-card'},
     h('div',{class:'pr-top'},h('div',{class:'pr-who'},h('b',{text:prColLabel(u.kol)+' · '+(u.judul||u.rid)}),
       h('small',{text:(u.nama||'—')+' · '+(PR_L[u.peran]||u.peran||'')+(u.kontraktor?' · '+u.kontraktor:'')+' · '+(u.ts?new Date(u.ts).toLocaleString('id-ID',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'')})),st),
@@ -12656,7 +12679,7 @@ var SP_INFO=[
   ['ful','SIMPER Full','Hijau','Akses penuh terhadap alat yang dioperasikan.']];
 function spKode(j){j=String(j||'');return /^Instr/i.test(j)?'ins':/^Restr/i.test(j)?'res':/^Prob/i.test(j)?'pro':/^Full/i.test(j)?'ful':''}
 function spChip(j){var k=spKode(j);if(!k)return '—';var i=SP_INFO.find(function(x){return x[0]===k});return h('span',{class:'sp-chip sp-'+k},h('i',{'aria-hidden':'true'}),i[1].replace('SIMPER ',''))}
-function pmStatus(r){var d=daysTo(r.berlaku);if(d==null)return ['Belum diisi','mute'];if(d<0)return ['Kedaluwarsa','crit'];if(d<=30)return ['Berakhir '+d+' hari','warn'];return ['Berlaku','good']}
+function pmStatus(r){if(r.persetujuan==='menunggu')return ['Menunggu persetujuan KTT','info'];if(r.persetujuan==='ditolak')return ['Ditolak KTT','mute'];var d=daysTo(r.berlaku);if(d==null)return ['Belum diisi','mute'];if(d<0)return ['Kedaluwarsa','crit'];if(d<=30)return ['Berakhir '+d+' hari','warn'];return ['Berlaku','good']}
 function spButuhAlat(j){var k=spKode(j);return k==='res'||k==='pro'}
 CFG.minepermit={key:'minepermit',add:'Tambah Mine Permit',empty:'Belum ada Mine Permit tercatat.',title:'Mine Permit',
   fields:[
@@ -13096,11 +13119,19 @@ function ktPilihNama(form,key,row){
   if(cur&&![].some.call(sel.options,function(o){return o.value===cur}))sel.append(h('option',{value:cur},cur+' (belum ada di Personel)'));
   if(!sel.options.length||sel.options[0].value!=='')sel.insertBefore(h('option',{value:''},ktPersNama().length?'Pilih dari daftar Personel':'Belum ada personel, isi dulu di menu Personel'),sel.firstChild);
   sel.value=cur;
-  var idf=form.querySelector('#m-'+(key==='minepermit'?'idpekerja':'noid'));
+  var idf=form.querySelector('#m-'+(key==='minepermit'?'idpekerja':'noid')),hint=h('small',{class:'sub',hidden:true});
+  /* ID pekerja hanya mengikuti data Personel dan tidak dapat diisi di sini */
+  if(idf){idf.readOnly=true;idf.removeAttribute('required');idf.placeholder='Terisi otomatis dari data Personel';var il=idf.closest('label');if(il)il.append(hint)}
+  function tampilId(p){
+    if(!idf)return;
+    idf.value=p&&p.idpekerja?p.idpekerja:(cur&&sel.value===cur&&row&&(row.idpekerja||row.noid)?(key==='minepermit'?row.idpekerja:row.noid)||'':'');
+    idf.dispatchEvent(new Event('input',{bubbles:true}));
+    hint.hidden=!(p&&!p.idpekerja);hint.textContent='Personel ini belum punya ID pekerja. Isi dulu di menu Personel.';
+  }
   sel.addEventListener('change',function(){
     var p=(S.personel||[]).find(function(r){return String(r.nama||'').trim()===sel.value});
-    if(!p)return;
-    if(idf&&!idf.disabled&&p.idpekerja){idf.value=p.idpekerja;idf.dispatchEvent(new Event('input',{bubbles:true}))}
+    if(!p){tampilId(null);return}
+    tampilId(p);
     var ks=form.querySelector('#m-kontraktor');
     if(ks&&!ks.disabled&&p.kontraktor!=null){if(p.kontraktor&&![].some.call(ks.options,function(o){return o.value===p.kontraktor}))ks.append(h('option',{value:p.kontraktor},p.kontraktor));ks.value=p.kontraktor||''}
   });
@@ -13177,8 +13208,8 @@ openForm=function(key,row,pre){
   if(key==='minepermit'||key==='simper'){
     try{var form=document.querySelector('#ov .dlg form');if(form){
       ktPilihNama(form,key,row);ktFotoWidget(form,key,row);
-      if(key==='minepermit'){ktGenBtn(form,key,'idpekerja','pekerja',row);ktGenBtn(form,key,'noid','permit',row)}
-      else{ktGenBtn(form,key,'noid','pekerja',row);ktGenBtn(form,key,'nolisensi','lisensi',row)}
+      if(key==='minepermit')ktGenBtn(form,key,'noid','permit',row);
+      else ktGenBtn(form,key,'nolisensi','lisensi',row)
     }}catch(e){if(window.console)console.error(e)}
   }
   return res;
