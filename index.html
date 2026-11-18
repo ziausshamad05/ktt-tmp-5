@@ -7624,8 +7624,10 @@ async function srSync(id){
   var r=await HOST.sb.from('ktt_kv').select('data').eq('collection','surat').eq('id',id).maybeSingle();
   if(r.error||!r.data)return;
   if(HOST.put)HOST.put('surat',id,r.data.data);
+  if(typeof blHydrate==='function'){try{await blHydrate(srRow(id)||r.data.data)}catch(e){}}
 }
 async function srRpc(fn,args){
+  if(args&&args.p_lampiran)args=Object.assign({},args,{p_lampiran:await lpUp(args.p_lampiran)});
   var r=await HOST.sb.rpc(fn,args);
   if(r.error)throw new Error(hostErrId(r.error.message));
   return r.data;
@@ -7695,7 +7697,7 @@ function srMeta(row){
 }
 /* ---- dialog rincian untuk KTT: status berubah otomatis, tidak bisa dipilih ---- */
 function suratDetail(row0){
-  var id=row0.id,box=h('div',{class:'sr-dlg'}),pernahTindak=false,ov=null,ovRep=null;
+  var id=row0.id,box=h('div',{class:'sr-dlg'}),pernahTindak=false,ov=null,ovRep=null,balLamp=[];
   function cur(){var r=srRow(id)||row0;return ov?Object.assign({},r,ov):r}
   function draw(){
     var row=cur();box.replaceChildren();
@@ -7709,7 +7711,7 @@ function suratDetail(row0){
     var rw=srRiwayat(row);if(rw)box.append(rw);
     if((dariPjo||manual)&&row.status==='Selesai'){
       var b=srRow(row.balasan_id)||(ovRep&&ovRep.id===row.balasan_id?ovRep:null);
-      if(b)box.append(h('div',{class:'sr-reply'},h('p',{class:'grouph',text:'Balasan KTT'}),h('p',{class:'sr-isi',text:b.isi||''}),h('small',{text:(b.nomor?b.nomor+' · ':'')+fmt(b.tanggal)})));
+      if(b)box.append(h('div',{class:'sr-reply'},h('p',{class:'grouph',text:'Balasan KTT'}),h('p',{class:'sr-isi',text:b.isi||''}),h('small',{text:(b.nomor?b.nomor+' · ':'')+fmt(b.tanggal)}),b.lampiran&&b.lampiran.length?lpList(b.lampiran,'Lampiran balasan'):null));
     }
     if(row.asal==='ktt'&&row.balas_ke){
       var o=srRow(row.balas_ke);
@@ -7752,12 +7754,13 @@ function suratDetail(row0){
         kb.disabled=true;kb.textContent='Mengirim…';
         try{
           if(dariPjo){
-            var rid=await srRpc('ktt_surat_balas',{p_id:id,p_isi:isi.value.trim(),p_nomor:no.value.trim()||null});
+            var rid=await srRpc('ktt_surat_balas',{p_id:id,p_isi:isi.value.trim(),p_nomor:no.value.trim()||null,p_lampiran:balLamp.length?balLamp:null});
             await srSync(id);await srSync(rid);
           }else{
             var now=new Date().toISOString(),rid2='b'+now.slice(2,10).replace(/-/g,'')+Math.random().toString(36).slice(2,8),
               me=(typeof HOST!=='undefined'&&HOST.member&&(HOST.member.nama||HOST.member.email))||'KTT';
             var rep={arah:'Keluar',asal:'ktt',balas_ke:id,nomor:no.value.trim(),tanggal:isoOf(TODAY),perihal:'Re: '+(row.perihal||'').slice(0,290),isi:isi.value.trim(),pihak:row.pihak||'',status:'Terkirim',dikirim_at:now,ktt_nama:me};
+            if(balLamp.length)rep.lampiran=balLamp.slice();
             await save('surat',rid2,rep);
             var p2={status:'Selesai',selesai_at:now,balasan_id:rid2,catatan_ktt:cat.value.trim(),draf_nomor:'',draf_balasan:''};
             await srPatch(id,p2);
@@ -7768,7 +7771,7 @@ function suratDetail(row0){
       });
       box.append(h('div',{class:'sr-act'},h('p',{class:'grouph',text:'Tindak lanjut'}),
         h('p',{class:'sub',style:'margin:0 0 6px',text:'Status berubah sendiri: mulai menulis draf balasan, maka menjadi Ditindaklanjuti. Setelah balasan dikirim, menjadi Selesai.'}),
-        cat,h('label',{class:'fld'},h('span',{text:dariPjo?'Balasan untuk PJO':'Balasan surat'}),no,isi),h('div',{class:'sr-row'},bs),er,h('div',{class:'sr-row'},kb)));
+        cat,h('label',{class:'fld'},h('span',{text:dariPjo?'Balasan untuk PJO':'Balasan surat'}),no,isi),lpInput(balLamp,'Lampiran balasan'),h('div',{class:'sr-row'},bs),er,h('div',{class:'sr-row'},kb)));
     }
     var tutup=h('div',{class:'acts sr-close'});
     if(manual&&canWrite&&!srPjo())tutup.append(h('button',{type:'button',class:'btn',onclick:function(){closeModal();SR_RAW=true;try{openForm('surat',cur())}finally{SR_RAW=false}}},'Ubah data surat'));
@@ -7844,7 +7847,7 @@ function pjoSuratView(){
     var li=h('li',null,head2);
     if(open){
       li.append(h('div',{class:'sr-body'},srMeta(r),r.isi?h('p',{class:'sr-isi',text:r.isi}):null,r.lampiran&&r.lampiran.length?lpList(r.lampiran,'Lampiran surat'):null,srStepper(r.status),
-        balasan?h('div',{class:'sr-reply'},h('p',{class:'grouph',text:'Balasan KTT'}),h('p',{class:'sr-isi',text:balasan.isi||''}),h('small',{text:(balasan.nomor?balasan.nomor+' · ':'')+fmt(balasan.tanggal)})):null,
+        balasan?h('div',{class:'sr-reply'},h('p',{class:'grouph',text:'Balasan KTT'}),h('p',{class:'sr-isi',text:balasan.isi||''}),h('small',{text:(balasan.nomor?balasan.nomor+' · ':'')+fmt(balasan.tanggal)}),balasan.lampiran&&balasan.lampiran.length?lpList(balasan.lampiran,'Lampiran balasan'):null):null,
         srRiwayat(r)));
     }
     return li;
@@ -7975,6 +7978,19 @@ async function lpPrep(file){
   if(file.size>LP_BYTES)throw new Error('Berkas '+nama+' berukuran '+bkKb(file.size)+', melebihi batas '+bkKb(LP_BYTES)+'. Kecilkan dulu lalu unggah lagi (lihat keterangan di bawah).');
   if(/^image\//.test(tipe)&&!/^image\/(jpeg|png|webp)$/.test(tipe))throw new Error('Format gambar '+nama+' tidak didukung. Ubah ke JPG atau PNG, lalu kompres.');
   return {nama:nama,tipe:tipe,ukuran:file.size,ts:Date.now(),b64:await lampB64(file)};
+}
+/* lampiran besar diunggah dulu ke Storage; RPC hanya menerima alamat file (b64ref) */
+async function lpUp(arr){
+  if(!Array.isArray(arr))return arr;
+  var out=[];
+  for(var i=0;i<arr.length;i++){
+    var it=arr[i];
+    if(!it||typeof it.b64!=='string'||it.b64.length<=BL.min||!blSb()){out.push(it);continue}
+    var path=BL.byB64.get(it.b64);
+    if(!path){path=await blPut(it.b64);BL.byB64.set(it.b64,path)}
+    var c=Object.assign({},it);delete c.b64;c.b64ref=path;out.push(c);
+  }
+  return out;
 }
 function lpHint(){return h('div',{class:'bk-tip'},h('small',null,h('b',{text:'Maksimal '+bkKb(LP_BYTES)+' per berkas. '}),LP_TIPS))}
 function lpTotal(a){return a.reduce(function(n,x){return n+(x.ukuran||0)},0)}
