@@ -15861,9 +15861,9 @@ function spPick(){
 function spMonRows(P,titik){return (S.sppantau||[]).filter(function(x){return x.pond===P.nama&&(!titik||x.titik===titik)}).sort(function(a,b){return String(a.tanggal).localeCompare(String(b.tanggal))})}
 function spDash(P,C){
   var root=h('div',{style:'display:flex;flex-direction:column;gap:16px'}),n=opNf;
-  var kp=h('div',{class:'grid'});
-  kp.append(kpi('HRT',n(C.HRT,2)+' jam','syarat ≥ 2 jam',C.HRT>=2?'good':'crit'),kpi('SOR / Vs',n(C.SOR,3)+' / '+n(C.VsH,3),'m/jam',C.SOR<=C.VsH?'good':'crit'),kpi('Vh',n(C.Vh,4),'m/detik, maks 0,05',C.Vh<=0.05?'good':'crit'),
-    kpi('Penyisihan TSS',n(C.rem*100,1)+'%',n(P.tssIn,0)+' → '+n(P.tssOut,0)+' mg/L',C.rem>=0.85?'good':'warn'),kpi('Siklus keruk',n(C.siklus,1)+' bln','syarat ≥ 3 bulan',C.siklus>=3?'good':'warn'),kpi('Biaya kimia',spRp(C.rpMon),'per bulan',''));
+  var kp=h('div',{class:'grid',style:'display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px'});
+  kp.append(kpi('HRT',n(C.HRT,2)+' jam','syarat ≥ 2 jam',C.HRT>=2?'good':'crit'),kpi('SOR',n(C.SOR,3),'m/jam, batas Vs '+n(C.VsH,3),C.SOR<=C.VsH?'good':'crit'),kpi('Vh horizontal',n(C.Vh,4),'m/detik, maks 0,05',C.Vh<=0.05?'good':'crit'),
+    kpi('Penyisihan TSS',n(C.rem*100,1)+'%',n(P.tssIn,0)+' → '+n(P.tssOut,0)+' mg/L',C.rem>=0.85?'good':'warn'),kpi('Siklus keruk',n(C.siklus,1)+' bln','syarat ≥ 3 bulan',C.siklus>=3?'good':'warn'),kpi('Biaya kimia',n(C.rpMon/1e6,1)+' jt','rupiah per bulan',''));
   root.append(kp);
   var okAll=C.lulus===C.cek.length;
   root.append(panel('Kepatuhan kriteria desain',C.lulus+' dari '+C.cek.length+' kriteria terpenuhi'+(okAll?'.':'. Perbaiki yang berstatus merah di tab Kolam dan parameter.'),
@@ -15884,7 +15884,7 @@ function spDash(P,C){
   if(out.length){
     var tl=out.slice(-30),tssV=tl.map(function(x){return Number(x.tss)||0}),dl=tl.map(function(x){return String(x.tanggal).slice(5)});
     var outTss=out.filter(function(x){return x.tss!==''&&x.tss!=null}),okT=outTss.filter(function(x){return Number(x.tss)<=lim2}).length,outPh=out.filter(function(x){return x.ph!==''&&x.ph!=null}),okP=outPh.filter(function(x){var v=Number(x.ph);return v>=6&&v<=9}).length;
-    var kp2=h('div',{class:'grid'});kp2.append(kpi('Outlet TSS memenuhi',outTss.length?n(100*okT/outTss.length,0)+'%':'—',okT+' dari '+outTss.length+' sampel, batas '+n(lim2,0)+' mg/L',outTss.length&&okT===outTss.length?'good':'warn'),kpi('Outlet pH memenuhi',outPh.length?n(100*okP/outPh.length,0)+'%':'—',okP+' dari '+outPh.length+' sampel, 6–9',outPh.length&&okP===outPh.length?'good':'warn'));
+    var kp2=h('div',{class:'grid',style:'display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px'});kp2.append(kpi('Outlet TSS memenuhi',outTss.length?n(100*okT/outTss.length,0)+'%':'—',okT+' dari '+outTss.length+' sampel, batas '+n(lim2,0)+' mg/L',outTss.length&&okT===outTss.length?'good':'warn'),kpi('Outlet pH memenuhi',outPh.length?n(100*okP/outPh.length,0)+'%':'—',okP+' dari '+outPh.length+' sampel, 6–9',outPh.length&&okP===outPh.length?'good':'warn'));
     var pd=spMonRows(P,'Inlet'),rm=[];inl.forEach(function(a){var b=out.find(function(x){return x.tanggal===a.tanggal});if(b&&Number(a.tss)>0&&b.tss!=='')rm.push(100*(Number(a.tss)-Number(b.tss))/Number(a.tss))});
     kp2.append(kpi('Penyisihan TSS aktual',rm.length?n(rm.reduce(function(a,b){return a+b},0)/rm.length,1)+'%':'—','rata-rata inlet ke outlet',rm.length&&rm.reduce(function(a,b){return a+b},0)/rm.length>=85?'good':'warn'));
     root.append(kp2);
