@@ -7778,6 +7778,11 @@ function suratDetail(row0){
     }
     var tutup=h('div',{class:'acts sr-close'});
     if(manual&&canWrite&&!srPjo())tutup.append(h('button',{type:'button',class:'btn',onclick:function(){closeModal();SR_RAW=true;try{openForm('surat',cur())}finally{SR_RAW=false}}},'Ubah data surat'));
+    if(prDirut()&&canWrite){var arm=false,del=h('button',{type:'button',class:'btn danger'},'Hapus surat');
+      del.addEventListener('click',async function(){
+        if(!arm){arm=true;del.textContent='Klik lagi untuk menghapus permanen';setTimeout(function(){arm=false;del.textContent='Hapus surat'},4000);return}
+        try{del.disabled=true;await remove('surat',cur().id);closeModal();toast('Surat dihapus')}catch(e){del.disabled=false;toast('Gagal menghapus: '+(e&&e.message?e.message:'periksa akses Anda'))}});
+      tutup.append(del)}
     tutup.append(h('span',{class:'grow'}),h('button',{type:'button',class:'btn',onclick:closeModal},'Tutup'));
     box.append(tutup);
   }
@@ -12370,6 +12375,7 @@ var PR_OPK=['opalat','opunit','opfuel','optank','opbd','whitem','whin','whout'];
 var PR_AJU=0,PR_BARU=0;
 function prMember(){return (typeof HOST!=='undefined'&&HOST&&HOST.member)?HOST.member:null}
 function prPeran(){var m=prMember();return m&&m.peran?m.peran:null}
+function prDirut(){var m=prMember();return !m||m.peran==='direktur'}
 function prKon(){var m=prMember();return m&&m.kontraktor?String(m.kontraktor):''}
 function aksKtt(){var p=prPeran();return !p||p==='ktt'||p==='direktur'}
 function prKonNames(){var s={};(S.kontraktor||[]).forEach(function(r){if(r.nama)s[r.nama]=1});var k=prKon();if(k)s[k]=1;return Object.keys(s).sort()}
@@ -12590,7 +12596,7 @@ function prUbah(){return (S.ubah||[]).slice().sort(function(a,b){return String(b
 function prFieldLabel(c,k){var C=CFG[c],f=C&&C.fields?C.fields.find(function(x){return x.k===k}):null;return f?f.l.replace(/\s*\(.*\)$/,''):k}
 function prVal(v){if(v==null||v==='')return '—';if(v&&(v.b64||v.b64ref))return 'Foto';if(typeof v==='object'){var s=JSON.stringify(v);return s.length>140?s.slice(0,138)+'…':s}return String(v)}
 function prDiff(u){
-  var a=u.lama||{},b=u.baru||{},skip={id:1,demo:1,log:1,updated_at:1,kontraktor:1},keys={};
+  var a=u.lama||{},b=u.baru||{},skip={id:1,demo:1,log:1,updated_at:1,kontraktor:1,persetujuan:1},keys={};
   Object.keys(a).concat(Object.keys(b)).forEach(function(k){if(!skip[k])keys[k]=1});
   return Object.keys(keys).filter(function(k){return JSON.stringify(a[k]==null?null:a[k])!==JSON.stringify(b[k]==null?null:b[k])}).map(function(k){return {k:k,l:prFieldLabel(u.kol,k),a:a[k],b:b[k]}});
 }
@@ -12666,6 +12672,11 @@ function prCard(u,ktt){
         try{await remove('ubah',u.id);PR_TOAST('Permohonan dibatalkan')}catch(e){err.textContent=e.message;err.hidden=false}}},'Batalkan permohonan'));
     }
     card.append(acts);
+  }else if(ktt&&canWrite&&prDirut()){
+    var hp=h('button',{type:'button',class:'btn danger',onclick:async function(){
+      if(!hp._arm){hp._arm=1;hp.textContent='Klik lagi untuk menghapus riwayat';setTimeout(function(){hp._arm=0;hp.textContent='Hapus'},4000);return}
+      hp.disabled=true;try{await remove('ubah',u.id);PR_TOAST('Riwayat permohonan dihapus')}catch(e){err.textContent=e.message;err.hidden=false;hp.disabled=false}}},'Hapus');
+    card.append(h('div',{class:'acts'},h('span',{class:'grow'}),hp));
   }
   return card;
 }
