@@ -15708,6 +15708,854 @@ fuelView=function(){
   if(t==='set')root.append(fsPanel());
   return root;
 };
+/* ===== GIS: pembuat layout peta (berjalan di browser) ===== */
+var GIS_R=6378137,GIS_W=40075016.686;
+var GIS_KERTAS={A4:[297,210],A3:[420,297]};
+var GIS_DASAR={
+  'esri-citra':{n:'Citra satelit Esri',u:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',z:19,a:'Esri World Imagery'},
+  'esri-topo':{n:'Topografi Esri',u:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',z:19,a:'Esri World Topographic Map'},
+  'esri-jalan':{n:'Jalan dunia Esri',u:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',z:19,a:'Esri World Street Map'},
+  'esri-relief':{n:'Relief Esri',u:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',z:13,a:'Esri World Shaded Relief'},
+  'osm':{n:'OpenStreetMap',u:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',z:19,a:'OpenStreetMap contributors'},
+  'rbi':{n:'Rupabumi Indonesia (BIG)',u:'https://geoservices.big.go.id/rbi/rest/services/BASEMAP/Rupabumi_Indonesia/MapServer/tile/{z}/{y}/{x}',z:17,a:'Badan Informasi Geospasial'},
+  'none':{n:'Tanpa peta dasar',u:'',z:0,a:''}
+};
+var GIS_SKALA=[1000,2500,5000,10000,25000,50000,100000,250000,500000,1000000,2500000,5000000];
+function gisBaru(){return {
+  nama:'Proyek GIS baru',layers:[],tab:'data',
+  v:{lon:120,lat:-2,den:500000},
+  o:{kertas:'A4',arah:'landscape',judul:'Peta Lokasi',sub:'',desk:'',garis:'tunggal',sumber:'',tgl:new Date().toISOString().slice(0,10),
+    posisi:'kanan',lebar:32,teks:9,simbol:1,arsir:false,
+    dasar:'esri-citra',dasarOp:100,skalaMode:'bebas',skalaTetap:50000,
+    legOn:true,legJudul:'Legenda',
+    utaraOn:true,utara:'klasik',utaraUk:14,utaraWarna:'#111111',
+    skOn:true,skSatuan:'auto',skSeg:4,skLebar:60,
+    grid:true,gridTeks:6,crsOn:true,crsMode:'utm',crsTeks:'',
+    insetOn:true,insetDasar:'esri-topo',insetOp:100,insetSkala:'auto',insetKhusus:2000000,
+    ttdOn:true,ttdJudul:'Pengesahan',ttdN:2,
+    ttd:[{nama:'',jab:'Dibuat oleh',org:'',tgl:''},{nama:'',jab:'Disetujui oleh',org:'',tgl:''},{nama:'',jab:'Diperiksa oleh',org:'',tgl:''}],
+    lbWarna:'#ffffff',lbBg:'#000000',lbUk:7,lbOpF:100,lbOpB:45,lbTebal:true,lbMiring:false,
+    fmt:'png',dpi:150,zipExtra:true,zipData:true}
+};}
+var GIS=gisBaru(),GIS_TOK=0,GIS_IMG={},GIS_T=null,GIS_CV=null;
+
+/* ---------- proyeksi ---------- */
+function gisMerc(lon,lat){var la=Math.max(-85.0511,Math.min(85.0511,lat));return [GIS_R*lon*Math.PI/180,GIS_R*Math.log(Math.tan(Math.PI/4+la*Math.PI/360))]}
+function gisInv(x,y){return [x/GIS_R*180/Math.PI,(2*Math.atan(Math.exp(y/GIS_R))-Math.PI/2)*180/Math.PI]}
+function gisPer(g,fn){
+  if(!g)return g;
+  function pt(c){var r=fn(c);return c.length>2?r.concat(c.slice(2)):r}
+  function ring(a){return a.map(pt)}
+  var t=g.type,c=g.coordinates;
+  if(t==='Point')return {type:t,coordinates:pt(c)};
+  if(t==='MultiPoint'||t==='LineString')return {type:t,coordinates:c.map(pt)};
+  if(t==='Polygon'||t==='MultiLineString')return {type:t,coordinates:c.map(ring)};
+  if(t==='MultiPolygon')return {type:t,coordinates:c.map(function(p){return p.map(ring)})};
+  if(t==='GeometryCollection')return {type:t,geometries:g.geometries.map(function(x){return gisPer(x,fn)})};
+  return g;
+}
+function gisPertama(g){var c=g&&g.coordinates;while(c&&Array.isArray(c)&&Array.isArray(c[0]))c=c[0];return c&&typeof c[0]==='number'?c:null}
+function gisCrsKe4326(feats,crs){
+  var pakai3857=crs==='3857';
+  if(crs==='auto'){var f=feats.find(function(x){return gisPertama(x.g)});var c=f&&gisPertama(f.g);pakai3857=!!(c&&(Math.abs(c[0])>180||Math.abs(c[1])>90))}
+  if(!pakai3857)return feats;
+  return feats.map(function(f){return {g:gisPer(f.g,function(c){return gisInv(c[0],c[1])}),p:f.p}});
+}
+function gisFlat(g,out){
+  if(!g)return out;var t=g.type,c=g.coordinates;
+  if(t==='GeometryCollection'){g.geometries.forEach(function(x){gisFlat(x,out)});return out}
+  if(t==='Point')out.push(c);else if(t==='MultiPoint'||t==='LineString')c.forEach(function(p){out.push(p)});
+  else if(t==='Polygon'||t==='MultiLineString')c.forEach(function(r){r.forEach(function(p){out.push(p)})});
+  else if(t==='MultiPolygon')c.forEach(function(pl){pl.forEach(function(r){r.forEach(function(p){out.push(p)})})});
+  return out;
+}
+function gisBatas(layers){
+  var b=null;layers.forEach(function(L){L.features.forEach(function(f){gisFlat(f.g,[]).forEach(function(c){
+    if(!isFinite(c[0])||!isFinite(c[1]))return;
+    if(!b)b=[c[0],c[1],c[0],c[1]];else{b[0]=Math.min(b[0],c[0]);b[1]=Math.min(b[1],c[1]);b[2]=Math.max(b[2],c[0]);b[3]=Math.max(b[3],c[1])}})})});
+  return b;
+}
+function gisJenis(feats){
+  var s={};feats.forEach(function(f){var t=f.g&&f.g.type||'';s[/Point/.test(t)?'point':/Line/.test(t)?'line':/Polygon/.test(t)?'polygon':'x']=1});
+  var k=Object.keys(s).filter(function(x){return x!=='x'});return k.length===1?k[0]:'mixed';
+}
+
+/* ---------- pembaca berkas ---------- */
+function gisMuatLib(url){
+  return new Promise(function(res,rej){
+    var s=document.createElement('script');s.src=url;s.onload=function(){res()};s.onerror=function(){rej(new Error('Pustaka pendukung gagal dimuat. Periksa koneksi internet.'))};document.head.appendChild(s);
+  });
+}
+var GIS_LIB={};
+function gisLib(k){
+  var U={xlsx:['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',function(){return window.XLSX}],
+    jszip:['https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',function(){return window.JSZip}],
+    shp:['https://cdnjs.cloudflare.com/ajax/libs/shpjs/3.6.3/shp.min.js',function(){return window.shp}]}[k];
+  if(U[1]())return Promise.resolve(U[1]());
+  if(!GIS_LIB[k])GIS_LIB[k]=gisMuatLib(U[0]).then(function(){return U[1]()});
+  return GIS_LIB[k];
+}
+function gisCsv(text){
+  text=String(text).replace(/^﻿/,'');
+  var first=text.split(/\r?\n/)[0]||'',d=[',',';','\t'].map(function(x){return [x,first.split(x).length]}).sort(function(a,b){return b[1]-a[1]})[0][0];
+  var rows=[],row=[],cur='',q=false;
+  for(var i=0;i<text.length;i++){var ch=text[i];
+    if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}
+    else if(ch==='"')q=true;else if(ch===d){row.push(cur);cur=''}
+    else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cur);cur='';if(row.some(function(x){return x!==''}))rows.push(row);row=[]}
+    else cur+=ch}
+  row.push(cur);if(row.some(function(x){return x!==''}))rows.push(row);
+  if(rows.length<2)return [];
+  var hd=rows[0].map(function(x,i){return String(x).trim()||('kolom'+(i+1))});
+  return rows.slice(1).map(function(r){var o={};hd.forEach(function(k,i){o[k]=r[i]==null?'':r[i]});return o});
+}
+function gisKol(keys,nama){
+  var low=keys.map(function(k){return String(k).toLowerCase().replace(/[^a-z0-9]/g,'')});
+  for(var i=0;i<nama.length;i++){var j=low.indexOf(nama[i]);if(j>=0)return keys[j]}return null;
+}
+function gisAngka(v){var n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:null}
+function gisTabel(rows,jenis,crs){
+  if(!rows.length)throw new Error('Tabel kosong');
+  var keys=Object.keys(rows[0]);
+  var kx=gisKol(keys,['lon','lng','long','longitude','x','bujur','easting','east']),ky=gisKol(keys,['lat','latitude','y','lintang','northing','north']);
+  if(!kx||!ky)throw new Error('Kolom koordinat tidak ditemukan. Beri nama kolom lat dan lon (atau x dan y).');
+  var pts=[];rows.forEach(function(r){var x=gisAngka(r[kx]),y=gisAngka(r[ky]);if(x!=null&&y!=null)pts.push({c:[x,y],p:r})});
+  if(!pts.length)throw new Error('Tidak ada baris dengan koordinat valid');
+  var feats;
+  if(jenis==='garis'||jenis==='poligon'){
+    var coords=pts.map(function(x){return x.c});
+    if(jenis==='poligon'){if(coords.length<3)throw new Error('Poligon perlu minimal 3 titik');coords=coords.concat([coords[0]])}
+    else if(coords.length<2)throw new Error('Garis perlu minimal 2 titik');
+    feats=[{g:jenis==='poligon'?{type:'Polygon',coordinates:[coords]}:{type:'LineString',coordinates:coords},p:{jumlah_titik:pts.length}}];
+  }else feats=pts.map(function(x){return {g:{type:'Point',coordinates:x.c},p:x.p}});
+  return gisCrsKe4326(feats,crs);
+}
+function gisGeo(j,crs){
+  var out=[];
+  function add(g,p){if(g)out.push({g:g,p:p||{}})}
+  (function walk(x){
+    if(!x)return;
+    if(Array.isArray(x)){x.forEach(walk);return}
+    if(x.type==='FeatureCollection')(x.features||[]).forEach(walk);
+    else if(x.type==='Feature')add(x.geometry,x.properties);
+    else if(x.type)add(x,{});
+  })(j);
+  if(!out.length)throw new Error('Tidak ada fitur geometri pada berkas');
+  return gisCrsKe4326(out,crs);
+}
+function gisKml(text){
+  var doc=new DOMParser().parseFromString(text,'text/xml');
+  if(doc.querySelector('parsererror'))throw new Error('KML tidak valid');
+  function koor(el){return String(el.textContent).trim().split(/\s+/).map(function(s){var a=s.split(',').map(parseFloat);return a.length>=2&&isFinite(a[0])&&isFinite(a[1])?a:null}).filter(Boolean)}
+  var out=[];
+  Array.prototype.forEach.call(doc.getElementsByTagName('Placemark'),function(pm){
+    var p={},nm=pm.getElementsByTagName('name')[0];if(nm)p.name=nm.textContent.trim();
+    var ds=pm.getElementsByTagName('description')[0];if(ds)p.description=ds.textContent.trim().slice(0,300);
+    Array.prototype.forEach.call(pm.getElementsByTagName('Data'),function(d){var v=d.getElementsByTagName('value')[0];p[d.getAttribute('name')]=v?v.textContent.trim():''});
+    Array.prototype.forEach.call(pm.getElementsByTagName('SimpleData'),function(d){p[d.getAttribute('name')]=d.textContent.trim()});
+    var gs=[];
+    Array.prototype.forEach.call(pm.getElementsByTagName('Point'),function(e){var c=koor(e.getElementsByTagName('coordinates')[0]);if(c[0])gs.push({type:'Point',coordinates:c[0]})});
+    Array.prototype.forEach.call(pm.getElementsByTagName('LineString'),function(e){if(e.parentNode&&e.parentNode.nodeName==='LinearRing')return;var c=koor(e.getElementsByTagName('coordinates')[0]);if(c.length>1)gs.push({type:'LineString',coordinates:c})});
+    Array.prototype.forEach.call(pm.getElementsByTagName('Polygon'),function(e){
+      var rings=[],ob=e.getElementsByTagName('outerBoundaryIs')[0];
+      if(ob)rings.push(koor(ob.getElementsByTagName('coordinates')[0]));
+      Array.prototype.forEach.call(e.getElementsByTagName('innerBoundaryIs'),function(ib){rings.push(koor(ib.getElementsByTagName('coordinates')[0]))});
+      rings=rings.filter(function(r){return r.length>2});if(rings.length)gs.push({type:'Polygon',coordinates:rings});
+    });
+    gs.forEach(function(g){out.push({g:g,p:p})});
+  });
+  if(!out.length)throw new Error('KML tidak berisi titik, garis, atau poligon');
+  return out;
+}
+async function gisBaca(file,opt){
+  var nm=file.name,ext=(nm.split('.').pop()||'').toLowerCase(),base=nm.replace(/\.[^.]+$/,'');
+  if(file.size>25*1048576)throw new Error('Berkas lebih dari 25 MB');
+  var feats;
+  if(ext==='geojson'||ext==='json')feats=gisGeo(JSON.parse(await file.text()),opt.crs);
+  else if(ext==='kml')feats=gisKml(await file.text());
+  else if(ext==='csv'||ext==='txt')feats=gisTabel(gisCsv(await file.text()),opt.jenis,opt.crs);
+  else if(ext==='xlsx'||ext==='xls'){
+    var X=await gisLib('xlsx'),wb=X.read(await file.arrayBuffer(),{type:'array'});
+    feats=gisTabel(X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}),opt.jenis,opt.crs);
+  }else if(ext==='zip'){
+    var S=await gisLib('shp'),r=await S(await file.arrayBuffer());
+    feats=gisGeo(r,opt.crs);
+  }else throw new Error('Format .'+ext+' belum didukung. Pakai CSV, Excel, GeoJSON, KML, atau SHP dalam ZIP.');
+  return gisLayer(base,feats);
+}
+var GIS_WARNA=['#e4572e','#17bebb','#ffc914','#76b041','#9b5de5','#f15bb5','#00a6fb','#ff9f1c'];
+function gisLayer(nama,feats){
+  var keys={};feats.forEach(function(f){Object.keys(f.p||{}).forEach(function(k){keys[k]=1})});
+  var kk=Object.keys(keys),lf=kk.find(function(k){return /^(name|nama)$/i.test(k)})||kk[0]||'';
+  return {id:'l'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:nama,type:gisJenis(feats),
+    color:GIS_WARNA[GIS.layers.length%GIS_WARNA.length],fill:35,width:1.5,visible:true,label:false,labelField:lf,features:feats};
+}
+
+/* ---------- ekspor data layer ---------- */
+function gisGeojson(L){return {type:'FeatureCollection',name:L.name,features:L.features.map(function(f){return {type:'Feature',properties:f.p||{},geometry:f.g}})}}
+function gisCsvOut(L){
+  var keys={};L.features.forEach(function(f){Object.keys(f.p||{}).forEach(function(k){keys[k]=1})});
+  var kk=['wkt_tipe','lon','lat'].concat(Object.keys(keys));
+  function q(v){v=v==null?'':String(v);return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+  var out=[kk.join(',')];
+  L.features.forEach(function(f){gisFlat(f.g,[]).forEach(function(c,i){
+    if(i>=20000)return;
+    out.push([f.g.type,c[0].toFixed(7),c[1].toFixed(7)].concat(Object.keys(keys).map(function(k){return (f.p||{})[k]})).map(q).join(','))})});
+  return out.join('\r\n');
+}
+function gisKmlOut(L){
+  function esc(s){return String(s==null?'':s).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]})}
+  function cs(a){return a.map(function(c){return c[0]+','+c[1]}).join(' ')}
+  function geo(g){
+    if(g.type==='Point')return '<Point><coordinates>'+g.coordinates[0]+','+g.coordinates[1]+'</coordinates></Point>';
+    if(g.type==='LineString')return '<LineString><coordinates>'+cs(g.coordinates)+'</coordinates></LineString>';
+    if(g.type==='Polygon')return '<Polygon>'+g.coordinates.map(function(r,i){return '<'+(i?'innerBoundaryIs':'outerBoundaryIs')+'><LinearRing><coordinates>'+cs(r)+'</coordinates></LinearRing></'+(i?'innerBoundaryIs':'outerBoundaryIs')+'>'}).join('')+'</Polygon>';
+    if(/^Multi/.test(g.type))return '<MultiGeometry>'+(g.type==='MultiPoint'?g.coordinates.map(function(c){return geo({type:'Point',coordinates:c})}):g.type==='MultiLineString'?g.coordinates.map(function(c){return geo({type:'LineString',coordinates:c})}):g.coordinates.map(function(c){return geo({type:'Polygon',coordinates:c})})).join('')+'</MultiGeometry>';
+    return '';
+  }
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>'+esc(L.name)+'</name>'+
+    L.features.map(function(f,i){var p=f.p||{},nm=p.name||p.nama||('Fitur '+(i+1));
+      return '<Placemark><name>'+esc(nm)+'</name><ExtendedData>'+Object.keys(p).map(function(k){return '<Data name="'+esc(k)+'"><value>'+esc(p[k])+'</value></Data>'}).join('')+'</ExtendedData>'+geo(f.g)+'</Placemark>'}).join('')+'</Document></kml>';
+}
+function gisUnduh(blob,nama){
+  var a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=nama;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(u);a.remove()},1500);
+}
+function gisSlug(s){return String(s||'peta').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'peta'}
+
+/* ---------- gambar peta ---------- */
+function gisTile(url,cb){
+  var e=GIS_IMG[url];
+  if(e)return e;
+  var im=new Image();e={im:im,st:0,cb:[]};GIS_IMG[url]=e;
+  im.crossOrigin='anonymous';
+  im.onload=function(){e.st=1;e.cb.splice(0).forEach(function(f){f()})};
+  im.onerror=function(){e.st=2;e.cb.splice(0).forEach(function(f){f()})};
+  im.src=url;return e;
+}
+function gisMpm(den,lat){return (den/1000)/Math.cos(Math.max(-85,Math.min(85,lat))*Math.PI/180)}
+function gisBunga(ctx,rect,view,dasar,opa,layers,o,pxmm,tunggu,onTile){
+  /* menggambar peta pada persegi (mm). mengembalikan daftar tile yang ditunggu */
+  var mpm=gisMpm(view.den,view.lat),c=gisMerc(view.lon,view.lat),tasks=[];
+  function X(mx){return rect.x+rect.w/2+(mx-c[0])/mpm}
+  function Y(my){return rect.y+rect.h/2-(my-c[1])/mpm}
+  ctx.save();ctx.beginPath();ctx.rect(rect.x,rect.y,rect.w,rect.h);ctx.clip();
+  ctx.fillStyle='#e9eef0';ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+  var B=GIS_DASAR[dasar];
+  if(B&&B.u&&opa>0){
+    var res=mpm/pxmm,z=Math.ceil(Math.log(GIS_W/(256*res))/Math.LN2-0.2);z=Math.max(0,Math.min(B.z,z));
+    var x0=c[0]-rect.w/2*mpm,x1=c[0]+rect.w/2*mpm,y0=c[1]-rect.h/2*mpm,y1=c[1]+rect.h/2*mpm,n,tx0,tx1,ty0,ty1,ts;
+    for(;;){
+      n=Math.pow(2,z);ts=GIS_W/n;
+      tx0=Math.max(0,Math.floor((x0+GIS_W/2)/ts));tx1=Math.min(n-1,Math.floor((x1+GIS_W/2)/ts));
+      ty0=Math.max(0,Math.floor((GIS_W/2-y1)/ts));ty1=Math.min(n-1,Math.floor((GIS_W/2-y0)/ts));
+      if((tx1-tx0+1)*(ty1-ty0+1)<=160||z<=0)break;z--;
+    }
+    ctx.globalAlpha=opa/100;
+    for(var ty=ty0;ty<=ty1;ty++)for(var tx=tx0;tx<=tx1;tx++){
+      var url=B.u.replace('{z}',z).replace('{x}',tx).replace('{y}',ty),e=gisTile(url);
+      var mx=-GIS_W/2+tx*ts,my=GIS_W/2-ty*ts;
+      if(e.st===1)ctx.drawImage(e.im,X(mx),Y(my),ts/mpm+0.25,ts/mpm+0.25);
+      else if(e.st===0){tasks.push(e);if(onTile)e.cb.push(onTile)}
+    }
+    ctx.globalAlpha=1;
+  }
+  /* vektor */
+  var sym=o.simbol||1;
+  layers.forEach(function(L){
+    if(!L.visible)return;
+    var rgb=gisRgb(L.color);
+    L.features.forEach(function(f){
+      var g=f.g;if(!g)return;
+      (function gambar(g){
+        if(g.type==='GeometryCollection'){g.geometries.forEach(gambar);return}
+        function P(c){var m=gisMerc(c[0],c[1]);return [X(m[0]),Y(m[1])]}
+        if(g.type==='Point'||g.type==='MultiPoint'){
+          (g.type==='Point'?[g.coordinates]:g.coordinates).forEach(function(c){var p=P(c);ctx.beginPath();ctx.arc(p[0],p[1],0.9*sym,0,6.2832);ctx.fillStyle=L.color;ctx.fill();ctx.lineWidth=0.25;ctx.strokeStyle='#fff';ctx.stroke()});
+        }else if(g.type==='LineString'||g.type==='MultiLineString'){
+          (g.type==='LineString'?[g.coordinates]:g.coordinates).forEach(function(l){ctx.beginPath();l.forEach(function(c,i){var p=P(c);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])});ctx.lineWidth=L.width*0.2*sym;ctx.strokeStyle=L.color;ctx.lineJoin='round';ctx.stroke()});
+        }else if(g.type==='Polygon'||g.type==='MultiPolygon'){
+          (g.type==='Polygon'?[g.coordinates]:g.coordinates).forEach(function(pl){
+            ctx.beginPath();pl.forEach(function(r){r.forEach(function(c,i){var p=P(c);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])});ctx.closePath()});
+            ctx.fillStyle='rgba('+rgb+','+(L.fill/100)+')';ctx.fill('evenodd');
+            if(o.arsir){ctx.save();ctx.clip('evenodd');ctx.strokeStyle='rgba('+rgb+',.7)';ctx.lineWidth=0.18;ctx.beginPath();
+              for(var k=-rect.h;k<rect.w+rect.h;k+=1.6){ctx.moveTo(rect.x+k,rect.y+rect.h);ctx.lineTo(rect.x+k+rect.h,rect.y)}ctx.stroke();ctx.restore()}
+            ctx.lineWidth=L.width*0.2*sym;ctx.strokeStyle=L.color;ctx.lineJoin='round';ctx.stroke();
+          });
+        }
+      })(g);
+    });
+  });
+  /* label */
+  layers.forEach(function(L){
+    if(!L.visible||!L.label||!L.labelField)return;
+    L.features.forEach(function(f){
+      var t=(f.p||{})[L.labelField];if(t==null||t==='')return;
+      var pos=gisTitikLabel(f.g);if(!pos)return;var m=gisMerc(pos[0],pos[1]),px=X(m[0]),py=Y(m[1]);
+      if(px<rect.x||px>rect.x+rect.w||py<rect.y||py>rect.y+rect.h)return;
+      gisTeksLabel(ctx,String(t).slice(0,40),px,py+(f.g.type==='Point'?-2.4:0),o);
+    });
+  });
+  ctx.restore();
+  return tasks;
+}
+function gisRgb(hex){var m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return '0,0,0';var n=parseInt(m[1],16);return (n>>16&255)+','+(n>>8&255)+','+(n&255)}
+function gisTitikLabel(g){
+  if(!g)return null;if(g.type==='Point')return g.coordinates;
+  var pts=gisFlat(g,[]);if(!pts.length)return null;
+  if(/Line/.test(g.type))return pts[Math.floor(pts.length/2)];
+  var b=[Infinity,Infinity,-Infinity,-Infinity];pts.forEach(function(c){b[0]=Math.min(b[0],c[0]);b[1]=Math.min(b[1],c[1]);b[2]=Math.max(b[2],c[0]);b[3]=Math.max(b[3],c[1])});
+  return [(b[0]+b[2])/2,(b[1]+b[3])/2];
+}
+function gisTeksLabel(ctx,t,x,y,o){
+  var s=o.lbUk*0.3528*(o.simbol||1);ctx.save();
+  ctx.font=(o.lbMiring?'italic ':'')+(o.lbTebal?'bold ':'')+s+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  var w=ctx.measureText(t).width;
+  ctx.globalAlpha=o.lbOpB/100;ctx.fillStyle=o.lbBg;ctx.fillRect(x-w/2-0.6,y-s*0.65,w+1.2,s*1.3);
+  ctx.globalAlpha=o.lbOpF/100;ctx.fillStyle=o.lbWarna;ctx.fillText(t,x,y);ctx.restore();
+}
+function gisNice(m){
+  var p=Math.pow(10,Math.floor(Math.log(m)/Math.LN10)),f=m/p,n=f>=5?5:f>=2.5?2.5:f>=2?2:1;return n*p;
+}
+function gisKerangka(ctx,rect,view,o){
+  /* grid koordinat dan bingkai */
+  var mpm=gisMpm(view.den,view.lat),c=gisMerc(view.lon,view.lat);
+  var tl=gisInv(c[0]-rect.w/2*mpm,c[1]+rect.h/2*mpm),br=gisInv(c[0]+rect.w/2*mpm,c[1]-rect.h/2*mpm);
+  var span=Math.max(br[0]-tl[0],tl[1]-br[1]),steps=[0.0005,0.001,0.002,0.005,0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10],st=steps[steps.length-1];
+  for(var i=0;i<steps.length;i++){if(span/steps[i]<=6){st=steps[i];break}}
+  var s=o.gridTeks*0.3528;
+  function X(lon){return rect.x+rect.w/2+(gisMerc(lon,0)[0]-c[0])/mpm}
+  function Y(lat){return rect.y+rect.h/2-(gisMerc(0,lat)[1]-c[1])/mpm}
+  function fmt(v,h){var a=Math.abs(v),dp=st<0.001?4:st<0.01?3:st<0.1?2:st<1?1:0;return a.toFixed(dp)+'°'+(h==='x'?(v<0?'W':'E'):(v<0?'S':'N'))}
+  ctx.save();ctx.beginPath();ctx.rect(rect.x,rect.y,rect.w,rect.h);ctx.clip();
+  ctx.font=s+'px sans-serif';ctx.textBaseline='middle';
+  for(var lon=Math.ceil(tl[0]/st)*st;lon<=br[0];lon+=st){
+    var x=X(lon);ctx.beginPath();ctx.moveTo(x,rect.y);ctx.lineTo(x,rect.y+rect.h);ctx.lineWidth=0.12;ctx.strokeStyle='rgba(255,255,255,.75)';ctx.setLineDash([1.2,1.2]);ctx.stroke();
+    ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(x,rect.y);ctx.lineTo(x,rect.y+1.6);ctx.moveTo(x,rect.y+rect.h);ctx.lineTo(x,rect.y+rect.h-1.6);ctx.lineWidth=0.25;ctx.strokeStyle='#111';ctx.stroke();
+    gisHalo(ctx,fmt(lon,'x'),x,rect.y+rect.h-s*1.1-1.6,'center',s);
+  }
+  for(var lat=Math.ceil(br[1]/st)*st;lat<=tl[1];lat+=st){
+    var y=Y(lat);ctx.beginPath();ctx.moveTo(rect.x,y);ctx.lineTo(rect.x+rect.w,y);ctx.lineWidth=0.12;ctx.strokeStyle='rgba(255,255,255,.75)';ctx.setLineDash([1.2,1.2]);ctx.stroke();
+    ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(rect.x,y);ctx.lineTo(rect.x+1.6,y);ctx.moveTo(rect.x+rect.w,y);ctx.lineTo(rect.x+rect.w-1.6,y);ctx.lineWidth=0.25;ctx.strokeStyle='#111';ctx.stroke();
+    gisHalo(ctx,fmt(lat,'y'),rect.x+2,y-s*0.7,'left',s);
+  }
+  ctx.restore();
+}
+function gisHalo(ctx,t,x,y,al,s){
+  ctx.save();ctx.textAlign=al;ctx.textBaseline='middle';ctx.font=s+'px sans-serif';ctx.lineWidth=s*0.3;ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineJoin='round';ctx.strokeText(t,x,y);ctx.fillStyle='#111';ctx.fillText(t,x,y);ctx.restore();
+}
+function gisUtm(lon,lat){var z=Math.floor((lon+180)/6)+1,s=lat<0;return {z:z,s:s,epsg:(s?32700:32600)+z,t:z+(s?'S':'N')}}
+
+/* ---------- tata letak ---------- */
+function gisDenAktif(){
+  var o=GIS.o;return o.skalaMode==='tetap'||o.skalaMode==='khusus'?(o.skalaTetap||GIS.v.den):GIS.v.den;
+}
+function gisUkuranKertas(o){var k=GIS_KERTAS[o.kertas]||GIS_KERTAS.A4;return o.arah==='portrait'?[k[1],k[0]]:[k[0],k[1]]}
+function gisTata(o){
+  var P=gisUkuranKertas(o),M=8,G=3,iw=P[0]-2*M,ih=P[1]-2*M;
+  var blok=[['judul',1.2],['utara',.95],['legenda',1.3]];
+  if(o.insetOn)blok.push(['inset',1.35]);
+  if(o.ttdOn)blok.push(['ttd',1.1]);
+  var peta,area,rects={};
+  if(o.posisi==='kanan'){
+    var rw=iw*o.lebar/100;peta={x:M,y:M,w:iw-rw-G,h:ih};area={x:M+peta.w+G,y:M,w:rw,h:ih};
+    var tot=blok.reduce(function(a,b){return a+b[1]},0),y=area.y;
+    blok.forEach(function(b){var hh=(ih-G*(blok.length-1))*b[1]/tot;rects[b[0]]={x:area.x,y:y,w:area.w,h:hh};y+=hh+G});
+  }else{
+    var bh=Math.max(34,ih*0.3);peta={x:M,y:M,w:iw,h:ih-bh-G};area={x:M,y:M+peta.h+G,w:iw,h:bh};
+    var tot2=blok.reduce(function(a,b){return a+b[1]},0),x=area.x;
+    blok.forEach(function(b){var ww=(iw-G*(blok.length-1))*b[1]/tot2;rects[b[0]]={x:x,y:area.y,w:ww,h:area.h};x+=ww+G});
+  }
+  return {P:P,M:M,peta:peta,area:area,r:rects};
+}
+function gisKotak(ctx,r,judul,s){
+  ctx.save();ctx.lineWidth=0.3;ctx.strokeStyle='#111';ctx.fillStyle='#fff';ctx.fillRect(r.x,r.y,r.w,r.h);ctx.strokeRect(r.x,r.y,r.w,r.h);
+  if(judul){ctx.fillStyle='#111';ctx.font='bold '+s*0.95+'px sans-serif';ctx.textBaseline='top';ctx.textAlign='left';ctx.fillText(judul,r.x+2,r.y+1.6);ctx.beginPath();ctx.moveTo(r.x+2,r.y+s*1.55);ctx.lineTo(r.x+r.w-2,r.y+s*1.55);ctx.lineWidth=0.18;ctx.stroke()}
+  ctx.restore();
+}
+function gisBungkus(ctx,t,x,y,mw,lh,maks){
+  var kata=String(t||'').split(/\s+/),baris=[],cur='';
+  kata.forEach(function(k){var u=cur?cur+' '+k:k;if(ctx.measureText(u).width>mw&&cur){baris.push(cur);cur=k}else cur=u});
+  if(cur)baris.push(cur);
+  baris.slice(0,maks||99).forEach(function(b,i){ctx.fillText(b,x,y+i*lh)});
+  return Math.min(baris.length,maks||99)*lh;
+}
+function gisGarisJudul(ctx,x1,x2,y,gaya){
+  if(gaya==='tanpa')return;ctx.save();ctx.strokeStyle='#111';ctx.lineWidth=0.3;
+  if(gaya==='putus')ctx.setLineDash([2.4,1.4]);else if(gaya==='titik')ctx.setLineDash([0.4,1]);
+  function g(yy){ctx.beginPath();ctx.moveTo(x1,yy);ctx.lineTo(x2,yy);ctx.stroke()}
+  g(y);if(gaya==='ganda')g(y+0.9);ctx.restore();
+}
+function gisBlokJudul(ctx,r,o,s){
+  gisKotak(ctx,r,null,s);ctx.save();ctx.fillStyle='#111';ctx.textBaseline='top';ctx.textAlign='left';
+  var x=r.x+2.5,w=r.w-5,y=r.y+2.2;
+  ctx.font='bold '+s*1.7+'px sans-serif';y+=gisBungkus(ctx,o.judul||'Judul peta',x,y,w,s*2,3)+0.8;
+  gisGarisJudul(ctx,x,x+w,y,o.garis);y+=2.2;
+  if(o.sub){ctx.font='bold '+s*1.05+'px sans-serif';y+=gisBungkus(ctx,o.sub,x,y,w,s*1.3,2)+0.8}
+  ctx.font=s*0.85+'px sans-serif';
+  if(o.desk)y+=gisBungkus(ctx,o.desk,x,y,w,s*1.1,Math.max(1,Math.floor((r.y+r.h-y-8)/(s*1.1))))+1;
+  ctx.fillStyle='#333';var pie=[];if(o.sumber)pie.push('Sumber: '+o.sumber);if(o.tgl)pie.push('Terbit: '+gisTgl(o.tgl));
+  ctx.textBaseline='alphabetic';pie.slice().reverse().forEach(function(t,i){ctx.font=s*0.75+'px sans-serif';ctx.fillText(t.slice(0,90),x,r.y+r.h-2-i*s*0.95)});
+  ctx.restore();
+}
+function gisTgl(v){var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(v||'');if(!m)return v||'';var B=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];return parseInt(m[3],10)+' '+B[parseInt(m[2],10)-1]+' '+m[1]}
+function gisUtaraGambar(ctx,cx,cy,r,gaya,warna){
+  ctx.save();ctx.translate(cx,cy);ctx.lineJoin='miter';
+  if(gaya==='klasik'){
+    ctx.beginPath();ctx.moveTo(0,-r);ctx.lineTo(r*0.38,r*0.75);ctx.lineTo(0,r*0.35);ctx.closePath();ctx.fillStyle=warna;ctx.fill();
+    ctx.beginPath();ctx.moveTo(0,-r);ctx.lineTo(-r*0.38,r*0.75);ctx.lineTo(0,r*0.35);ctx.closePath();ctx.fillStyle='#fff';ctx.fill();ctx.lineWidth=0.25;ctx.strokeStyle=warna;ctx.stroke();
+  }else if(gaya==='ramping'){
+    ctx.beginPath();ctx.moveTo(0,-r);ctx.lineTo(r*0.22,-r*0.3);ctx.lineTo(r*0.06,-r*0.3);ctx.lineTo(r*0.06,r);ctx.lineTo(-r*0.06,r);ctx.lineTo(-r*0.06,-r*0.3);ctx.lineTo(-r*0.22,-r*0.3);ctx.closePath();ctx.fillStyle=warna;ctx.fill();
+  }else{
+    ctx.beginPath();ctx.arc(0,0,r*0.55,0,6.2832);ctx.lineWidth=0.25;ctx.strokeStyle=warna;ctx.stroke();
+    [[0,-1],[1,0],[0,1],[-1,0]].forEach(function(d,i){ctx.save();ctx.rotate(i*Math.PI/2);ctx.beginPath();ctx.moveTo(0,-r);ctx.lineTo(r*0.2,-r*0.2);ctx.lineTo(-r*0.2,-r*0.2);ctx.closePath();ctx.fillStyle=i===0?warna:'#fff';ctx.fill();ctx.lineWidth=0.22;ctx.strokeStyle=warna;ctx.stroke();ctx.restore()});
+    [[0.45,0.45],[-0.45,0.45],[0.45,-0.45],[-0.45,-0.45]].forEach(function(d){ctx.beginPath();ctx.moveTo(d[0]*r*0.5,d[1]*r*0.5);ctx.lineTo(d[0]*r*1.0,d[1]*r*1.0);ctx.lineWidth=0.2;ctx.strokeStyle=warna;ctx.stroke()});
+  }
+  ctx.restore();
+}
+function gisBlokUtara(ctx,r,o,s,den,lat){
+  gisKotak(ctx,r,'Arah utara dan skala',s);
+  var top=r.y+s*1.9,tinggi=r.y+r.h-top-1;
+  if(o.utaraOn){var ru=Math.min(o.utaraUk/2,tinggi/2-0.5);gisUtaraGambar(ctx,r.x+2.5+ru,top+tinggi/2-0.5,ru,o.utara,o.utaraWarna);ctx.save();ctx.fillStyle=o.utaraWarna;ctx.font='bold '+s+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('U',r.x+2.5+ru,top+tinggi/2-ru-0.4);ctx.restore()}
+  if(o.skOn){
+    var x0=r.x+(o.utaraOn?o.utaraUk+6:3),mw=Math.min(o.skLebar,r.x+r.w-x0-4),mpmm=den/1000;
+    var nseg=Math.max(2,Math.min(o.skSeg,Math.floor(mw/9))),mm=mw,total=mm*mpmm,satuan=o.skSatuan==='auto'?(total>=2000?'km':'m'):o.skSatuan,bagi=satuan==='km'?1000:1;
+    var nice=gisNice(total/bagi/ nseg*0.999)*nseg;
+    var segMm=nice*bagi/mpmm/nseg,y=top+tinggi/2-1.5;
+    if(segMm*nseg>mw){nice=gisNice(total/bagi*0.999);segMm=nice*bagi/mpmm/nseg}
+    ctx.save();ctx.lineWidth=0.25;ctx.strokeStyle='#111';
+    for(var i=0;i<nseg;i++){ctx.fillStyle=i%2?'#fff':'#111';ctx.fillRect(x0+i*segMm,y,segMm,1.8);ctx.strokeRect(x0+i*segMm,y,segMm,1.8)}
+    ctx.fillStyle='#111';ctx.font=s*0.85+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
+    for(var j=0;j<=nseg;j++){var v=nice/nseg*j;ctx.fillText((Math.round(v*100)/100).toString().replace('.',','),x0+j*segMm,y+2.4)}
+    ctx.textAlign='left';ctx.fillText(satuan,x0+nseg*segMm+1.2,y-0.2);
+    ctx.font='bold '+s*0.95+'px sans-serif';ctx.textAlign='left';ctx.fillText('Skala 1 : '+Math.round(den).toLocaleString('id-ID'),x0,y-s*1.5);
+    ctx.restore();
+  }
+}
+function gisBlokLegenda(ctx,r,o,s,layers){
+  gisKotak(ctx,r,o.legJudul||'Legenda',s);
+  var y=r.y+s*2.1,lh=Math.max(s*1.25,3.4),simb=3.4*(o.simbol||1);
+  ctx.save();ctx.textBaseline='middle';ctx.fillStyle='#111';ctx.font=s*0.9+'px sans-serif';
+  var vis=layers.filter(function(L){return L.visible});
+  if(!vis.length){ctx.fillStyle='#777';ctx.fillText('Belum ada layer',r.x+2.5,y+lh/2)}
+  vis.forEach(function(L){
+    if(y+lh>r.y+r.h)return;var cy=y+lh/2,x=r.x+2.5;
+    if(L.type==='line'){ctx.beginPath();ctx.moveTo(x,cy);ctx.lineTo(x+simb*1.6,cy);ctx.lineWidth=L.width*0.2;ctx.strokeStyle=L.color;ctx.stroke()}
+    else if(L.type==='point'){ctx.beginPath();ctx.arc(x+simb*0.8,cy,simb*0.3,0,6.2832);ctx.fillStyle=L.color;ctx.fill()}
+    else{ctx.fillStyle='rgba('+gisRgb(L.color)+','+(L.fill/100)+')';ctx.fillRect(x,cy-simb*0.4,simb*1.6,simb*0.8);ctx.lineWidth=L.width*0.2;ctx.strokeStyle=L.color;ctx.strokeRect(x,cy-simb*0.4,simb*1.6,simb*0.8)}
+    ctx.fillStyle='#111';ctx.textAlign='left';ctx.font=s*0.9+'px sans-serif';
+    var t=L.name,mw=r.x+r.w-(x+simb*1.6+2)-2;while(ctx.measureText(t).width>mw&&t.length>3)t=t.slice(0,-2);if(t!==L.name)t+='…';
+    ctx.fillText(t,x+simb*1.6+2,cy);y+=lh;
+  });
+  ctx.restore();
+}
+function gisBlokTtd(ctx,r,o,s){
+  gisKotak(ctx,r,o.ttdJudul||'Pengesahan',s);
+  var n=o.ttdN,hor=r.w>r.h*1.25,top=r.y+s*2.0,ww=hor?(r.w-3)/n:r.w-3,hh=hor?r.h-(top-r.y)-1:(r.h-(top-r.y)-1)/n;
+  ctx.save();ctx.fillStyle='#111';
+  for(var i=0;i<n;i++){
+    var t=o.ttd[i]||{},x=r.x+1.5+(hor?i*ww:0),y=top+(hor?0:i*hh),w=ww-2;
+    ctx.textAlign='center';ctx.textBaseline='top';ctx.font=s*0.8+'px sans-serif';ctx.fillText(String(t.jab||'').slice(0,34),x+w/2,y);
+    ctx.textBaseline='alphabetic';ctx.font='bold '+s*0.85+'px sans-serif';
+    var by=y+hh-s*1.75;ctx.fillText(String(t.nama||'').slice(0,30)||'',x+w/2,by);
+    ctx.beginPath();ctx.moveTo(x+1,by+0.6);ctx.lineTo(x+w-1,by+0.6);ctx.lineWidth=0.2;ctx.stroke();
+    ctx.font=s*0.7+'px sans-serif';ctx.fillText(String(t.org||'').slice(0,34),x+w/2,by+s*0.85);
+    if(t.tgl)ctx.fillText(gisTgl(t.tgl),x+w/2,by+s*1.6);
+  }
+  ctx.restore();
+}
+function gisBlokCrs(ctx,rect,o,s,v){
+  var u=gisUtm(v.lon,v.lat),t=o.crsMode==='khusus'?String(o.crsTeks||'').split('\n'):
+    o.crsMode==='utm'?['Sistem koordinat grid: WGS 84 (EPSG:4326)','Referensi UTM: zona '+u.t+' (EPSG:'+u.epsg+')']:['Sistem koordinat grid: WGS 84 (EPSG:4326)','Proyeksi tampilan: Web Mercator (EPSG:3857)'];
+  ctx.save();ctx.font=s*0.8+'px sans-serif';var w=0;t.forEach(function(x){w=Math.max(w,ctx.measureText(x).width)});
+  var bw=w+3,bh=t.length*s*1.05+2,x=rect.x+rect.w-bw-1.5,y=rect.y+rect.h-bh-1.5;
+  ctx.fillStyle='rgba(255,255,255,.88)';ctx.fillRect(x,y,bw,bh);ctx.strokeStyle='#111';ctx.lineWidth=0.2;ctx.strokeRect(x,y,bw,bh);
+  ctx.fillStyle='#111';ctx.textBaseline='top';t.forEach(function(x2,i){ctx.fillText(x2,x+1.5,y+1+i*s*1.05)});ctx.restore();
+}
+function gisInsetView(P,o,peta){
+  var v=GIS.v,den=o.insetSkala==='auto'?gisDenAktif()*(peta.w/P.w)*8:o.insetSkala==='khusus'?o.insetKhusus:parseFloat(o.insetSkala);
+  return {lon:v.lon,lat:v.lat,den:Math.max(1000,den||1000000)};
+}
+/* render seluruh lembar */
+function gisLembar(canvas,pxmm,opt){
+  opt=opt||{};
+  var o=GIS.o,T=gisTata(o),ctx=canvas.getContext('2d'),tasks=[],den=gisDenAktif(),view={lon:GIS.v.lon,lat:GIS.v.lat,den:den};
+  canvas.width=Math.round(T.P[0]*pxmm);canvas.height=Math.round(T.P[1]*pxmm);
+  ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.setTransform(pxmm,0,0,pxmm,0,0);
+  var s=o.teks*0.3528,onT=opt.onTile;
+  ctx.lineWidth=0.4;ctx.strokeStyle='#111';ctx.strokeRect(2.5,2.5,T.P[0]-5,T.P[1]-5);
+  tasks=tasks.concat(gisBunga(ctx,T.peta,view,o.dasar,o.dasarOp,GIS.layers,o,pxmm,false,onT));
+  if(o.grid)gisKerangka(ctx,T.peta,view,o);
+  if(o.crsOn)gisBlokCrs(ctx,T.peta,o,s,view);
+  ctx.lineWidth=0.5;ctx.strokeStyle='#111';ctx.strokeRect(T.peta.x,T.peta.y,T.peta.w,T.peta.h);
+  gisBlokJudul(ctx,T.r.judul,o,s);
+  gisBlokUtara(ctx,T.r.utara,o,s,den,view.lat);
+  if(o.legOn||true)gisBlokLegenda(ctx,T.r.legenda,o,s,GIS.layers);
+  if(o.insetOn&&T.r.inset){
+    var ri=T.r.inset;gisKotak(ctx,ri,'Peta inset',s);
+    var ir={x:ri.x+1.5,y:ri.y+s*1.9,w:ri.w-3,h:ri.h-s*1.9-1.5},iv=gisInsetView(T.P,o,T.peta);
+    tasks=tasks.concat(gisBunga(ctx,ir,iv,o.insetDasar,o.insetOp,GIS.layers,Object.assign({},o,{lbUk:0}),pxmm,false,onT));
+    /* kotak ukuran peta utama */
+    var mpmI=gisMpm(iv.den,iv.lat),mpmM=gisMpm(view.den,view.lat),ww=T.peta.w*mpmM/mpmI,hh=T.peta.h*mpmM/mpmI;
+    ctx.save();ctx.beginPath();ctx.rect(ir.x,ir.y,ir.w,ir.h);ctx.clip();ctx.strokeStyle='#d62828';ctx.lineWidth=0.5;
+    ctx.strokeRect(ir.x+ir.w/2-Math.max(ww,1.2)/2,ir.y+ir.h/2-Math.max(hh,1.2)/2,Math.max(ww,1.2),Math.max(hh,1.2));ctx.restore();
+    ctx.strokeStyle='#111';ctx.lineWidth=0.25;ctx.strokeRect(ir.x,ir.y,ir.w,ir.h);
+  }
+  if(o.ttdOn)gisBlokTtd(ctx,T.r.ttd,o,s);
+  var attr=[GIS_DASAR[o.dasar]&&GIS_DASAR[o.dasar].a].filter(Boolean).join(' ');
+  if(attr&&o.dasar!=='none'){ctx.save();ctx.font=s*0.65+'px sans-serif';ctx.textAlign='left';ctx.textBaseline='bottom';ctx.fillStyle='rgba(0,0,0,.75)';ctx.fillText('Peta dasar: '+attr,T.peta.x+1.2,T.peta.y+T.peta.h-1);ctx.restore()}
+  return tasks;
+}
+/* ---------- tampilan interaktif ---------- */
+function gisGambar(){
+  if(!GIS_CV)return;
+  var tok=++GIS_TOK,cv=GIS_CV,wrap=cv.parentNode,w=Math.max(300,wrap.clientWidth-2),P=gisUkuranKertas(GIS.o),dpr=Math.min(2,window.devicePixelRatio||1);
+  var pxmm=w*dpr/P[0];
+  var buf=cv._buf||(cv._buf=document.createElement('canvas'));
+  var tasks=gisLembar(buf,pxmm,{onTile:function(){clearTimeout(GIS_T);GIS_T=setTimeout(function(){if(tok===GIS_TOK)gisGambar()},120)}});
+  cv.width=buf.width;cv.height=buf.height;cv.style.width=w+'px';cv.style.height=Math.round(w*P[1]/P[0])+'px';
+  cv.getContext('2d').drawImage(buf,0,0);cv._pxmm=pxmm;
+  var st=wrap.parentNode&&wrap.parentNode.querySelector('.gis-st');
+  if(st){var nT=tasks.length;st.textContent=nT?'Memuat peta dasar ('+nT+' potongan)…':'Skala 1 : '+Math.round(gisDenAktif()).toLocaleString('id-ID')}
+}
+function gisTunda(){clearTimeout(GIS_T);GIS_T=setTimeout(gisGambar,40)}
+function gisZoomLayer(ids){
+  var ls=GIS.layers.filter(function(L){return !ids||ids.indexOf(L.id)>=0});
+  var b=gisBatas(ls);if(!b){toast('Belum ada data untuk diperbesar');return}
+  var T=gisTata(GIS.o),p=T.peta,c=[(b[0]+b[2])/2,(b[1]+b[3])/2],m0=gisMerc(b[0],b[1]),m1=gisMerc(b[2],b[3]);
+  var wm=Math.max(1,m1[0]-m0[0]),hm=Math.max(1,m1[1]-m0[1]),lat=c[1];
+  var den=Math.max(wm/(p.w*0.82),hm/(p.h*0.82))*Math.cos(Math.abs(lat)*Math.PI/180)*1000;
+  den=Math.max(500,den);
+  GIS.v={lon:c[0],lat:c[1],den:den};
+  if(GIS.o.skalaMode!=='bebas'){var k=GIS_SKALA.find(function(x){return x>=den})||GIS_SKALA[GIS_SKALA.length-1];GIS.o.skalaTetap=k}
+  gisGambar();gisSegarkanForm();
+}
+function gisPan(dxmm,dymm){
+  var mpm=gisMpm(gisDenAktif(),GIS.v.lat),c=gisMerc(GIS.v.lon,GIS.v.lat),n=gisInv(c[0]-dxmm*mpm,c[1]+dymm*mpm);
+  GIS.v.lon=n[0];GIS.v.lat=Math.max(-80,Math.min(80,n[1]));
+}
+function gisZoomFaktor(f){
+  if(GIS.o.skalaMode==='bebas')GIS.v.den=Math.max(200,Math.min(20000000,GIS.v.den*f));
+  else{var cur=GIS.o.skalaTetap||GIS.v.den,i=GIS_SKALA.findIndex(function(x){return x>=cur});if(i<0)i=GIS_SKALA.length-1;i=Math.max(0,Math.min(GIS_SKALA.length-1,i+(f>1?1:-1)));GIS.o.skalaTetap=GIS_SKALA[i];GIS.v.den=GIS_SKALA[i]}
+}
+/* ---------- ekspor lembar ---------- */
+async function gisTunggu(tasks){
+  await Promise.all(tasks.map(function(e){return new Promise(function(res){if(e.st!==0)return res();e.cb.push(res);setTimeout(res,12000)})}));
+}
+async function gisCanvasFull(dpi){
+  var cv=document.createElement('canvas'),pxmm=dpi/25.4;
+  for(var i=0;i<3;i++){var t=gisLembar(cv,pxmm);if(!t.length)break;await gisTunggu(t)}
+  return cv;
+}
+function gisBlob(cv,fmt){return new Promise(function(res){cv.toBlob(res,fmt==='jpeg'?'image/jpeg':'image/png',0.93)})}
+async function gisPdfBlob(cv,P){
+  var jpg=await gisBlob(cv,'jpeg'),bytes=new Uint8Array(await jpg.arrayBuffer()),enc=new TextEncoder();
+  var wpt=(P[0]/25.4*72).toFixed(2),hpt=(P[1]/25.4*72).toFixed(2),parts=[],off=[],len=0;
+  function put(x){var b=typeof x==='string'?enc.encode(x):x;parts.push(b);len+=b.length}
+  put('%PDF-1.4\n');
+  off[1]=len;put('1 0 obj\n<</Type/Catalog/Pages 2 0 R>>\nendobj\n');
+  off[2]=len;put('2 0 obj\n<</Type/Pages/Kids[3 0 R]/Count 1>>\nendobj\n');
+  off[3]=len;put('3 0 obj\n<</Type/Page/Parent 2 0 R/MediaBox[0 0 '+wpt+' '+hpt+']/Resources<</XObject<</Im0 4 0 R>>>>/Contents 5 0 R>>\nendobj\n');
+  off[4]=len;put('4 0 obj\n<</Type/XObject/Subtype/Image/Width '+cv.width+'/Height '+cv.height+'/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length '+bytes.length+'>>\nstream\n');put(bytes);put('\nendstream\nendobj\n');
+  var cs='q '+wpt+' 0 0 '+hpt+' 0 0 cm /Im0 Do Q';
+  off[5]=len;put('5 0 obj\n<</Length '+cs.length+'>>\nstream\n'+cs+'\nendstream\nendobj\n');
+  var xr=len;put('xref\n0 6\n0000000000 65535 f \n'+[1,2,3,4,5].map(function(i){return ('0000000000'+off[i]).slice(-10)+' 00000 n \n'}).join('')+'trailer\n<</Size 6/Root 1 0 R>>\nstartxref\n'+xr+'\n%%EOF');
+  return new Blob(parts,{type:'application/pdf'});
+}
+async function gisEkspor(btn){
+  var o=GIS.o,nm=gisSlug(o.judul||GIS.nama);
+  if(!GIS.layers.length&&!confirm_ok())return;
+  function confirm_ok(){return true}
+  var lbl=btn.textContent;btn.disabled=true;btn.textContent='Menyiapkan…';
+  try{
+    var cv=await gisCanvasFull(o.dpi),P=gisUkuranKertas(o),zipOn=o.zipExtra||o.zipData;
+    var utama;
+    if(o.fmt==='pdf')utama=await gisPdfBlob(cv,P);else utama=await gisBlob(cv,o.fmt);
+    var ext=o.fmt==='jpeg'?'jpg':o.fmt;
+    if(!zipOn){gisUnduh(utama,nm+'.'+ext);toast('Layout diunduh');return}
+    var Z=await gisLib('jszip'),z=new Z();z.file(nm+'.'+ext,utama);
+    if(o.zipExtra){
+      var T=gisTata(o),pxmm=o.dpi/25.4,mc=document.createElement('canvas'),den=gisDenAktif(),v={lon:GIS.v.lon,lat:GIS.v.lat,den:den};
+      mc.width=Math.round(T.peta.w*pxmm);mc.height=Math.round(T.peta.h*pxmm);
+      for(var i=0;i<3;i++){var cx=mc.getContext('2d');cx.setTransform(pxmm,0,0,pxmm,0,0);var tk=gisBunga(cx,{x:0,y:0,w:T.peta.w,h:T.peta.h},v,o.dasar,o.dasarOp,GIS.layers,o,pxmm,false);if(!tk.length)break;await gisTunggu(tk)}
+      z.file(nm+'-area-peta.png',await gisBlob(mc,'png'));
+      var mpm=gisMpm(den,v.lat),res=mpm/pxmm,c=gisMerc(v.lon,v.lat),ulx=c[0]-T.peta.w/2*mpm+res/2,uly=c[1]+T.peta.h/2*mpm-res/2;
+      z.file(nm+'-area-peta.pgw',[res,0,0,-res,ulx,uly].map(function(n){return n.toFixed(8)}).join('\n')+'\n');
+      z.file(nm+'-area-peta.prj','PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1],AUTHORITY["EPSG","3857"]]');
+    }
+    if(o.zipData)GIS.layers.forEach(function(L){var s=gisSlug(L.name);z.file('data/'+s+'.geojson',JSON.stringify(gisGeojson(L)));z.file('data/'+s+'.csv',gisCsvOut(L))});
+    gisUnduh(await z.generateAsync({type:'blob'}),nm+'.zip');toast('Paket ZIP diunduh');
+  }catch(e){toast('Ekspor gagal: '+(e&&e.message?e.message:'kesalahan tak dikenal'))}
+  finally{btn.disabled=false;btn.textContent=lbl}
+}
+/* ---------- simpan proyek ---------- */
+var GIS_KEY='ktt.gis.proyek';
+function gisSimpan(){
+  try{var s=JSON.stringify({nama:GIS.nama,layers:GIS.layers,v:GIS.v,o:GIS.o});if(s.length>4500000){toast('Proyek terlalu besar untuk disimpan di peramban. Pakai Unduh proyek.');return}localStorage.setItem(GIS_KEY,s);toast('Proyek disimpan di peramban ini')}
+  catch(e){toast('Tidak bisa menyimpan di peramban ini. Pakai Unduh proyek.')}
+}
+function gisTerap(d){
+  var b=gisBaru();GIS.nama=d.nama||b.nama;GIS.layers=Array.isArray(d.layers)?d.layers:[];GIS.v=Object.assign(b.v,d.v||{});GIS.o=Object.assign(b.o,d.o||{});
+  if(d.o&&Array.isArray(d.o.ttd))GIS.o.ttd=b.o.ttd.map(function(x,i){return Object.assign({},x,d.o.ttd[i]||{})});
+}
+function gisBuka(){
+  try{var s=localStorage.getItem(GIS_KEY);if(!s){toast('Belum ada proyek tersimpan di peramban ini');return}gisTerap(JSON.parse(s));toast('Proyek dibuka');schedule()}catch(e){toast('Proyek tersimpan tidak bisa dibaca')}
+}
+/* ---------- data contoh ---------- */
+function gisContoh(){
+  var iup=[[121.935,-5.180],[121.968,-5.176],[121.982,-5.196],[121.971,-5.221],[121.944,-5.226],[121.929,-5.205],[121.935,-5.180]];
+  var L1=gisLayer('IUP Operasi Produksi (contoh)',[{g:{type:'Polygon',coordinates:[iup]},p:{name:'WIUP contoh',luas_ha:'1299'}}]);L1.color='#e4572e';L1.fill=22;L1.width=2;L1.label=true;
+  var L2=gisLayer('Jalan angkut (contoh)',[{g:{type:'LineString',coordinates:[[121.941,-5.198],[121.949,-5.201],[121.957,-5.199],[121.964,-5.206],[121.974,-5.214]]},p:{name:'Hauling road'}}]);L2.color='#ffc914';L2.width=2.4;
+  var L3=gisLayer('Fasilitas (contoh)',[{g:{type:'Point',coordinates:[121.949,-5.201]},p:{name:'Stockpile'}},{g:{type:'Point',coordinates:[121.974,-5.214]},p:{name:'Jetty'}},{g:{type:'Point',coordinates:[121.941,-5.198]},p:{name:'Pit 1'}}]);L3.color='#17bebb';L3.label=true;
+  GIS.layers=GIS.layers.concat([L1,L2,L3]);
+  if(!GIS.o.judul||GIS.o.judul==='Peta Lokasi'){GIS.o.judul='Peta Situasi IUP Operasi Produksi';GIS.o.sub='Data contoh';GIS.o.sumber='Data contoh Platform KTT'}
+  gisZoomLayer();
+}
+/* ===== GIS: antarmuka ===== */
+var GIS_CSS=false;
+function gisCss(){
+  if(GIS_CSS)return;GIS_CSS=true;
+  var st=document.createElement('style');
+  st.textContent='.gis{display:flex;flex-direction:column;gap:14px}'+
+  '.gis-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.gis-bar input[type=text]{flex:1 1 220px;max-width:360px;font-weight:600}'+
+  '.gis-body{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:14px;align-items:start}'+
+  '@media(max-width:980px){.gis-body{grid-template-columns:minmax(0,1fr)}}'+
+  '.gis-side{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0}'+
+  '.gis-tabs{display:flex;flex-wrap:wrap;gap:2px;padding:6px;background:var(--surface2);border-bottom:1px solid var(--line)}'+
+  '.gis-tab{border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:600;padding:7px 11px;border-radius:9px;cursor:pointer}'+
+  '.gis-tab.on{background:var(--surface);color:var(--brand);box-shadow:var(--sh1)}'+
+  '.gis-pane{padding:14px;display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 230px);overflow:auto}'+
+  '@media(max-width:980px){.gis-pane{max-height:none}}'+
+  '.gis-grp{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:6px 0 -2px}'+
+  '.gis-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.gis-row.one{grid-template-columns:1fr}'+
+  '.gis-drop{border:1.5px dashed var(--line);border-radius:12px;padding:18px;text-align:center;background:var(--surface2);color:var(--muted);font-size:13px;cursor:pointer}'+
+  '.gis-drop.on{border-color:var(--brand);background:var(--brand-soft);color:var(--ink)}'+
+  '.gis-prev{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;min-width:0;display:flex;flex-direction:column;gap:8px}'+
+  '.gis-cvw{overflow:auto;border-radius:8px;background:var(--bg-deep);padding:0;line-height:0}'+
+  '.gis-cvw canvas{display:block;touch-action:none;cursor:grab;max-width:100%;box-shadow:var(--sh1)}'+
+  '.gis-tool{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.gis-tool .gis-st{margin-left:auto;font-size:12.5px;color:var(--muted)}'+
+  '.gis-lyr{border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}'+
+  '.gis-lyr-h{display:flex;gap:8px;align-items:center}.gis-lyr-h b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'+
+  '.gis-lyr-h input[type=color]{width:30px;height:26px;padding:0;border:1px solid var(--line);border-radius:6px;background:none}'+
+  '.gis-lyr-a{display:flex;flex-wrap:wrap;gap:6px}.gis-lyr-a .btn{padding:4px 9px;font-size:12.5px}'+
+  '.gis-sig{border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:8px}'+
+  '.gis-note{font-size:12.5px;color:var(--muted);margin:0}.gis-chk{display:flex;gap:8px;align-items:center;font-size:13.5px}';
+  document.head.appendChild(st);
+}
+function gF(lbl,node,wide){return h('label',{class:'fld'+(wide?' wide':'')},h('span',{text:lbl}),node)}
+function gIn(key,type,opt){
+  opt=opt||{};var o=GIS.o,el;
+  if(type==='check'){
+    el=h('input',{type:'checkbox'});el.checked=!!o[key];
+    el.addEventListener('change',function(){o[key]=el.checked;if(opt.rebuild)schedule();else gisTunda()});
+    return h('label',{class:'gis-chk'},el,h('span',{text:opt.l}));
+  }
+  if(type==='select'){
+    el=h('select',null,opt.o.map(function(x){return h('option',{value:x[0],text:x[1]})}));el.value=String(o[key]);
+    el.addEventListener('change',function(){var v=el.value;o[key]=opt.num?parseFloat(v):v;if(opt.rebuild)schedule();else gisTunda()});
+    return gF(opt.l,el,opt.wide);
+  }
+  if(type==='area'){el=h('textarea',{rows:opt.rows||3});el.value=o[key]||'';el.addEventListener('input',function(){o[key]=el.value;gisTunda()});return gF(opt.l,el,true)}
+  el=h('input',{type:type||'text'});if(type==='number'){if(opt.min!=null)el.min=opt.min;if(opt.max!=null)el.max=opt.max;if(opt.step)el.step=opt.step}
+  if(type==='range'){el.min=opt.min;el.max=opt.max}
+  el.value=o[key]==null?'':o[key];
+  el.addEventListener('input',function(){var v=el.value;if(type==='number'||type==='range'){v=parseFloat(v);if(!isFinite(v))return}o[key]=v;gisTunda()});
+  return gF(opt.l,el,opt.wide);
+}
+function gTab(){
+  var t=GIS.tab,b=h('div',{class:'gis-pane'});
+  if(t==='data')gTabData(b);else if(t==='layer')gTabLayer(b);else if(t==='peta')gTabPeta(b);else if(t==='layout')gTabLayout(b);else if(t==='ttd')gTabTtd(b);else gTabEkspor(b);
+  return b;
+}
+var GIS_DATA={crs:'auto',jenis:'titik',manJenis:'titik',manNama:'',manUrut:'latlon',man:''};
+function gTabData(b){
+  var crs=h('select',null,[['auto','Otomatis (dari metadata)'],['4326','WGS 84 (EPSG:4326)'],['3857','Web Mercator (EPSG:3857)']].map(function(x){return h('option',{value:x[0],text:x[1]})}));crs.value=GIS_DATA.crs;crs.onchange=function(){GIS_DATA.crs=crs.value};
+  var jn=h('select',null,[['titik','Titik'],['garis','Garis (titik berurutan)'],['poligon','Poligon (titik berurutan)']].map(function(x){return h('option',{value:x[0],text:x[1]})}));jn.value=GIS_DATA.jenis;jn.onchange=function(){GIS_DATA.jenis=jn.value};
+  var fi=h('input',{type:'file',multiple:true,hidden:true,accept:'.csv,.txt,.xlsx,.xls,.geojson,.json,.kml,.zip'}),drop=h('div',{class:'gis-drop',tabindex:'0',role:'button','aria-label':'Unggah berkas data'},h('b',{text:'Tarik berkas ke sini atau klik untuk memilih'}),h('br'),h('span',{text:'CSV, Excel, GeoJSON, KML, atau SHP dalam ZIP (maks 25 MB)'}));
+  var err=h('p',{class:'err',hidden:true});
+  async function terima(files){
+    err.hidden=true;var ok=0;
+    for(var i=0;i<files.length;i++){
+      try{var L=await gisBaca(files[i],{crs:GIS_DATA.crs,jenis:GIS_DATA.jenis});GIS.layers.push(L);ok++}
+      catch(e){err.textContent=files[i].name+': '+(e&&e.message?e.message:'gagal dibaca');err.hidden=false}
+    }
+    if(ok){toast(ok+' layer ditambahkan');gisZoomLayer(GIS.layers.slice(-ok).map(function(x){return x.id}))}
+  }
+  fi.onchange=function(){terima(Array.from(fi.files));fi.value=''};
+  drop.onclick=function(){fi.click()};drop.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();fi.click()}};
+  drop.ondragover=function(e){e.preventDefault();drop.classList.add('on')};drop.ondragleave=function(){drop.classList.remove('on')};
+  drop.ondrop=function(e){e.preventDefault();drop.classList.remove('on');terima(Array.from(e.dataTransfer.files))};
+  b.append(h('p',{class:'gis-grp',text:'Sumber data'}),fi,drop,h('div',{class:'gis-row'},gF('Sistem koordinat (CRS)',crs),gF('Tabel CSV atau Excel dibaca sebagai',jn)),
+    h('p',{class:'gis-note',text:'Tabel perlu kolom lat dan lon (atau x dan y). Titik berurutan dapat dihubungkan menjadi satu garis atau poligon.'}),err,
+    h('div',{class:'acts'},h('button',{type:'button',class:'btn',onclick:function(){gisContoh();schedule()}},'Muat data contoh')));
+  /* koordinat manual */
+  var ta=h('textarea',{rows:5,placeholder:'Satu titik per baris, contoh:\n-5.180, 121.935\nPit 1, -5.198, 121.941'});ta.value=GIS_DATA.man;ta.oninput=function(){GIS_DATA.man=ta.value};
+  var mj=h('select',null,[['titik','Titik'],['garis','Garis'],['poligon','Poligon']].map(function(x){return h('option',{value:x[0],text:x[1]})}));mj.value=GIS_DATA.manJenis;mj.onchange=function(){GIS_DATA.manJenis=mj.value};
+  var mu=h('select',null,[['latlon','Lintang, Bujur'],['lonlat','Bujur, Lintang (x, y)']].map(function(x){return h('option',{value:x[0],text:x[1]})}));mu.value=GIS_DATA.manUrut;mu.onchange=function(){GIS_DATA.manUrut=mu.value};
+  var mn=h('input',{type:'text',placeholder:'Koordinat manual'});mn.value=GIS_DATA.manNama;mn.oninput=function(){GIS_DATA.manNama=mn.value};
+  var me=h('p',{class:'err',hidden:true});
+  b.append(h('p',{class:'gis-grp',text:'Input koordinat manual'}),ta,h('div',{class:'gis-row'},gF('Jenis',mj),gF('Urutan nilai',mu)),gF('Nama layer',mn,true),me,
+    h('div',{class:'acts'},h('button',{type:'button',class:'btn primary',onclick:function(){
+      try{
+        var rows=[];ta.value.split(/\r?\n/).forEach(function(ln){
+          ln=ln.trim();if(!ln)return;var tok=ln.split(/[;\t,]+|\s{2,}/).map(function(x){return x.trim()}).filter(Boolean),nm='';
+          if(tok.length>2&&gisAngka(tok[0])==null){nm=tok.shift()}
+          if(tok.length<2)throw new Error('Baris tidak valid: '+ln);
+          var a=gisAngka(tok[0]),c=gisAngka(tok[1]);if(a==null||c==null)throw new Error('Angka tidak valid: '+ln);
+          rows.push(GIS_DATA.manUrut==='latlon'?{name:nm,lon:c,lat:a}:{name:nm,lon:a,lat:c});
+        });
+        if(!rows.length)throw new Error('Belum ada koordinat');
+        var L=gisLayer(GIS_DATA.manNama||'Koordinat manual',gisTabel(rows,GIS_DATA.manJenis,GIS_DATA.crs));
+        GIS.layers.push(L);me.hidden=true;gisZoomLayer([L.id]);toast('Layer ditambahkan');
+      }catch(e){me.textContent=e.message;me.hidden=false}
+    }},'Tambah ke peta')));
+}
+function gTabLayer(b){
+  if(!GIS.layers.length){b.append(h('p',{class:'empty',text:'Belum ada layer. Tambahkan data di tab Data.'}));return}
+  GIS.layers.forEach(function(L,i){
+    var cb=h('input',{type:'checkbox','aria-label':'Tampilkan '+L.name});cb.checked=L.visible;cb.onchange=function(){L.visible=cb.checked;gisTunda()};
+    var col=h('input',{type:'color','aria-label':'Warna '+L.name});col.value=L.color;col.oninput=function(){L.color=col.value;gisTunda()};
+    var nm=h('input',{type:'text','aria-label':'Nama layer'});nm.value=L.name;nm.oninput=function(){L.name=nm.value;gisTunda()};
+    var keys={};L.features.forEach(function(f){Object.keys(f.p||{}).forEach(function(k){keys[k]=1})});
+    var lf=h('select',{'aria-label':'Kolom label'},[h('option',{value:'',text:'(tanpa label)'})].concat(Object.keys(keys).map(function(k){return h('option',{value:k,text:k})})));lf.value=L.labelField||'';
+    lf.onchange=function(){L.labelField=lf.value;L.label=!!lf.value;gisTunda()};
+    var fl=h('input',{type:'range',min:0,max:100,'aria-label':'Transparansi isi'});fl.value=L.fill;fl.oninput=function(){L.fill=parseInt(fl.value,10);gisTunda()};
+    var wd=h('input',{type:'number',min:.2,max:8,step:.1,'aria-label':'Tebal garis'});wd.value=L.width;wd.oninput=function(){var v=parseFloat(wd.value);if(v>0){L.width=v;gisTunda()}};
+    var fmt=h('select',{'aria-label':'Format unduhan'},[['geojson','GeoJSON'],['csv','CSV'],['kml','KML']].map(function(x){return h('option',{value:x[0],text:x[1]})}));
+    var q=h('div',{class:'gis-row'},gF('Label dari kolom',lf),gF('Tebal garis',wd));
+    var acts=h('div',{class:'gis-lyr-a'},
+      h('button',{type:'button',class:'btn',onclick:function(){gisZoomLayer([L.id])}},'Perbesar'),
+      h('button',{type:'button',class:'btn',onclick:function(){var f=fmt.value,s=gisSlug(L.name);
+        if(f==='geojson')gisUnduh(new Blob([JSON.stringify(gisGeojson(L))],{type:'application/geo+json'}),s+'.geojson');
+        else if(f==='csv')gisUnduh(new Blob(['﻿'+gisCsvOut(L)],{type:'text/csv'}),s+'.csv');
+        else gisUnduh(new Blob([gisKmlOut(L)],{type:'application/vnd.google-earth.kml+xml'}),s+'.kml')}},'Unduh'),fmt,
+      h('button',{type:'button',class:'btn',onclick:async function(){
+        try{var X=await gisLib('xlsx'),rows=[];
+          L.features.forEach(function(f,fi){var p=f.p||{},nmF=p.name||p.nama||('Fitur '+(fi+1));gisFlat(f.g,[]).forEach(function(c,k){rows.push({Fitur:nmF,Tipe:f.g.type,Urutan:k+1,Bujur:c[0],Lintang:c[1]})})});
+          var wb=X.utils.book_new();X.utils.book_append_sheet(wb,X.utils.json_to_sheet(rows),'Koordinat');
+          gisUnduh(new Blob([X.write(wb,{type:'array',bookType:'xlsx'})],{type:'application/octet-stream'}),gisSlug(L.name)+'-koordinat.xlsx');
+        }catch(e){toast(e.message)}}},'Extract koordinat'),
+      i>0?h('button',{type:'button',class:'btn',onclick:function(){GIS.layers.splice(i,1);GIS.layers.splice(i-1,0,L);schedule()}},'Naik'):null,
+      h('button',{type:'button',class:'btn danger',onclick:function(){GIS.layers.splice(i,1);schedule()}},'Hapus'));
+    b.append(h('div',{class:'gis-lyr'},h('div',{class:'gis-lyr-h'},cb,col,nm),
+      h('span',{class:'gis-note',text:({point:'Titik',line:'Garis',polygon:'Poligon',mixed:'Campuran'}[L.type]||'')+' · '+L.features.length+' fitur'}),
+      q,gF('Transparansi isi poligon',fl),acts));
+  });
+}
+function gTabPeta(b){
+  var o=GIS.o,bas=Object.keys(GIS_DASAR).map(function(k){return [k,GIS_DASAR[k].n]});
+  b.append(h('p',{class:'gis-grp',text:'Peta dasar'}),gIn('dasar','select',{l:'Peta dasar utama',o:bas,wide:1}),gIn('dasarOp','range',{l:'Transparansi peta dasar (opasitas %)',min:0,max:100,wide:1}));
+  b.append(h('p',{class:'gis-grp',text:'Skala peta utama'}));
+  var mode=h('select',null,[['bebas','Bebas (zoom manual)'],['tetap','Skala tetap'],['khusus','Skala khusus']].map(function(x){return h('option',{value:x[0],text:x[1]})}));mode.value=o.skalaMode;
+  mode.onchange=function(){o.skalaMode=mode.value;if(o.skalaMode==='tetap'){var k=GIS_SKALA.find(function(x){return x>=GIS.v.den})||GIS_SKALA[GIS_SKALA.length-1];o.skalaTetap=k}else if(o.skalaMode==='khusus')o.skalaTetap=Math.round(GIS.v.den);schedule()};
+  b.append(gF('Mode skala',mode,true));
+  if(o.skalaMode==='tetap')b.append(gIn('skalaTetap','select',{l:'Skala cetak',num:1,o:GIS_SKALA.map(function(x){return [x,'1 : '+x.toLocaleString('id-ID')]}),wide:1}));
+  if(o.skalaMode==='khusus')b.append(gIn('skalaTetap','number',{l:'Penyebut skala (1 : n)',min:200,max:50000000,step:100,wide:1}));
+  b.append(h('div',{class:'acts'},h('button',{type:'button',class:'btn',onclick:function(){gisZoomLayer()}},'Perbesar ke semua layer')));
+  b.append(h('p',{class:'gis-note',text:'Geser peta dengan menyeret pada pratinjau, perbesar dengan roda mouse atau tombol + dan −.'}));
+  b.append(h('p',{class:'gis-grp',text:'Peta inset'}),gIn('insetOn','check',{l:'Tampilkan peta inset',rebuild:1}));
+  if(o.insetOn){
+    b.append(gIn('insetDasar','select',{l:'Peta dasar inset',o:bas,wide:1}),gIn('insetOp','range',{l:'Opasitas peta dasar inset (%)',min:0,max:100,wide:1}));
+    var sk=[['auto','Otomatis mengikuti peta utama']].concat(GIS_SKALA.map(function(x){return [String(x),'1 : '+x.toLocaleString('id-ID')]})).concat([['khusus','Skala khusus']]);
+    b.append(gIn('insetSkala','select',{l:'Skala inset',o:sk,wide:1,rebuild:1}));
+    if(o.insetSkala==='khusus')b.append(gIn('insetKhusus','number',{l:'Penyebut skala inset',min:1000,max:100000000,step:1000,wide:1}));
+  }
+}
+function gTabLayout(b){
+  var o=GIS.o;
+  b.append(h('p',{class:'gis-grp',text:'Kertas'}),h('div',{class:'gis-row'},gIn('kertas','select',{l:'Ukuran kertas',o:[['A4','A4'],['A3','A3']],rebuild:1}),gIn('arah','select',{l:'Orientasi',o:[['landscape','Landscape'],['portrait','Portrait']],rebuild:1})),
+    gIn('posisi','select',{l:'Posisi blok informasi',o:[['kanan','Di kanan peta'],['bawah','Di bawah peta']],wide:1,rebuild:1}));
+  if(o.posisi==='kanan')b.append(gIn('lebar','range',{l:'Lebar panel kanan (%)',min:22,max:45,wide:1}));
+  b.append(h('p',{class:'gis-grp',text:'Judul dan keterangan'}),gIn('judul','text',{l:'Judul peta',wide:1}),gIn('sub','text',{l:'Subjudul',wide:1}),gIn('desk','area',{l:'Deskripsi',rows:3}),
+    gIn('garis','select',{l:'Garis pemisah judul',o:[['tunggal','Tunggal'],['ganda','Ganda'],['putus','Putus-putus'],['titik','Titik-titik'],['tanpa','Tanpa garis']],wide:1}),
+    h('div',{class:'gis-row'},gIn('sumber','text',{l:'Sumber data'}),gIn('tgl','date',{l:'Tanggal terbit'})));
+  b.append(h('p',{class:'gis-grp',text:'Ukuran'}),h('div',{class:'gis-row'},gIn('teks','number',{l:'Ukuran teks (pt)',min:6,max:16,step:.5}),gIn('simbol','number',{l:'Skala simbol peta',min:.5,max:3,step:.1})));
+  b.append(h('p',{class:'gis-grp',text:'Elemen peta'}),gIn('arsir','check',{l:'Arsiran area poligon'}),
+    h('div',{class:'gis-row'},gIn('lbUk','number',{l:'Ukuran label (pt)',min:4,max:18,step:.5}),gIn('lbWarna','color',{l:'Warna font label'})),
+    h('div',{class:'gis-row'},gIn('lbBg','color',{l:'Warna latar label'}),gIn('lbOpF','number',{l:'Opasitas font (%)',min:0,max:100})),
+    h('div',{class:'gis-row'},gIn('lbOpB','number',{l:'Opasitas latar (%)',min:0,max:100}),h('span')),
+    h('div',{class:'gis-row'},gIn('lbTebal','check',{l:'Tebal'}),gIn('lbMiring','check',{l:'Miring'})));
+  b.append(h('p',{class:'gis-grp',text:'Legenda'}),gIn('legJudul','text',{l:'Judul legenda',wide:1}));
+  b.append(h('p',{class:'gis-grp',text:'Arah utara'}),gIn('utaraOn','check',{l:'Tampilkan arah utara'}),
+    h('div',{class:'gis-row'},gIn('utara','select',{l:'Gaya',o:[['klasik','Klasik hitam putih'],['ramping','Panah ramping'],['mata','Mata angin']]}),gIn('utaraUk','number',{l:'Ukuran (mm)',min:8,max:30})),gIn('utaraWarna','color',{l:'Warna'}));
+  b.append(h('p',{class:'gis-grp',text:'Skala grafis'}),gIn('skOn','check',{l:'Tampilkan skala grafis'}),
+    h('div',{class:'gis-row'},gIn('skSatuan','select',{l:'Satuan',o:[['auto','Otomatis'],['m','Meter'],['km','Kilometer']]}),gIn('skSeg','select',{l:'Jumlah segmen',num:1,o:[[2,'2'],[3,'3'],[4,'4'],[5,'5']]})),
+    gIn('skLebar','number',{l:'Lebar maksimum (mm)',min:20,max:150,wide:1}));
+  b.append(h('p',{class:'gis-grp',text:'Grid dan sistem koordinat'}),gIn('grid','check',{l:'Grid koordinat'}),gIn('gridTeks','number',{l:'Ukuran teks koordinat (pt)',min:4,max:12,step:.5,wide:1}),
+    gIn('crsOn','check',{l:'Tampilkan informasi sistem koordinat',rebuild:1}));
+  if(o.crsOn){b.append(gIn('crsMode','select',{l:'Isi keterangan',o:[['utm','Referensi UTM otomatis'],['proyeksi','Proyeksi tampilan'],['khusus','Keterangan khusus']],wide:1,rebuild:1}));if(o.crsMode==='khusus')b.append(gIn('crsTeks','area',{l:'Keterangan (satu baris per butir)',rows:3}))}
+}
+function gTabTtd(b){
+  var o=GIS.o;
+  b.append(gIn('ttdOn','check',{l:'Tampilkan kolom pengesahan',rebuild:1}));
+  if(!o.ttdOn){return}
+  b.append(gIn('ttdJudul','text',{l:'Judul pengesahan',wide:1}),gIn('ttdN','select',{l:'Jumlah penanda tangan',num:1,o:[[1,'1 orang'],[2,'2 orang'],[3,'3 orang']],wide:1,rebuild:1}));
+  for(var i=0;i<o.ttdN;i++)(function(i){
+    var t=o.ttd[i];function f(k,l,ty){var e=h('input',{type:ty||'text'});e.value=t[k]||'';e.oninput=function(){t[k]=e.value;gisTunda()};return gF(l,e)}
+    b.append(h('div',{class:'gis-sig'},h('b',{text:'Penanda tangan '+(i+1)}),f('jab','Jabatan atau peran'),f('nama','Nama'),f('org','Organisasi atau perusahaan'),f('tgl','Tanggal','date')));
+  })(i);
+}
+function gTabEkspor(b){
+  var o=GIS.o;
+  b.append(h('p',{class:'gis-grp',text:'Unduh layout'}),h('div',{class:'gis-row'},gIn('fmt','select',{l:'Format',o:[['png','PNG'],['jpeg','JPEG'],['pdf','PDF']]}),gIn('dpi','select',{l:'Resolusi',num:1,o:[[150,'150 DPI'],[300,'300 DPI']]})),
+    gIn('zipExtra','check',{l:'ZIP: tambah PNG area peta, world file (.pgw) dan proyeksi (.prj)'}),
+    gIn('zipData','check',{l:'ZIP: sertakan geometri dan atribut layer (GeoJSON WGS 84 dan CSV)'}));
+  var btn=h('button',{type:'button',class:'btn primary',onclick:function(){gisEkspor(btn)}},'Unduh layout');
+  b.append(h('div',{class:'acts'},btn),h('p',{class:'gis-note',text:'Bila salah satu opsi ZIP dicentang, hasilnya satu berkas ZIP. Tanpa itu, layout diunduh langsung sebagai '+o.fmt.toUpperCase()+'. PDF berisi gambar layout satu halaman (belum bergeoreferensi).'}));
+  b.append(h('p',{class:'gis-grp',text:'Proyek'}),h('div',{class:'acts'},
+    h('button',{type:'button',class:'btn',onclick:function(){gisSimpan()}},'Simpan di peramban'),
+    h('button',{type:'button',class:'btn',onclick:gisBuka},'Buka tersimpan'),
+    h('button',{type:'button',class:'btn',onclick:function(){gisUnduh(new Blob([JSON.stringify({nama:GIS.nama,layers:GIS.layers,v:GIS.v,o:GIS.o})],{type:'application/json'}),gisSlug(GIS.nama)+'.gis.json')}},'Unduh proyek')));
+  var fi=h('input',{type:'file',accept:'.json',hidden:true});fi.onchange=async function(){try{gisTerap(JSON.parse(await fi.files[0].text()));schedule();toast('Proyek dibuka')}catch(e){toast('Berkas proyek tidak valid')}fi.value=''};
+  b.append(fi,h('div',{class:'acts'},h('button',{type:'button',class:'btn',onclick:function(){fi.click()}},'Buka berkas proyek')));
+}
+function gisView(){
+  gisCss();
+  var root=h('div',{class:'gis'}),nm=h('input',{type:'text','aria-label':'Nama proyek'});nm.value=GIS.nama;nm.oninput=function(){GIS.nama=nm.value};
+  root.append(head('GIS','Buat layout peta siap cetak dari data koordinat, KML, GeoJSON, atau SHP. Semua proses berjalan di peramban Anda.'));
+  var bar=h('div',{class:'gis-bar'},nm,
+    h('button',{type:'button',class:'btn',onclick:function(){gisSimpan()}},'Simpan proyek'),
+    h('button',{type:'button',class:'btn',onclick:function(){GIS=gisBaru();schedule()}},'Proyek baru'),
+    h('button',{type:'button',class:'btn primary',onclick:function(){GIS.tab='ekspor';schedule()}},'Unduh peta'));
+  var tabs=h('div',{class:'gis-tabs',role:'tablist'},[['data','Data'],['layer','Layer'],['peta','Peta'],['layout','Layout'],['ttd','Pengesahan'],['ekspor','Ekspor']].map(function(t){
+    return h('button',{type:'button',role:'tab',class:'gis-tab'+(GIS.tab===t[0]?' on':''),'aria-selected':String(GIS.tab===t[0]),onclick:function(){GIS.tab=t[0];schedule()}},t[1])}));
+  var cv=h('canvas',{role:'img','aria-label':'Pratinjau layout peta'}),cvw=h('div',{class:'gis-cvw'},cv);
+  var tool=h('div',{class:'gis-tool'},
+    h('button',{type:'button',class:'btn',onclick:function(){gisZoomFaktor(0.5);gisGambar();if(GIS.o.skalaMode!=='bebas')schedule()},'aria-label':'Perbesar'},'+'),
+    h('button',{type:'button',class:'btn',onclick:function(){gisZoomFaktor(2);gisGambar();if(GIS.o.skalaMode!=='bebas')schedule()},'aria-label':'Perkecil'},'−'),
+    h('button',{type:'button',class:'btn',onclick:function(){gisZoomLayer()}},'Pas ke layer'),h('span',{class:'gis-st'}));
+  var prev=h('div',{class:'gis-prev'},tool,cvw);
+  GIS_CV=cv;
+  /* interaksi */
+  var drag=null;
+  cv.addEventListener('pointerdown',function(e){var r=cv.getBoundingClientRect(),pm=cv._pxmm/(cv.width/r.width),T=gisTata(GIS.o),x=(e.clientX-r.left)/(r.width/GIS.o_w||1);
+    var mmx=(e.clientX-r.left)/r.width*T.P[0],mmy=(e.clientY-r.top)/r.height*T.P[1],p=T.peta;
+    if(mmx<p.x||mmx>p.x+p.w||mmy<p.y||mmy>p.y+p.h)return;
+    drag={x:e.clientX,y:e.clientY,k:T.P[0]/r.width};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing'});
+  cv.addEventListener('pointermove',function(e){if(!drag)return;gisPan((e.clientX-drag.x)*drag.k,(e.clientY-drag.y)*drag.k);drag.x=e.clientX;drag.y=e.clientY;gisTunda()});
+  cv.addEventListener('pointerup',function(){drag=null;cv.style.cursor='grab'});
+  cv.addEventListener('pointercancel',function(){drag=null;cv.style.cursor='grab'});
+  cv.addEventListener('wheel',function(e){e.preventDefault();gisZoomFaktor(e.deltaY<0?0.8:1.25);gisTunda()},{passive:false});
+  root.append(bar,h('div',{class:'gis-body'},h('div',{class:'gis-side'},tabs,gTab()),prev));
+  setTimeout(function(){if(GIS_CV===cv){if(!GIS.layers.length&&!GIS._init){GIS._init=1;}gisGambar()}},0);
+  window.addEventListener('resize',gisUkur);
+  return root;
+}
+function gisUkur(){if(GIS_CV&&document.body.contains(GIS_CV))gisTunda()}
+function gisSegarkanForm(){schedule()}
+/* ---------- menu ---------- */
+(function(){
+  MGRP.gis='Operasional tambang';
+  var i=MORD.indexOf('fuelov');i=i<0?MORD.length:i+1;MORD.splice(i,0,'gis');
+  var NS=navSetup;
+  navSetup=function(){
+    MODS.push({k:'gis',t:'GIS',i:'M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10zM12 8a2.5 2.5 0 100 5 2.5 2.5 0 000-5z'});
+    NS();
+  };
+  if(typeof SUB_KUNCI_DASAR!=='undefined'&&SUB_KUNCI_DASAR.indexOf('gis')<0)SUB_KUNCI_DASAR.push('gis');
+  if(typeof PR_MENU!=='undefined')['hse','pjo','qaqc'].forEach(function(p){if(PR_MENU[p]&&PR_MENU[p].indexOf('gis')<0){var j=PR_MENU[p].indexOf('setelan');PR_MENU[p].splice(j<0?PR_MENU[p].length:j,0,'gis')}});
+})();
 /* ---------- Kode standar dengan inisial perusahaan di depan (Warehouse dan Fuel) ----------
    Inisial: kolom Inisial pada data kontraktor (atau huruf awal nama), atau kode perusahaan sendiri di Pengaturan Pengapalan.
    Contoh: kode barang MBP-0001, nama tangki MBP-TK-01, store slip MBP/SS/2026/001, BA fuel MBP/BAF/2026/001. */
@@ -17261,7 +18109,7 @@ VIEWS.inventaris=function(){return invView()};
 VIEWS.asetsite=function(){return asetView()};
 VIEWS.operasional=function(){return opView()};
 VIEWS.pgdash=function(){return pgTabWrap('pgdash',pgDash)};VIEWS.pgship=function(){return pgTabWrap('pgship',pgShip)};VIEWS.pgarsip=function(){return pgTabWrap('pgarsip',pgArsip)};VIEWS.pgmaster=function(){return pgTabWrap('pgmaster',pgMaster)};VIEWS.pgset=function(){return pgTabWrap('pgset',pgSetting)};VIEWS.pgtrack=function(){return pgTabWrap('pgtrack',pgTrack)};VIEWS.pgcek=function(){return pgTabWrap('pgcek',pgCek)};
-VIEWS.kredit=function(){return krView()};VIEWS.prodov=function(){return prodView()};VIEWS.plantov=function(){return plantView()};VIEWS.fuelov=function(){return fuelView()};VIEWS.settling=function(){return spView()};VIEWS.whov=function(){return whView()};
+VIEWS.kredit=function(){return krView()};VIEWS.gis=function(){return gisView()};VIEWS.prodov=function(){return prodView()};VIEWS.plantov=function(){return plantView()};VIEWS.fuelov=function(){return fuelView()};VIEWS.settling=function(){return spView()};VIEWS.whov=function(){return whView()};
 VIEWS.setelan=function(){return setView()};
 VIEWS.kontraktor=function(){
   var m=metrics(),root=h('div',{style:'display:flex;flex-direction:column;gap:16px'});
