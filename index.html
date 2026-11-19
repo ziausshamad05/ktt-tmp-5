@@ -1371,6 +1371,26 @@ html.hg-on body>*:not(#hostgate){visibility:hidden}
 .hg-plan .hg-row{display:flex;gap:8px;flex-wrap:wrap}
 .hg-inv{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .hg-inv input{flex:1 1 200px;min-width:0}
+
+/* pemberitahuan promo di layar masuk */
+.hg-promo{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:5;width:min(380px,calc(100vw - 32px));
+ background:var(--surface2);border:1px solid rgba(242,196,104,.45);border-radius:14px;padding:16px 16px 14px;box-shadow:0 18px 48px rgba(0,0,0,.45);
+ display:grid;gap:8px;animation:hgpromo .45s var(--ease) both}
+.hg-promo b{font-size:15.5px;line-height:1.3;color:var(--ink);padding-right:30px}
+.hg-promo p{margin:0;font-size:13.5px;line-height:1.5;color:var(--muted)}
+.hg-promo .hp-k{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--warn);margin:0}
+.hg-promo .hp-list{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:4px;font-size:13.5px;color:var(--ink)}
+.hg-promo .hp-list li{display:flex;justify-content:space-between;gap:10px}
+.hg-promo .hp-list s{color:var(--muted);margin-right:6px}
+.hg-promo .hp-act{display:flex;gap:8px;margin-top:4px}
+.hg-promo .hp-act .btn{flex:1;min-height:44px;transition:transform .15s var(--ease),background .15s}
+.hg-promo .hp-act .btn:hover{transform:translateY(-1px)}.hg-promo .hp-act .btn:active{transform:translateY(0)}
+.hg-promo .hp-x{position:absolute;top:6px;right:6px;width:44px;height:44px;border:0;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;border-radius:10px}
+.hg-promo .hp-x:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+.hg-promo .hp-x:focus-visible,.hg-promo .btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+@keyframes hgpromo{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media(max-width:640px){.hg-promo{left:16px;right:16px;width:auto;top:max(16px,env(safe-area-inset-top,0px));bottom:auto}}
+@media(prefers-reduced-motion:reduce){.hg-promo{animation:none}.hg-promo .hp-act .btn{transition:none}}
 .qr-box{display:flex;flex-direction:column;gap:12px;align-items:stretch}
 .qr-top{display:flex;flex-direction:column;gap:2px;text-align:center}
 .qr-top small{color:var(--muted);font-size:12.5px;line-height:1.45}
@@ -10351,6 +10371,44 @@ function hostPaket(){
   box.append(h('p',{class:'pk-foot',text:'Paket dibeli setelah masuk, di menu Langganan dan paket. Harga belum termasuk PPN.'}));
   return box;
 }
+/* ===== Pemberitahuan promo hampir berakhir di layar masuk (bisa ditutup) ===== */
+var HP_AMBANG=7,HP_KEY='ktt.promo.tutup';
+function hostPromoInfo(){
+  try{
+    var rows=subKat().plans.map(function(p){return {p:p,pr:subPromo(p)}}).filter(function(x){return x.pr.on&&x.pr.sisa<=HP_AMBANG});
+    if(!rows.length)return null;
+    rows.sort(function(a,b){return a.pr.sisa-b.pr.sisa});return {rows:rows,sampai:rows[0].pr.sampai,sisa:rows[0].pr.sisa};
+  }catch(e){return null}
+}
+function hostPromoTutup(sampai,simpan){
+  var el=document.getElementById('hg-promo');if(el)el.remove();
+  if(simpan){try{sessionStorage.setItem(HP_KEY,sampai)}catch(e){}}
+}
+function hostPromoTampil(){
+  var g=document.getElementById('hostgate');if(!g||document.getElementById('hg-promo'))return;
+  var info=hostPromoInfo();if(!info)return;
+  try{if(sessionStorage.getItem(HP_KEY)===info.sampai)return}catch(e){}
+  var ttl=h('b',{id:'hg-promo-t',text:'Promo bulanan segera berakhir'}),
+    x=h('button',{type:'button',class:'hp-x','aria-label':'Tutup pemberitahuan promo',onclick:function(){hostPromoTutup(info.sampai,true)}},'×'),
+    box=h('section',{id:'hg-promo',class:'hg-promo',role:'dialog','aria-labelledby':'hg-promo-t','aria-describedby':'hg-promo-d'},x,
+      h('p',{class:'hp-k',text:info.sisa<=0?'Berakhir hari ini':'Sisa '+info.sisa+' hari'}),ttl,
+      h('p',{id:'hg-promo-d',text:'Harga promo berlaku sampai '+fmt(info.sampai)+'. Setelah itu paket kembali ke harga normal.'}),
+      h('ul',{class:'hp-list'},info.rows.map(function(r){var b=Number(r.p.bln)||0,n=Number(r.p.normal)||0;
+        return h('li',null,h('span',{text:'Paket '+r.p.nama}),h('span',null,h('s',{text:subRp(n)}),subRp(b)+'/bln'))})),
+      h('div',{class:'hp-act'},
+        h('button',{type:'button',class:'btn primary',onclick:function(){hostPromoTutup(info.sampai,true);var pk=document.querySelector('.hg-pk');if(pk){pk.scrollIntoView({behavior:'smooth',block:'center'});pk.setAttribute('tabindex','-1');pk.focus({preventScroll:true})}}},'Lihat paket'),
+        h('button',{type:'button',class:'btn',onclick:function(){hostPromoTutup(info.sampai,true)}},'Tutup')));
+  box.addEventListener('keydown',function(e){if(e.key==='Escape'){e.stopPropagation();hostPromoTutup(info.sampai,true)}});
+  g.append(box);
+}
+(function(){
+  var HS=hostScreen;
+  hostScreen=function(kind){
+    var r=HS.apply(this,arguments);
+    if(kind==='login'||kind==='signup')hostPromoTampil();else hostPromoTutup(null,false);
+    return r;
+  };
+})();
 /* ===== Chat CS (pop up kanan bawah) + Kredit AI ===== */
 var CH={open:false,rows:[],last:0,seen:0,busy:false,ai:false,info:null,ht:null,mounted:false,err:''};
 var KR={info:null,reqs:[],at:0,busy:false};
