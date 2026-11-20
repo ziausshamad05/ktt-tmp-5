@@ -1810,6 +1810,85 @@ html.lc-on body>*:not(.lc-pub):not(script):not(style){display:none!important}
 .paper .pp-sign b,.paper .pp-sign span{display:block}.paper .pp-sign span{font-size:12px;color:#5f6a63}
 @media (max-width:520px){.paper{padding:18px 14px}.paper .pp-kv{grid-template-columns:1fr}.paper .pp-kv dt{border-bottom:0;padding-bottom:0}}
 
+
+/* ---------- pengingat surat: lonceng, kartu, formulir ---------- */
+input[type=time],input[type=tel]{border:1px solid var(--line);border-radius:12px;padding:9px 12px;background:var(--surface2);min-width:0;max-width:100%;color:inherit;font:inherit;transition:border-color .3s}
+input[type=time]:focus,input[type=tel]:focus{border-color:var(--brand);outline:none;box-shadow:0 0 0 3px var(--glow)}
+.btn.ghost{border-color:transparent}
+.btn.ghost:hover{border-color:var(--line)}
+.igb{position:relative;flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:grid;place-items:center;padding:0;transition:border-color .3s,transform .25s var(--ease)}
+.igb:hover{border-color:var(--brand)}
+.igb:active{transform:scale(.94)}
+.igb:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.igb svg{width:20px;height:20px}
+.igb .clap{transform-origin:12px 4px}
+.igb.on .clap{animation:igRing 2.8s var(--ease) infinite}
+.igb .ig-n0{position:absolute;top:-3px;right:-3px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:var(--warn);color:#fff;font:600 11px/19px var(--f-body,inherit);text-align:center;box-shadow:0 0 0 2px var(--surface)}
+@keyframes igRing{0%,70%,100%{transform:rotate(0)}74%{transform:rotate(14deg)}80%{transform:rotate(-12deg)}86%{transform:rotate(8deg)}92%{transform:rotate(-4deg)}}
+@media (prefers-reduced-motion:reduce){.igb.on .clap{animation:none}}
+.who{display:flex;align-items:center;gap:10px}
+.ig-center{display:flex;flex-direction:column;gap:8px}
+.ig-center .fsec{margin:10px 0 2px;padding-top:10px;border-top:1px solid var(--line);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:600;color:var(--muted)}
+.ig-center .fsec:first-of-type{border-top:0;padding-top:0}
+.ig-perm{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;padding:10px 14px;border-radius:14px;background:var(--brand-soft)}
+.ig-perm p{margin:0;font-size:13px}
+.ig-list{display:flex;flex-direction:column;gap:10px}
+.ig-card{display:grid;grid-template-columns:118px minmax(0,1fr);gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.ig-card.due{border-color:color-mix(in srgb,var(--warn) 55%,var(--line));background:color-mix(in srgb,var(--warn-soft) 45%,var(--surface))}
+.ig-when{display:flex;flex-direction:column;gap:2px;padding-right:12px;border-right:1px dashed var(--line)}
+.ig-when b{font-size:14px;font-weight:700}
+.ig-card.due .ig-when b{color:var(--warn)}
+.ig-when small{color:var(--muted);font-size:12px}
+.ig-body{min-width:0;display:flex;flex-direction:column;gap:4px}
+.ig-body p{margin:0}
+.ig-t{font-weight:600;overflow-wrap:anywhere}
+.ig-m{color:var(--muted);font-size:12.5px;overflow-wrap:anywhere}
+.ig-n{font-size:13px;padding-left:10px;border-left:2px solid var(--line)}
+.ig-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:2px}
+.ig-tags small{color:var(--muted);font-size:11.5px}
+.ig-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.ig-wa{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--good);border-color:color-mix(in srgb,var(--good) 45%,var(--line))}
+.ig-wai{width:15px;height:15px;flex:none}
+.ig-cell{display:inline-flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.ig-form{grid-column:1/-1;display:flex;flex-direction:column;gap:10px}
+.ig-form[hidden]{display:none!important}
+.ig-sw{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:14px;cursor:pointer;background:var(--surface)}
+.ig-sw:hover{border-color:var(--brand)}
+.ig-sw input{width:18px;height:18px;margin-top:2px;accent-color:var(--brand);flex:none}
+.ig-sw span{display:flex;flex-direction:column;gap:2px}
+.ig-sw small{color:var(--muted);font-size:12.5px}
+.ig-in{display:flex;flex-direction:column;gap:10px;padding-left:14px;border-left:2px solid var(--brand-soft)}
+.ig-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ig-wabox{display:flex;flex-direction:column;gap:8px}
+.ig-wabox .sub{margin:0;font-size:12.5px;color:var(--muted)}
+.ig-rcp{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.ig-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) auto;gap:8px;align-items:start;width:100%}
+.ig-row input{width:100%}
+.ig-noc{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ig-ok{font-size:11.5px;color:var(--good);min-height:14px}
+.ig-ok.bad{color:var(--crit)}
+@media (max-width:560px){
+  .ig-card{grid-template-columns:1fr;gap:8px}
+  .ig-when{flex-direction:row;gap:8px;align-items:baseline;border-right:0;padding-right:0}
+  .ig-grid{grid-template-columns:1fr}
+  .ig-row{grid-template-columns:1fr;padding:8px;border:1px solid var(--line);border-radius:12px}
+  .igb{width:40px;height:40px}
+}
+
+/* kirim WhatsApp sekarang */
+.ig-send{display:flex;flex-direction:column;gap:10px}
+.ig-send .fsec{margin:4px 0 0;padding-top:10px;border-top:1px solid var(--line);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:600;color:var(--muted)}
+.ig-msg{font:13.5px/1.5 var(--f-body,inherit);white-space:pre-wrap}
+.ig-sendl{display:flex;flex-direction:column;gap:8px}
+.ig-sendr{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.ig-who{display:flex;flex-direction:column;flex:1;min-width:0}
+.ig-who small{color:var(--muted);font-size:12px}
+.ig-wa.done{opacity:.75}
+.ig-addr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:center}
+.ig-sw2{background:transparent;padding:8px 10px}
+.btn.ig-wa{display:inline-flex;align-items:center;gap:6px}
+@media (max-width:560px){.ig-addr{grid-template-columns:1fr}.ig-sendr{flex-wrap:wrap}}
+@media (max-width:520px){.who .igb span.ig-n0:not([hidden]){display:block}.who{gap:6px}.igb{width:36px;height:36px}.igb svg{width:18px;height:18px}.topin .brandmark h1{overflow:hidden;text-overflow:ellipsis}}
 </style>
 
 <div class="bg" aria-hidden="true"></div>
@@ -1821,6 +1900,7 @@ html.lc-on body>*:not(.lc-pub):not(script):not(style){display:none!important}
     <div><h1>Platform KTT</h1><small>PT Surya Saga Utama · IUP Operasi Produksi</small></div>
   </div>
   <div class="who"><span class="dot"></span><span id="whoktt">Pjs. KTT <b>Andy Fadjrun Assiddiqi</b></span>
+    <button class="igb" id="igbell" type="button" aria-label="Notifikasi pengingat surat" title="Pengingat surat keluar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><g class="clap"><path d="M6.2 16.5V11a5.8 5.8 0 0111.6 0v5.5l1.5 1.8H4.7z"/><path d="M12 3.2v1.9"/></g><path d="M10 20.4a2.1 2.1 0 004 0"/></svg><span class="ig-n0" hidden>0</span></button>
     <button class="tt" id="tt" type="button" aria-pressed="false" aria-label="Ganti tema">
       <svg class="tick" viewBox="0 0 44 44" aria-hidden="true"><g stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".7"><path d="M22 2.5v3M22 38.5v3M2.5 22h3M38.5 22h3"/></g></svg>
       <svg class="needle" viewBox="0 0 44 44" aria-hidden="true"><path d="M22 6l3 16h-6z" fill="var(--brand)"/><path d="M22 38l-3-16h6z" fill="var(--muted)" opacity=".6"/></svg>
@@ -2323,6 +2403,7 @@ var CFG={
    {l:'Tanggal',r:function(r){return fmt(r.tanggal)}},
    {l:'Perihal',r:function(r){return h('span',{class:'clip',text:r.perihal||''})}},
    {l:'Pihak',r:function(r){return r.pihak||'—'}},
+   {l:'Notifikasi',r:function(r){return igCol(r)}},
    {l:'Status',r:function(r){return badge(r.status||'—',r.arah==='Keluar'&&r.status==='Terkirim'?'info':srTone(r.status))}}]},
  personel:{key:'personel',add:'Tambah personel',empty:'Belum ada personel.',title:'Personel',
   fields:[
@@ -2465,6 +2546,7 @@ function openForm(key,row,pre){if(key==='ptw'&&row&&!PTW_RAW)return ptwDetail(ro
     if(f.dl){ctl.setAttribute('list','dl-'+f.k);lab.append(h('datalist',{id:'dl-'+f.k},f.dl.map(function(o){return h('option',{value:o})})))}
     form.append(lab);
   });
+  var IG=key==='surat'?igField(row,ro,form,pre):null;if(IG)form.append(IG.el);
   var BK=bkField(key,row,ro);if(BK.el)form.append(BK.el);
   var err=h('p',{class:'err',hidden:true});
   form.append(err);
@@ -2481,10 +2563,12 @@ function openForm(key,row,pre){if(key==='ptw'&&row&&!PTW_RAW)return ptwDetail(ro
     });
     if(bad||msg){err.textContent=bad?bad+' wajib diisi.':msg;err.hidden=false;return}
     if(row&&row.demo)out.demo=true;
+    if(IG){var ige=IG.collect(out);if(ige){err.textContent=ige;err.hidden=false;return}}
     if(key==='surat')srAfterForm(out,form,row);
     if(key==='ptw'){var pe=ptwCheck(out);if(pe){err.textContent=pe;err.hidden=false;return}ptwAfterForm(out,row)}
     if(key==='distribusi'&&row){out.urut=row.urut;out.kelompok=row.kelompok;out.diterima=row.diterima}
-    try{var rid=await save(key,row&&row.id,out);await BK.commit(row&&row.id?row.id:rid);closeModal();toast('Tersimpan')}
+    try{var rid=await save(key,row&&row.id,out);await BK.commit(row&&row.id?row.id:rid);closeModal();toast('Tersimpan');
+      if(IG&&IG.sendNow())igSendNow(Object.assign({id:row&&row.id?row.id:rid},out))}
     catch(x){err.textContent='Gagal menyimpan. '+(x&&x.message?x.message:'Periksa akses Anda.');err.hidden=false}
   });
   var acts=h('div',{class:'acts'});
@@ -2496,6 +2580,7 @@ function openForm(key,row,pre){if(key==='ptw'&&row&&!PTW_RAW)return ptwDetail(ro
     });
     acts.append(del);
   }
+  if(key==='surat'&&row&&row.arah==='Keluar')acts.append(h('button',{type:'button',class:'btn ig-wa',onclick:function(){igSendNow(row)}},igWaIcon(),'Kirim WhatsApp'));
   acts.append(h('span',{class:'grow'}),h('button',{type:'button',class:'btn',onclick:closeModal},ro?'Tutup':'Batal'));
   if(!ro)acts.append(h('button',{type:'submit',class:'btn primary'},'Simpan'));
   form.append(acts);
@@ -2621,6 +2706,7 @@ function attention(m){
   (function(){var w=ptwMetrik();if(w.kedal)a.push({tone:'crit',t:'Izin kerja kedaluwarsa dan belum ditutup: '+w.kedal+'.',to:'ptw'});if(w.tunggu)a.push({tone:'warn',t:'Izin kerja menunggu keputusan HSE atau KTT: '+w.tunggu+'.',to:'ptw'})})();
   if(m.izinIncomplete.length)a.push({tone:'info',t:m.izinIncomplete.length+' dokumen perizinan belum lengkap nomor dan masa berlakunya.',to:'izin'});
   if(m.pjoOpen)a.push({tone:m.pjoBaru?'warn':'info',t:'Surat dari PJO belum selesai: '+m.pjoOpen+' dari '+m.pjoAll+' surat'+(m.pjoBaru?', '+m.pjoBaru+' belum dibuka.':'.'),to:'surat'});
+  (function(){var d=igItems().filter(function(x){return x.due});if(d.length)a.push({tone:'warn',t:d.length===1?'Pengingat surat keluar jatuh tempo: '+(d[0].r.perihal||'')+'.':d.length+' pengingat surat keluar jatuh tempo.',to:'surat'})})();
   rkAttnItems().forEach(function(x){a.push(x)});rcAttnItems().forEach(function(x){a.push(x)});
   var rank={crit:0,warn:1,info:2};a.sort(function(x,y){return rank[x.tone]-rank[y.tone]});
   return a;
@@ -7863,6 +7949,7 @@ function suratView(){
     kpi('Diterima',String(m.terima),'Sudah dibuka, belum ditindaklanjuti',m.terima?'info':''),
     kpi('Ditindaklanjuti',String(m.tindak),'Sedang diproses',m.tindak?'info':''),
     kpi('Selesai',String(m.selesai),'Dari '+m.all+' surat PJO',m.all&&m.selesai===m.all?'good':'')));
+  root.append(igPanel());
   root.append(panel('Disposisi dari PJO','Klik surat untuk membaca. Menulis draf balasan menjadikannya Ditindaklanjuti, dan mengirim balasan menyelesaikannya.',srInbox()));
   root.append(panel('Register surat','Semua surat masuk dan keluar, termasuk surat dari PJO dan balasannya. Status ditentukan sistem dan tidak bisa diubah manual.',listView('surat')));
   return root;
@@ -8007,6 +8094,335 @@ function srAfterForm(out,form,row){
   /* status tidak dipilih di formulir: ikuti status tersimpan atau tentukan otomatis */
   if(!out.status)out.status=srAutoStatus(out.arah,row&&row.status);
   ['draf_nomor','draf_balasan','tindak_at','selesai_at'].forEach(function(k){if(row&&row[k]!=null&&out[k]==null)out[k]=row[k]});
+}
+
+/* ---------- Pengingat surat keluar: lonceng notifikasi dan kirim ke WhatsApp ----------
+   Data disimpan di baris surat itu sendiri:
+   ingat_on, ingat_tgl, ingat_jam, ingat_ulang, ingat_sampai, ingat_pesan, ingat_ok (terakhir ditangani), ingat_tunda,
+   wa_on, wa_to [{nama,no}], wa_log [{t,no,oleh}] */
+var IG_ULANG=['Sekali','Setiap hari sampai dihentikan'];
+var IG_SEEN={};
+try{IG_SEEN=JSON.parse(localStorage.getItem('ktt-ig-seen')||'{}')||{}}catch(e){IG_SEEN={}}
+function igSeenSave(){try{var k=Object.keys(IG_SEEN);if(k.length>300)k.slice(0,k.length-300).forEach(function(x){delete IG_SEEN[x]});localStorage.setItem('ktt-ig-seen',JSON.stringify(IG_SEEN))}catch(e){}}
+function igNo(v){var d=String(v||'').replace(/\D/g,'');if(!d)return '';if(d.indexOf('0')===0)d='62'+d.slice(1);else if(d.indexOf('8')===0)d='62'+d;return d}
+function igNoOk(v){return /^62\d{8,13}$/.test(igNo(v))}
+function igNoFmt(v){var d=igNo(v);if(!d)return '';var r=d.slice(2);return '+62 '+r.slice(0,3)+'-'+r.slice(3,7)+(r.length>7?'-'+r.slice(7):'')}
+function igMe(){return (typeof HOST!=='undefined'&&HOST.member&&(HOST.member.nama||HOST.member.email))||'KTT'}
+/* waktu pengingat berikutnya untuk satu surat; null bila tidak aktif atau sudah tuntas */
+function igAt(r){
+  if(!r||!r.ingat_on||r.arah!=='Keluar'||r.status==='Selesai'||!r.ingat_tgl)return null;
+  var base=parse(r.ingat_tgl);if(!base)return null;
+  var j=String(r.ingat_jam||'08:00').split(':');base.setHours(Number(j[0])||0,Number(j[1])||0,0,0);
+  var now=new Date(),d=new Date(base.getTime()),ok=r.ingat_ok?new Date(r.ingat_ok):null;
+  if(r.ingat_ulang===IG_ULANG[1]){
+    if(now>d){var t=new Date(now.getTime());t.setHours(base.getHours(),base.getMinutes(),0,0);if(t>now)t.setDate(t.getDate()-1);d=t}
+    if(ok&&ok>=d)d.setDate(d.getDate()+1);
+    if(r.ingat_sampai){var s=parse(r.ingat_sampai);if(s){s.setHours(23,59,59,999);if(d>s)return null}}
+  }else if(ok)return null;
+  if(r.ingat_tunda){var td=new Date(r.ingat_tunda);if(!isNaN(td)&&td>d)d=td}
+  return d;
+}
+function igItems(){
+  var now=Date.now(),a=[];
+  ((typeof SALL!=='undefined'&&SALL.surat)||S.surat||[]).forEach(function(r){var d=igAt(r);if(d)a.push({r:r,at:d,due:d.getTime()<=now})});
+  a.sort(function(x,y){return x.at-y.at});
+  return a;
+}
+function igWaktu(d){return d.toLocaleString('id-ID',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
+function igRel(d){
+  var m=Math.round((d.getTime()-Date.now())/6e4),a=Math.abs(m),t;
+  if(a<1)return 'sekarang';
+  t=a<60?a+' menit':a<1440?Math.round(a/60)+' jam':Math.round(a/1440)+' hari';
+  return m<0?'lewat '+t:'dalam '+t;
+}
+function igPesan(r){
+  var L=['*Pengingat Surat Keluar*',''];
+  L.push('Perihal: '+(r.perihal||'-'));
+  if(r.nomor)L.push('Nomor: '+r.nomor);
+  L.push('Tanggal surat: '+fmt(r.tanggal));
+  if(r.pihak)L.push('Tujuan: '+r.pihak);
+  L.push('Status: '+(r.status||'-'));
+  if(r.ingat_pesan)L.push('','Catatan: '+r.ingat_pesan);
+  var co='';try{co=coName()}catch(e){}
+  L.push('','Dikirim dari Platform KTT'+(co?' · '+co:''));
+  return L.join('\n');
+}
+function igWaUrl(no,r){return 'https://wa.me/'+igNo(no)+'?text='+encodeURIComponent(igPesan(r))}
+async function igPatch(r,patch){
+  if(!canWrite)throw new Error('Akun ini hanya dapat melihat.');
+  var cur=(SALL.surat||[]).find(function(x){return x.id===r.id})||r,d=Object.assign({},cur);delete d.id;
+  Object.keys(patch).forEach(function(k){if(patch[k]==null)delete d[k];else d[k]=patch[k]});
+  await save('surat',r.id,d);
+}
+function igLogWa(r,no){
+  if(!canWrite)return;
+  var log=(Array.isArray(r.wa_log)?r.wa_log.slice(-19):[]).concat([{t:new Date().toISOString(),no:igNo(no),oleh:igMe()}]);
+  igPatch(r,{wa_log:log}).catch(function(){});
+}
+function igWaBtns(r){
+  if(!r.wa_on||!Array.isArray(r.wa_to)||!r.wa_to.length)return null;
+  return r.wa_to.filter(function(p){return igNoOk(p.no)}).map(function(p){
+    return h('a',{class:'btn sm ig-wa',href:igWaUrl(p.no,r),target:'_blank',rel:'noopener',title:'Buka WhatsApp dengan pesan pengingat yang sudah terisi',
+      onclick:function(){igLogWa(r,p.no)}},igWaIcon(),'WA '+(p.nama||igNoFmt(p.no)));
+  });
+}
+function igWaIcon(){
+  var s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 24 24');s.setAttribute('aria-hidden','true');s.setAttribute('class','ig-wai');
+  s.innerHTML='<path d="M12 3.2a8.7 8.7 0 00-7.5 13.1L3.3 20.8l4.6-1.2A8.7 8.7 0 1012 3.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 8.3c.2-.4.4-.4.7-.4h.5c.2 0 .4 0 .5.4l.7 1.6c.1.2 0 .4-.1.6l-.5.6c-.1.1-.1.3 0 .5.6 1 1.4 1.8 2.4 2.3.2.1.4.1.5 0l.6-.7c.2-.2.4-.2.6-.1l1.6.8c.3.1.3.3.3.5 0 .9-.7 1.7-1.6 1.8-1.1.1-2.5-.3-4.1-1.7-1.9-1.6-2.6-3.3-2.6-4.3 0-.8.3-1.4.5-1.9z" fill="currentColor"/>';
+  return s;
+}
+/* satu kartu pengingat: dipakai di lonceng notifikasi dan di menu Surat */
+function igCard(it,onDone){
+  var r=it.r,acts=h('div',{class:'ig-acts'}),wa=igWaBtns(r);
+  function act(label,patch,msg){
+    return h('button',{type:'button',class:'btn sm',disabled:!canWrite,onclick:async function(e){
+      e.currentTarget.disabled=true;
+      try{await igPatch(r,patch);toast(msg);if(onDone)onDone()}catch(x){toast('Gagal menyimpan. '+(x.message||''))}
+    }},label);
+  }
+  if(wa)add(acts,wa);
+  if(it.due){
+    var t1=new Date(Date.now()+36e5),t2=new Date();t2.setDate(t2.getDate()+1);var jm=String(r.ingat_jam||'08:00').split(':');t2.setHours(Number(jm[0])||8,Number(jm[1])||0,0,0);
+    add(acts,[
+      act('Tunda 1 jam',{ingat_tunda:t1.toISOString()},'Pengingat ditunda 1 jam'),
+      r.ingat_ulang===IG_ULANG[1]?null:act('Ingatkan besok',{ingat_tunda:t2.toISOString()},'Pengingat dipindah ke besok'),
+      act(r.ingat_ulang===IG_ULANG[1]?'Selesai hari ini':'Tandai selesai',{ingat_ok:new Date().toISOString(),ingat_tunda:null},'Pengingat ditandai selesai')]);
+  }
+  acts.append(h('button',{type:'button',class:'btn sm ghost',onclick:function(){closeModal();openForm('surat',r)}},'Buka surat'));
+  var meta=[r.pihak||'Tujuan belum diisi',r.nomor||'belum bernomor'].join(' · ');
+  var last=Array.isArray(r.wa_log)&&r.wa_log.length?r.wa_log[r.wa_log.length-1]:null;
+  return h('article',{class:'ig-card'+(it.due?' due':'')},
+    h('div',{class:'ig-when'},h('b',{text:igRel(it.at)}),h('small',{text:igWaktu(it.at)})),
+    h('div',{class:'ig-body'},
+      h('p',{class:'ig-t',text:r.perihal||'(tanpa perihal)'}),
+      h('p',{class:'ig-m',text:meta}),
+      r.ingat_pesan?h('p',{class:'ig-n',text:r.ingat_pesan}):null,
+      h('p',{class:'ig-tags'},
+        badge(r.ingat_ulang===IG_ULANG[1]?'Harian':'Sekali','mute'),
+        r.wa_on?badge('WhatsApp · '+((r.wa_to||[]).length)+' penerima','good'):badge('Hanya di aplikasi','mute'),
+        last?h('small',{text:'WA terakhir dibuka '+srWaktu(last.t)}):null),
+      acts));
+}
+/* ---- lonceng di kepala halaman ---- */
+function igBell(){return document.getElementById('igbell')}
+function igPaintBell(){
+  var b=igBell();if(!b)return;
+  var pj=false;try{pj=srPjo()}catch(e){}
+  b.hidden=pj;if(pj)return;
+  var n=igItems().filter(function(x){return x.due}).length,c=b.querySelector('.ig-n0');
+  c.textContent=n>9?'9+':String(n);c.hidden=!n;
+  b.classList.toggle('on',n>0);
+  b.setAttribute('aria-label',n?n+' pengingat surat jatuh tempo':'Notifikasi pengingat surat');
+}
+function igCenter(){
+  var box=h('div',{class:'ig-center'});
+  function draw(){
+    var all=igItems(),due=all.filter(function(x){return x.due}),
+      soon=all.filter(function(x){return !x.due&&x.at.getTime()-Date.now()<=7*864e5}),later=all.length-due.length-soon.length;
+    box.replaceChildren();
+    if('Notification' in window&&Notification.permission==='default')box.append(h('div',{class:'ig-perm'},
+      h('p',{text:'Izinkan notifikasi browser agar pengingat muncul walau Anda sedang di menu lain.'}),
+      h('button',{type:'button',class:'btn sm',onclick:function(){try{Notification.requestPermission().then(draw)}catch(e){}}},'Izinkan notifikasi')));
+    box.append(h('p',{class:'fsec',text:'Jatuh tempo ('+due.length+')'}));
+    box.append(due.length?h('div',{class:'ig-list'},due.map(function(x){return igCard(x,function(){draw();igPaintBell()})})):h('p',{class:'empty',text:'Tidak ada pengingat yang jatuh tempo.'}));
+    box.append(h('p',{class:'fsec',text:'Tujuh hari ke depan ('+soon.length+')'}));
+    box.append(soon.length?h('div',{class:'ig-list'},soon.map(function(x){return igCard(x)})):h('p',{class:'empty',text:'Belum ada jadwal dalam tujuh hari ke depan.'}));
+    if(later)box.append(h('p',{class:'sub',text:later+' pengingat lain dijadwalkan lebih dari tujuh hari lagi. Lihat semuanya di menu Surat Menyurat.'}));
+    box.append(h('div',{class:'acts',style:'display:flex;gap:8px;justify-content:flex-end;margin-top:14px'},
+      canWrite?h('button',{type:'button',class:'btn',onclick:function(){closeModal();openForm('surat',null,{arah:'Keluar',ingat_on:true})}},'Surat keluar baru dengan pengingat'):null,
+      h('button',{type:'button',class:'btn primary',onclick:function(){closeModal();location.hash='surat'}},'Ke Surat Menyurat')));
+  }
+  openModal('Notifikasi pengingat',box);draw();
+}
+/* ---- pemeriksa berkala: munculkan toast dan notifikasi browser saat jatuh tempo ---- */
+function igTick(){
+  igPaintBell();
+  var pj=false;try{pj=srPjo()}catch(e){}
+  if(pj)return;
+  var baru=igItems().filter(function(x){return x.due&&!IG_SEEN[x.r.id+'@'+x.at.getTime()]});
+  if(!baru.length)return;
+  baru.forEach(function(x){IG_SEEN[x.r.id+'@'+x.at.getTime()]=1});igSeenSave();
+  var x=baru[0];
+  toast('Pengingat surat: '+(x.r.perihal||'').slice(0,70)+(baru.length>1?' (+'+(baru.length-1)+' lainnya)':''));
+  try{
+    if('Notification' in window&&Notification.permission==='granted'){
+      var n=new Notification('Pengingat surat keluar',{body:(x.r.perihal||'')+(x.r.pihak?'\nTujuan: '+x.r.pihak:'')+(x.r.wa_on?'\nBuka untuk kirim ke WhatsApp.':''),tag:'ktt-ig-'+x.r.id});
+      n.onclick=function(){try{window.focus()}catch(e){}igCenter();n.close()};
+    }
+  }catch(e){}
+  if(active==='surat')schedule();
+}
+function igStart(){
+  var b=igBell();
+  if(b&&!b._ig){b._ig=1;b.addEventListener('click',igCenter)}
+  igTick();
+  setInterval(igTick,30000);
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')igTick()});
+}
+/* ---- kirim WhatsApp sekarang: jendela dengan pesan yang bisa disunting dan tombol per penerima ---- */
+function igPesanKirim(r){
+  var L=['*Pemberitahuan Surat Keluar*',''];
+  L.push('Perihal: '+(r.perihal||'-'));
+  if(r.nomor)L.push('Nomor: '+r.nomor);
+  L.push('Tanggal surat: '+fmt(r.tanggal));
+  if(r.pihak)L.push('Tujuan: '+r.pihak);
+  if(r.isi)L.push('','Isi/catatan: '+String(r.isi).slice(0,600));
+  var co='';try{co=coName()}catch(e){}
+  L.push('','Dikirim dari Platform KTT'+(co?' · '+co:''));
+  return L.join('\n');
+}
+function igSendNow(r0){
+  var r=Object.assign({},r0),box=h('div',{class:'ig-send'});
+  var ps=(Array.isArray(r.wa_to)?r.wa_to:[]).filter(function(p){return igNoOk(p.no)}).map(function(p){return {nama:p.nama||'',no:igNo(p.no),sent:false}});
+  var txt=h('textarea',{rows:9,class:'ig-msg','aria-label':'Isi pesan WhatsApp'});txt.value=igPesanKirim(r);
+  var list=h('div',{class:'ig-sendl'});
+  function href(no){return 'https://wa.me/'+igNo(no)+'?text='+encodeURIComponent(txt.value)}
+  function log(no){
+    if(!canWrite||!r.id)return;
+    var cur=(SALL.surat||[]).find(function(x){return x.id===r.id})||r;
+    var lg=(Array.isArray(cur.wa_log)?cur.wa_log.slice(-19):[]).concat([{t:new Date().toISOString(),no:igNo(no),oleh:igMe(),jenis:'kirim'}]);
+    r.wa_log=lg;igPatch(cur,{wa_log:lg}).catch(function(){});
+  }
+  function draw(){
+    list.replaceChildren();
+    if(!ps.length)list.append(h('p',{class:'empty',style:'padding:6px 0',text:'Belum ada penerima. Tambahkan nomor di bawah.'}));
+    ps.forEach(function(p){
+      var a=h('a',{class:'btn sm ig-wa'+(p.sent?' done':''),href:href(p.no),target:'_blank',rel:'noopener',
+        onclick:function(){a.href=href(p.no);p.sent=true;log(p.no);setTimeout(draw,50)}},igWaIcon(),p.sent?'Dibuka lagi':'Kirim');
+      list.append(h('div',{class:'ig-sendr'},
+        h('span',{class:'ig-who'},h('b',{text:p.nama||'Tanpa nama'}),h('small',{text:igNoFmt(p.no)})),
+        p.sent?badge('Sudah dibuka di WhatsApp','good'):null,a));
+    });
+  }
+  var nm=h('input',{type:'text',maxlength:'60',placeholder:'Nama (opsional)'}),
+    no=h('input',{type:'tel',maxlength:'20',placeholder:'08xx-xxxx-xxxx'}),
+    er=h('p',{class:'err',hidden:true}),
+    addB=h('button',{type:'button',class:'btn sm',onclick:function(){
+      er.hidden=true;
+      if(!igNoOk(no.value)){er.textContent='Nomor WhatsApp belum valid. Gunakan format 08xx atau +62.';er.hidden=false;return}
+      var n=igNo(no.value);if(ps.some(function(p){return p.no===n})){er.textContent='Nomor ini sudah ada di daftar.';er.hidden=false;return}
+      ps.push({nama:nm.value.trim(),no:n,sent:false});nm.value='';no.value='';draw();
+    }},'+ Tambah');
+  txt.addEventListener('input',function(){[].forEach.call(list.querySelectorAll('a.ig-wa'),function(a,i){if(ps[i])a.href=href(ps[i].no)})});
+  draw();
+  box.append(
+    h('p',{class:'sub',style:'margin:0',text:'Pesan langsung dikirim tanpa menunggu pengingat. Tombol Kirim membuka WhatsApp dengan pesan di bawah, lalu tekan kirim di WhatsApp. Ulangi untuk tiap penerima.'}),
+    h('label',{class:'fld'},h('span',{text:'Isi pesan (boleh disunting)'}),txt),
+    h('p',{class:'fsec',text:'Penerima'}),list,
+    h('div',{class:'ig-addr'},nm,no,addB),er,
+    h('div',{class:'acts',style:'display:flex;justify-content:flex-end;gap:8px;margin-top:6px'},
+      h('button',{type:'button',class:'btn',onclick:function(){try{navigator.clipboard.writeText(txt.value).then(function(){toast('Pesan disalin')},function(){toast('Gagal menyalin')})}catch(e){toast('Gagal menyalin')}}},'Salin pesan'),
+      h('button',{type:'button',class:'btn primary',onclick:closeModal},'Selesai')));
+  openModal('Kirim WhatsApp: '+String(r.perihal||'surat keluar').slice(0,48),box);
+}
+/* ---- isian di formulir surat (hanya untuk arah Keluar) ---- */
+function igField(row,ro,form,pre){
+  var src=Object.assign({},pre||{},row||{});
+  var on=!!src.ingat_on,waOn=!!src.wa_on||!!src.wa_kirim,list=(Array.isArray(src.wa_to)?src.wa_to:[]).map(function(p){return {nama:p.nama||'',no:p.no||''}});
+  var tom=new Date();tom.setDate(tom.getDate()+1);
+  var wrap=h('div',{class:'ig-form wide'});
+  var cOn=h('input',{type:'checkbox',disabled:ro}),cWa=h('input',{type:'checkbox',disabled:ro}),cNow=h('input',{type:'checkbox',disabled:ro});
+  cOn.checked=on;cWa.checked=waOn;cNow.checked=!row||!!src.wa_kirim;
+  var tgl=h('input',{type:'date',disabled:ro}),jam=h('input',{type:'time',disabled:ro}),
+    ul=h('select',{disabled:ro},IG_ULANG.map(function(o){return h('option',{value:o,selected:(src.ingat_ulang||IG_ULANG[0])===o},o)})),
+    sampai=h('input',{type:'date',disabled:ro}),cat=h('input',{type:'text',maxlength:'200',placeholder:'Contoh: pastikan tanda terima sudah kembali',disabled:ro});
+  tgl.value=src.ingat_tgl||isoOf(tom);jam.value=src.ingat_jam||'08:00';sampai.value=src.ingat_sampai||'';cat.value=src.ingat_pesan||'';
+  var fSampai=h('label',{class:'fld'},h('span',{text:'Berhenti setelah (opsional)'}),sampai);
+  var detail=h('div',{class:'ig-grid'},
+    h('label',{class:'fld'},h('span',null,'Tanggal pengingat',h('b',{class:'req',text:' *'})),tgl),
+    h('label',{class:'fld'},h('span',null,'Jam',h('b',{class:'req',text:' *'})),jam),
+    h('label',{class:'fld'},h('span',{text:'Ulangi'}),ul),fSampai,
+    h('label',{class:'fld wide'},h('span',{text:'Catatan pengingat'}),cat));
+  /* penerima WhatsApp */
+  var known={};
+  ((SALL&&SALL.surat)||[]).forEach(function(r){(r.wa_to||[]).forEach(function(p){var n=igNo(p.no);if(n&&!known[n])known[n]=p.nama||''})});
+  var dlId='dl-igwa-'+Math.random().toString(36).slice(2,7);
+  var dl=h('datalist',{id:dlId},Object.keys(known).map(function(n){return h('option',{value:'0'+n.slice(2),label:known[n]})}));
+  var rows=h('div',{class:'ig-rcp'});
+  function drawRows(){
+    rows.replaceChildren();
+    list.forEach(function(p,i){
+      var nm=h('input',{type:'text',maxlength:'60',placeholder:'Nama penerima',disabled:ro,oninput:function(){p.nama=nm.value}}),
+        no=h('input',{type:'tel',maxlength:'20',placeholder:'08xx-xxxx-xxxx',list:dlId,disabled:ro,oninput:function(){p.no=no.value;mark()},
+          onchange:function(){var n=igNo(no.value);if(!p.nama&&known[n]){p.nama=known[n];nm.value=p.nama}}}),
+        st=h('small',{class:'ig-ok'});
+      nm.value=p.nama;no.value=p.no;
+      function mark(){var v=no.value.trim();st.textContent=!v?'':igNoOk(v)?igNoFmt(v):'Nomor belum valid';st.className='ig-ok'+(v&&!igNoOk(v)?' bad':'')}
+      mark();
+      rows.append(h('div',{class:'ig-row'},nm,h('div',{class:'ig-noc'},no,st),
+        ro?null:h('button',{type:'button',class:'btn sm ghost','aria-label':'Hapus penerima',onclick:function(){list.splice(i,1);if(!list.length)list.push({nama:'',no:''});drawRows()}},'Hapus')));
+    });
+    if(!ro&&list.length<8)rows.append(h('button',{type:'button',class:'btn sm',onclick:function(){list.push({nama:'',no:''});drawRows();var x=rows.querySelectorAll('input[type=text]');if(x.length)x[x.length-1].focus()}},'+ Tambah penerima'));
+  }
+  if(!list.length)list.push({nama:'',no:''});
+  drawRows();
+  var swNow=h('label',{class:'ig-sw ig-sw2'},cNow,h('span',null,h('b',{text:'Kirim sekarang setelah disimpan'}),h('small',{text:'Jendela kirim WhatsApp langsung terbuka begitu surat disimpan, tanpa menunggu pengingat.'})));
+  var waBox=h('div',{class:'ig-wabox'},rows,dl,swNow,
+    h('p',{class:'sub',text:'Tombol Kirim membuka WhatsApp dengan pesan yang sudah terisi (perihal, nomor, tanggal, tujuan). Pesan terkirim setelah Anda menekan kirim di WhatsApp.'}));
+  var swWa=h('label',{class:'ig-sw'},cWa,h('span',null,h('b',{text:'Kirim notifikasi ke WhatsApp'}),h('small',{text:'Kirim langsung sekarang, dan dipakai juga saat pengingat jatuh tempo bila pengingat aktif.'})));
+  var swOn=h('label',{class:'ig-sw'},cOn,h('span',null,h('b',{text:'Aktifkan pengingat'}),h('small',{text:'Opsional. Notifikasi muncul di lonceng dan sebagai notifikasi browser pada waktu yang ditentukan.'})));
+  var waIn=h('div',{class:'ig-in'},waBox),onIn=h('div',{class:'ig-in'},detail);
+  wrap.append(h('p',{class:'fsec',text:'Notifikasi WhatsApp dan pengingat'}),swWa,waIn,swOn,onIn);
+  function sync(){
+    var ar=form.querySelector('#m-arah'),kel=!ar||ar.value==='Keluar';
+    wrap.hidden=!kel;onIn.hidden=!cOn.checked;waIn.hidden=!cWa.checked;fSampai.hidden=ul.value!==IG_ULANG[1];
+  }
+  cOn.addEventListener('change',sync);cWa.addEventListener('change',sync);ul.addEventListener('change',sync);
+  setTimeout(function(){var ar=form.querySelector('#m-arah');if(ar)ar.addEventListener('change',sync);sync()},0);
+  sync();
+  var wantNow=false;
+  return {el:wrap,
+    sendNow:function(){return wantNow},
+    collect:function(out){
+    var keep=row||{};wantNow=false;
+    if(keep.wa_log)out.wa_log=keep.wa_log;
+    if(out.arah!=='Keluar')return null;
+    if(cWa.checked){
+      var ps=list.map(function(p){return {nama:String(p.nama||'').trim(),no:String(p.no||'').trim()}}).filter(function(p){return p.no||p.nama});
+      if(!ps.length)return 'Isi minimal satu nomor WhatsApp penerima, atau matikan Kirim notifikasi ke WhatsApp.';
+      var bad=ps.find(function(p){return !igNoOk(p.no)});
+      if(bad)return 'Nomor WhatsApp '+(bad.nama?'untuk '+bad.nama+' ':'')+'belum valid. Gunakan format 08xx atau +62.';
+      out.wa_on=true;out.wa_to=ps.map(function(p){return {nama:p.nama,no:igNo(p.no)}});
+      wantNow=cNow.checked;
+    }
+    if(!cOn.checked)return null;
+    if(!tgl.value)return 'Tanggal pengingat wajib diisi.';
+    if(!jam.value)return 'Jam pengingat wajib diisi.';
+    if(ul.value===IG_ULANG[1]&&sampai.value&&sampai.value<tgl.value)return 'Tanggal berhenti tidak boleh sebelum tanggal pengingat.';
+    out.ingat_on=true;out.ingat_tgl=tgl.value;out.ingat_jam=jam.value;out.ingat_ulang=ul.value;
+    if(ul.value===IG_ULANG[1]&&sampai.value)out.ingat_sampai=sampai.value;
+    if(cat.value.trim())out.ingat_pesan=cat.value.trim();
+    var sama=keep.ingat_on&&keep.ingat_tgl===tgl.value&&keep.ingat_jam===jam.value&&keep.ingat_ulang===ul.value;
+    if(sama){if(keep.ingat_ok)out.ingat_ok=keep.ingat_ok;if(keep.ingat_tunda)out.ingat_tunda=keep.ingat_tunda}
+    return null;
+  }};
+}
+/* ---- panel di menu Surat Menyurat ---- */
+function igPanel(){
+  var all=igItems(),body=h('div');
+  if(!all.length)body.append(h('div',{class:'emptyst'},h('p',{class:'empty',text:'Belum ada pengingat aktif.'}),
+    h('p',{class:'empty-h',text:'Saat mencatat atau mengubah surat keluar, nyalakan Aktifkan pengingat. Untuk memberi tahu penerima sekarang juga tanpa pengingat, pakai tombol Kirim WA di kolom Notifikasi pada Register surat.'}),
+    canWrite?h('div',{class:'emptyst-a'},h('button',{type:'button',class:'btn primary',onclick:function(){openForm('surat',null,{arah:'Keluar',ingat_on:true})}},'Surat keluar dengan pengingat')):null));
+  else{
+    body.append(h('div',{class:'ig-list'},all.slice(0,12).map(function(x){return igCard(x,function(){schedule()})})));
+    if(all.length>12)body.append(h('p',{class:'sub',text:'Menampilkan 12 dari '+all.length+' pengingat terdekat.'}));
+    if(canWrite)body.append(h('div',{style:'display:flex;justify-content:flex-end;margin-top:10px'},h('button',{type:'button',class:'btn',onclick:function(){openForm('surat',null,{arah:'Keluar',ingat_on:true})}},'+ Surat keluar dengan pengingat')));
+  }
+  var due=all.filter(function(x){return x.due}).length;
+  return panel('Pengingat surat keluar',(due?due+' jatuh tempo. ':'')+'Diurutkan dari yang paling dekat. Pengingat berhenti otomatis saat surat berstatus Selesai.',body);
+}
+function igCol(r){
+  if(r.arah!=='Keluar')return h('span',{class:'sub',text:'—'});
+  var out=h('span',{class:'ig-cell'});
+  if(r.ingat_on){
+    var d=igAt(r);
+    if(!d)out.append(badge('Pengingat tuntas','mute'));
+    else{var due=d.getTime()<=Date.now();out.append(badge((due?'Jatuh tempo · ':'')+d.getDate()+' '+MON[d.getMonth()]+' '+String(d.getHours()).padStart(2,'0')+'.'+String(d.getMinutes()).padStart(2,'0'),due?'warn':'info'))}
+  }
+  var n=Array.isArray(r.wa_log)?r.wa_log.length:0;
+  out.append(h('button',{type:'button',class:'btn sm ig-wa',title:n?'WhatsApp sudah dibuka '+n+' kali':'Kirim pemberitahuan lewat WhatsApp sekarang',
+    onclick:function(e){e.stopPropagation();igSendNow(r)}},igWaIcon(),n?'WA · '+n:'Kirim WA'));
+  return out;
 }
 
 /* ---------- Izin Kerja (PTW): PJO mengajukan, HSE atau KTT memeriksa lalu memutuskan ---------- */
@@ -18345,6 +18761,7 @@ function paint(){
   main.replaceChildren(stack);
   window.scrollTo(0,y);
   try{fxAfter()}catch(e){if(window.console)console.error(e)}
+  try{igPaintBell()}catch(e){}
   try{wyHeadSync()}catch(e){if(window.console)console.error(e)}
   try{aksAfter()}catch(e){if(window.console)console.error(e)}
   try{turAfter()}catch(e){if(window.console)console.error(e)}
@@ -18354,6 +18771,7 @@ active=(location.hash&&VIEWS[location.hash.slice(1)])?location.hash.slice(1):'ri
 if(srPjo())active=srPjoMenu((location.hash||'').slice(1));
 paint();
 hostStart();
+igStart();
 })();
 </script>
 
