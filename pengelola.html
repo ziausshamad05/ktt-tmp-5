@@ -537,9 +537,10 @@ function secDemo(){
   var exp=S.demoLink?Number(S.demoLink.split('demo=')[1]):0,aktif=exp>Date.now();
   var ln=el('input',{class:'inp',readonly:true,value:aktif?S.demoLink:'',placeholder:'Klik Buat link demo baru',onfocus:function(){this.select()}});
   w.append(el('section',{class:'dcard'},el('h2',{text:'Akun demo 24 jam'}),
-    el('p',{class:'sub',text:'Link ini membuka Platform KTT berisi data contoh lengkap (K3, operasional, reklamasi, RKAB, personel, dan lainnya) tanpa perlu mendaftar. Berlaku 24 jam sejak link dibuat. Perubahan yang dibuat pengunjung tidak disimpan dan tidak memengaruhi data pelanggan.'}),
+    el('p',{class:'sub',text:'Link ini membuka Platform KTT berisi data contoh lengkap (K3, operasional, reklamasi, RKAB, personel, dan lainnya) tanpa perlu mendaftar. Berlaku 24 jam sejak link dibuat. Perubahan yang dibuat pengunjung tidak disimpan dan tidak memengaruhi data pelanggan. Link akun uji PJO membuka sesi sebagai Contoh PJO (Kontraktor Contoh A): hanya menu PJO, dengan surat dan izin kerja contoh; surat dan izin yang dikirim dibalas KTT otomatis.'}),
     el('div',{class:'row'},ln,
       el('button',{type:'button',class:'btn pri',onclick:function(){S.demoLink='https://kttplatform.id/?demo='+(Date.now()+24*3600*1000);render()}},'Buat link demo baru'),
+      el('button',{type:'button',class:'btn',onclick:function(){S.demoLink='https://kttplatform.id/?peran=pjo&demo='+(Date.now()+24*3600*1000);render()}},'Buat link akun uji PJO'),
       el('button',{type:'button',class:'btn',disabled:!aktif,onclick:function(){copy(S.demoLink)}},'Salin link')),
     el('p',{class:'sub',text:aktif?'Berlaku sampai '+new Date(exp).toLocaleString('id-ID',{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+'.':'Belum ada link aktif di sesi ini.'})));
   /* 2. api key */

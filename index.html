@@ -18122,19 +18122,103 @@ function hostDlShim(){return {save:function(o){return new Promise(function(res,r
   try{var b=o.data instanceof Blob?o.data:new Blob([o.data],{type:hostMime(o.filename)});
     var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=o.filename||'berkas';document.body.append(a);a.click();
     setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},4000);res({})}catch(e){rej(e)}})}}}
+/* ---- sesi demo PJO: ?peran=pjo&demo=... ; akun PJO fiktif milik Kontraktor Contoh A, tanpa server ---- */
+var DM_PJO={user_id:'demo-pjo',nama:'Contoh PJO',email:'pjo.contoh@example.com',kon:'Kontraktor Contoh A'};
+function demoIsPjo(){return /[?&]peran=pjo(?:&|$)/.test(location.search)}
+function demoPjoAkun(){
+  HOST.member={user_id:DM_PJO.user_id,nama:DM_PJO.nama,email:DM_PJO.email,peran:'pjo',role:'editor',kontraktor:DM_PJO.kon,org_id:'demo'};
+  HOST.role='editor';
+  HOST.org={id:'demo',nama:'PT Contoh Tambang Nusantara',internal:true,paket:'profesional',status:'aktif'};
+  srRpc=demoPjoRpc;
+}
+function demoSet(c,id,patch){
+  var i=(SALL[c]||[]).findIndex(function(r){return r.id===id});if(i<0)return;
+  SALL[c][i]=Object.assign({},SALL[c][i],patch);wyRe(c);schedule();
+}
+function demoLog(old,aksi,oleh,ket){return (Array.isArray(old)?old:[]).concat([{t:new Date().toISOString(),aksi:aksi,oleh:oleh,ket:ket}])}
+/* pengganti fungsi server untuk surat dan izin kerja PJO; KTT disimulasikan oleh pewaktu */
+async function demoPjoRpc(fn,a){
+  var nm=DM_PJO.nama,now=function(){return new Date().toISOString()},ym=smpDay(0).slice(0,7).replace('-','');
+  if(fn==='ktt_surat_kirim'){
+    var id='dm-p'+Date.now().toString(36);
+    await save('surat',id,{arah:'Masuk',asal:'pjo',pjo_id:DM_PJO.user_id,pjo_nama:nm,pjo_email:DM_PJO.email,nomor:a.p_nomor||'',tanggal:smpDay(0),perihal:a.p_perihal,pihak:nm+' (PJO)',lampiran:a.p_lampiran||[],status:'Terkirim',dikirim_at:now(),log:demoLog(null,'Dikirim',nm,'Disposisi ke Contoh KTT'),demo:true});
+    setTimeout(function(){var r=SALL.surat.find(function(x){return x.id===id});if(r)demoSet('surat',id,{status:'Diterima',dibaca_at:now(),dibaca_oleh:'Contoh KTT',log:demoLog(r.log,'Diterima','Contoh KTT','Surat dibuka')})},8000);
+    setTimeout(function(){var r=SALL.surat.find(function(x){return x.id===id});if(r)demoSet('surat',id,{status:'Ditindaklanjuti',tindak_at:now(),log:demoLog(r.log,'Ditindaklanjuti','Contoh KTT','Mulai ditindaklanjuti')})},20000);
+    setTimeout(function(){var r=SALL.surat.find(function(x){return x.id===id});if(!r)return;
+      var bid='dm-b'+id.slice(4);
+      SALL.surat.push({id:bid,arah:'Keluar',asal:'ktt',balas_ke:id,pjo_id:DM_PJO.user_id,pjo_nama:nm,ktt_nama:'Contoh KTT',nomor:'',tanggal:smpDay(0),perihal:'Re: '+(r.perihal||''),isi:'Surat diterima dan sudah kami proses. Silakan lanjutkan sesuai arahan. (Balasan otomatis akun demo)',pihak:nm+' (PJO)',status:'Terkirim',dikirim_at:now(),log:demoLog(null,'Dikirim','Contoh KTT','Balasan untuk '+nm),demo:true});
+      demoSet('surat',id,{status:'Selesai',selesai_at:now(),balasan_id:bid,log:demoLog(r.log,'Selesai','Contoh KTT','Dibalas')})},34000);
+    return id;
+  }
+  if(fn==='ktt_ptw_ajukan'||fn==='ktt_ptw_revisi'){
+    var rev=fn==='ktt_ptw_revisi',old=rev?SALL.ptw.find(function(x){return x.id===a.p_id}):null;
+    if(rev&&!old)throw new Error('Izin kerja tidak ditemukan');
+    var n=SALL.ptw.filter(function(x){return String(x.nomor||'').indexOf('PTW-'+ym)===0}).length+1,pid=rev?a.p_id:'dm-w'+Date.now().toString(36);
+    var data={nomor:rev?old.nomor:'PTW-'+ym+'-'+('00'+n).slice(-3),jenis:a.p_jenis,lokasi:a.p_lokasi,pekerjaan:a.p_pekerjaan,pelaksana:a.p_pelaksana||DM_PJO.kon,mulai:a.p_mulai,selesai:a.p_selesai,jumlah:a.p_jumlah,bahaya:a.p_bahaya,kendali:a.p_kendali,apd:a.p_apd||'',lampiran:a.p_lampiran||[],pemohon:nm,pjo_id:DM_PJO.user_id,asal:'pjo',status:'Menunggu',diajukan_at:rev?old.diajukan_at:now(),log:demoLog(rev?old.log:null,rev?'Direvisi':'Diajukan',nm,rev?'Diajukan kembali setelah revisi':'Menunggu keputusan KTT atau HSE'),demo:true};
+    if(rev){data.revisi=(old.revisi||0)+1;SALL.ptw=SALL.ptw.map(function(x){return x.id===pid?data=Object.assign({id:pid},data):x});wyRe('ptw');schedule()}
+    else await save('ptw',pid,data);
+    setTimeout(function(){var r=SALL.ptw.find(function(x){return x.id===pid});if(r&&r.status==='Menunggu')demoSet('ptw',pid,{status:'Disetujui',diputus_at:now(),diputus_oleh:'Contoh KTT',diputus_peran:'KTT',log:demoLog(r.log,'Disetujui','Contoh KTT (KTT)')})},15000);
+    return pid;
+  }
+  throw new Error('Fitur ini tidak tersedia di akun demo.');
+}
+/* data contoh PJO: seluruh data K3, reklamasi dan personel menjadi milik Kontraktor Contoh A, lalu dibatasi seperti aturan akses server */
+async function demoPjoData(){
+  demoPjoAkun();
+  var kA=DM_PJO.kon,U=DM_PJO.user_id,ts=function(n){var d=new Date(Date.now()-n*3600000);return d.toISOString()};
+  PR_TAG.forEach(function(c){if(c==='kdok'||!SALL[c])return;SALL[c]=SALL[c].map(function(r){return r.kontraktor?r:Object.assign({},r,{kontraktor:kA})})});
+  function put(c,rows){if(!SALL[c])SALL[c]=[];rows.forEach(function(r){SALL[c].push(Object.assign({},r,{demo:true}))})}
+  put('kdok',[
+    {id:'dm-kd1',kontraktor:kA,jenis:KD_JENIS[0],nomor:'CONTOH/NIB/001',penerbit:'Instansi Contoh',terbit:smpDay(-700),berlaku:smpDay(900)},
+    {id:'dm-kd2',kontraktor:kA,jenis:KD_JENIS[1],nomor:'CONTOH/IUJP/002',penerbit:'Instansi Contoh',terbit:smpDay(-500),berlaku:smpDay(60)},
+    {id:'dm-kd3',kontraktor:kA,jenis:KD_JENIS[2],nomor:'CONTOH/SPK/003',penerbit:'PT Contoh Tambang Nusantara',terbit:smpDay(-300),berlaku:smpDay(430)},
+    {id:'dm-kd4',kontraktor:kA,jenis:KD_JENIS[3],nomor:'CONTOH/SMK3/004',penerbit:'Lembaga Sertifikasi Contoh',terbit:smpDay(-900),berlaku:smpDay(-12)}]);
+  var pj=function(id,o){return Object.assign({id:id,arah:'Masuk',asal:'pjo',pjo_id:U,pjo_nama:DM_PJO.nama,pjo_email:DM_PJO.email,pihak:DM_PJO.nama+' (PJO)'},o)};
+  put('surat',[
+    pj('dm-s1',{nomor:'001/PJO-A/'+smpDay(0).slice(0,4),tanggal:smpDay(-9),perihal:'Permohonan perpanjangan SMK3 Kontraktor Contoh A',status:'Selesai',dikirim_at:ts(216),dibaca_at:ts(212),dibaca_oleh:'Contoh KTT',tindak_at:ts(200),selesai_at:ts(190),balasan_id:'dm-s1b',
+      log:[{t:ts(216),aksi:'Dikirim',oleh:DM_PJO.nama,ket:'Disposisi ke Contoh KTT'},{t:ts(212),aksi:'Diterima',oleh:'Contoh KTT',ket:'Surat dibuka'},{t:ts(200),aksi:'Ditindaklanjuti',oleh:'Contoh KTT',ket:'Mulai ditindaklanjuti'},{t:ts(190),aksi:'Selesai',oleh:'Contoh KTT',ket:'Dibalas'}]}),
+    {id:'dm-s1b',arah:'Keluar',asal:'ktt',balas_ke:'dm-s1',pjo_id:U,pjo_nama:DM_PJO.nama,ktt_nama:'Contoh KTT',nomor:'045/KTT/'+smpDay(0).slice(0,4),tanggal:smpDay(-8),perihal:'Re: Permohonan perpanjangan SMK3 Kontraktor Contoh A',isi:'Permohonan diterima. Mohon melampirkan hasil audit terbaru, lalu ajukan kembali setelah lengkap.',pihak:DM_PJO.nama+' (PJO)',status:'Terkirim',dikirim_at:ts(190),log:[{t:ts(190),aksi:'Dikirim',oleh:'Contoh KTT',ket:'Balasan untuk '+DM_PJO.nama}]},
+    pj('dm-s2',{nomor:'002/PJO-A/'+smpDay(0).slice(0,4),tanggal:smpDay(-3),perihal:'Laporan hasil inspeksi jalan angkut dan usulan perbaikan drainase',status:'Ditindaklanjuti',dikirim_at:ts(72),dibaca_at:ts(70),dibaca_oleh:'Contoh KTT',tindak_at:ts(30),
+      log:[{t:ts(72),aksi:'Dikirim',oleh:DM_PJO.nama,ket:'Disposisi ke Contoh KTT'},{t:ts(70),aksi:'Diterima',oleh:'Contoh KTT',ket:'Surat dibuka'},{t:ts(30),aksi:'Ditindaklanjuti',oleh:'Contoh KTT',ket:'Mulai ditindaklanjuti'}]}),
+    pj('dm-s3',{tanggal:smpDay(-1),perihal:'Pemberitahuan pergantian pengawas operasional shift malam',status:'Diterima',dikirim_at:ts(20),dibaca_at:ts(5),dibaca_oleh:'Contoh KTT',
+      log:[{t:ts(20),aksi:'Dikirim',oleh:DM_PJO.nama,ket:'Disposisi ke Contoh KTT'},{t:ts(5),aksi:'Diterima',oleh:'Contoh KTT',ket:'Surat dibuka'}]}),
+    pj('dm-s4',{tanggal:smpDay(0),perihal:'Permohonan jadwal pemeriksaan unit baru',status:'Terkirim',dikirim_at:ts(1),log:[{t:ts(1),aksi:'Dikirim',oleh:DM_PJO.nama,ket:'Disposisi ke Contoh KTT'}]})]);
+  var pt=function(id,o){return Object.assign({id:id,pemohon:DM_PJO.nama,pjo_id:U,asal:'pjo',pelaksana:kA,jumlah:3,apd:'Helm, sepatu keselamatan, rompi reflektif.'},o)};
+  put('ptw',[
+    pt('dm-w1',{nomor:'PTW-'+smpDay(0).slice(0,7).replace('-','')+'-101',jenis:'Pekerjaan Panas (Las, Gerinda)',lokasi:'Workshop kontraktor',pekerjaan:'Pengelasan perbaikan bak dump truck.',bahaya:'Percikan api, luka bakar.',kendali:'Area bersih radius 10 m, APAR siaga.',mulai:smpDay(-5),selesai:smpDay(-5),status:'Ditutup',diajukan_at:ts(150),diputus_at:ts(148),diputus_oleh:'Contoh KTT',diputus_peran:'KTT',tutup_at:ts(120),tutup_oleh:'Contoh KTT',log:[{t:ts(150),aksi:'Diajukan',oleh:DM_PJO.nama},{t:ts(148),aksi:'Disetujui',oleh:'Contoh KTT (KTT)'},{t:ts(120),aksi:'Ditutup',oleh:'Contoh KTT (KTT)'}]}),
+    pt('dm-w2',{nomor:'PTW-'+smpDay(0).slice(0,7).replace('-','')+'-102',jenis:'Penggalian',lokasi:'Drainase tepi jalan angkut',pekerjaan:'Penggalian parit drainase sedalam 1,5 m sepanjang 40 m.',bahaya:'Longsoran dinding galian.',kendali:'Dinding galian dilandaikan, pagar dan rambu.',mulai:smpDay(0),selesai:smpDay(3),jumlah:5,status:'Disetujui',diajukan_at:ts(26),diputus_at:ts(24),diputus_oleh:'Contoh KTT',diputus_peran:'KTT',log:[{t:ts(26),aksi:'Diajukan',oleh:DM_PJO.nama},{t:ts(24),aksi:'Disetujui',oleh:'Contoh KTT (KTT)'}]}),
+    pt('dm-w3',{nomor:'PTW-'+smpDay(0).slice(0,7).replace('-','')+'-103',jenis:'Pekerjaan di Ketinggian',lokasi:'Menara lampu stockpile',pekerjaan:'Penggantian armatur lampu setinggi 9 m.',bahaya:'Jatuh dari ketinggian.',kendali:'Harness terkait, area bawah dibatasi.',mulai:smpDay(2),selesai:smpDay(2),jumlah:2,status:'Ditolak',diajukan_at:ts(10),diputus_at:ts(8),diputus_oleh:'Contoh KTT',diputus_peran:'KTT',catatan_putus:'Lampirkan JSA dan sertifikat kerja di ketinggian, lalu ajukan revisi.',log:[{t:ts(10),aksi:'Diajukan',oleh:DM_PJO.nama},{t:ts(8),aksi:'Ditolak',oleh:'Contoh KTT (KTT)',ket:'Lampirkan JSA dan sertifikat kerja di ketinggian, lalu ajukan revisi.'}]}),
+    pt('dm-w4',{nomor:'PTW-'+smpDay(0).slice(0,7).replace('-','')+'-104',jenis:'Pekerjaan Listrik',lokasi:'Panel distribusi camp kontraktor',pekerjaan:'Penggantian kabel utama panel distribusi.',bahaya:'Sengatan listrik.',kendali:'LOTO dan pengawas listrik.',mulai:smpDay(4),selesai:smpDay(5),jumlah:2,status:'Menunggu',diajukan_at:ts(2),log:[{t:ts(2),aksi:'Diajukan',oleh:DM_PJO.nama,ket:'Menunggu keputusan KTT atau HSE'}]})]);
+  put('ubah',[{id:'dm-ub1',kol:'minepermit',rid:'demo-mp-3',judul:'Contoh Operator Tiga',baru:{},lama:{},oleh:U,nama:DM_PJO.nama,peran:'pjo',kontraktor:kA,status:'menunggu',ts:ts(6)}]);
+  /* batas akses: cermin ktt_kv_boleh untuk peran PJO */
+  var OPD=['opsm','opcat','opeto','opform','oplog'],OPR=['opset','opmaster','opplan','oprkab','opkon'],OPK=['opalat','opunit','opfuel','optank','opbd','whitem','whin','whout'],CFGOK=['opcat','opform'];
+  function lihat(c,r){
+    if(c==='surat'||c==='ptw')return r.pjo_id===U;
+    if(c==='ubah')return r.oleh===U;
+    if(c==='kontraktor')return r.nama===kA;
+    if(OPR.indexOf(c)>=0)return true;
+    if(OPD.indexOf(c)>=0||OPK.indexOf(c)>=0)return r.kontraktor===kA||(!r.kontraktor&&CFGOK.indexOf(c)>=0);
+    if(c==='kdok'||PR_TAG.indexOf(c)>=0)return r.kontraktor===kA;
+    return false;
+  }
+  COLS.forEach(function(c){SALL[c]=(SALL[c]||[]).filter(function(r){return lihat(c,r)});wyRe(c)});
+  active='ringkasan';
+  schedule();
+}
 function demoStart(exp){
   var left=exp-Date.now();
   if(left<=0||left>26*3600*1000){hostScreen('err','Link demo ini sudah berakhir. Akun demo hanya berlaku 24 jam. Minta link baru kepada pengelola Platform KTT.');return}
   window.__KTT_DEMO=exp;
+  var PJO=demoIsPjo();
   var t=new Date(exp).toLocaleString('id-ID',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-  var bar=h('div',{class:'dm-bar',role:'status'},h('b',{text:'Akun demo'}),h('span',{text:' · berisi data contoh · berlaku sampai '+t+' · perubahan tidak disimpan setelah halaman dimuat ulang'}));
+  var bar=h('div',{class:'dm-bar',role:'status'},h('b',{text:PJO?'Akun uji PJO':'Akun demo'}),h('span',{text:(PJO?' · Contoh PJO, Kontraktor Contoh A':'')+' · berisi data contoh · berlaku sampai '+t+' · perubahan tidak disimpan setelah halaman dimuat ulang'}));
   document.body.append(bar);document.documentElement.classList.add('dm-on');
   setTimeout(function(){location.reload()},Math.min(left+500,2147000000));
   var real={};COLS.forEach(function(c){(SEED[c]||[]).forEach(function(r){if(!r.demo)real[c+':'+r.id]=1})});
   var SAN=[['Andy Fadjrun Assiddiqi','Contoh KTT'],['PT Inti Resources Mandiri','Kontraktor Contoh A'],['PT Maleo Berkah Perkasa','Kontraktor Contoh B'],['Tim reklamasi SSU','Tim reklamasi perusahaan'],['Personel SSU','Personel perusahaan'],['Persemaian SSU','Persemaian perusahaan'],['Terminal khusus Mapila','Terminal khusus']];
   function strip(){COLS.forEach(function(c){var j=JSON.stringify(S[c].filter(function(r){return !real[c+':'+r.id]}));SAN.forEach(function(x){j=j.split(x[0]).join(x[1])});S[c]=JSON.parse(j)})}
   try{if(typeof tenantBlank==='function')tenantBlank()}catch(e){}
-  Promise.resolve(init()).then(function(){try{DL=hostDlShim()}catch(e){}strip();return typeof demoKon==='function'?demoKon():0}).then(function(){return typeof smpRun==='function'?smpRun('add',SMP_MENU):0}).then(function(){strip();return typeof demoFill==='function'?demoFill():0}).then(function(){schedule()},function(e){if(window.console)console.error(e)});
+  Promise.resolve(init()).then(function(){try{DL=hostDlShim()}catch(e){}strip();return typeof demoKon==='function'?demoKon():0}).then(function(){return typeof smpRun==='function'?smpRun('add',SMP_MENU):0}).then(function(){strip();return typeof demoFill==='function'?demoFill():0}).then(function(){return PJO?demoPjoData():0}).then(function(){schedule()},function(e){if(window.console)console.error(e)});
 }
 function hostReveal(){var s=document.getElementById('prehide');if(s)s.remove()}
 function hostStart(){
