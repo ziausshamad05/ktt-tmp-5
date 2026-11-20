@@ -1902,6 +1902,33 @@ input[type=time]:focus,input[type=tel]:focus{border-color:var(--brand);outline:n
 .ig-sw2{background:transparent;padding:8px 10px}
 .btn.ig-wa{display:inline-flex;align-items:center;gap:6px}
 @media (max-width:560px){.ig-addr{grid-template-columns:1fr}.ig-sendr{flex-wrap:wrap}}
+
+/* kontak WhatsApp */
+.ig-kc{display:flex;flex-direction:column;gap:6px;width:100%}
+.ig-khead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ig-khead>span{font-size:12.5px;color:var(--muted);font-weight:600;margin-right:auto}
+.ig-khead input[type=search]{max-width:200px;padding:6px 12px}
+.ig-kchips{display:flex;flex-wrap:wrap;gap:6px}
+.ig-chip{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;padding:6px 12px 6px 6px;border:1px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer;font-size:13px;max-width:100%;transition:border-color .2s,background .2s}
+.ig-chip:hover{border-color:var(--brand)}
+.ig-chip:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.ig-chip b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ig-chip small{color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
+.ig-chip .ig-chk{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--surface2);color:var(--muted);flex:none}
+.ig-chip.on{border-color:color-mix(in srgb,var(--good) 55%,var(--line));background:color-mix(in srgb,var(--good-soft) 60%,var(--surface))}
+.ig-chip.on .ig-chk{background:var(--good);color:#fff}
+.ig-chip[disabled]{opacity:.55;cursor:default}
+.ig-kempty{color:var(--muted);font-size:12.5px}
+.ig-hint{margin:0;font-size:12px;color:var(--muted)}
+.ig-ov2{z-index:60}
+.ig-kl{display:flex;flex-direction:column;gap:8px}
+.ig-kl input[type=search]{width:100%}
+.ig-klist{display:flex;flex-direction:column;gap:6px;max-height:46vh;overflow:auto;padding-right:2px}
+.ig-krow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.ig-kno{font-size:12.5px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.ig-kadd{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr) auto;gap:8px;align-items:center}
+.ig-kl .fsec{margin:8px 0 0;padding-top:10px;border-top:1px solid var(--line);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:600;color:var(--muted)}
+@media (max-width:560px){.ig-krow{grid-template-columns:1fr 1fr}.ig-kno{grid-column:1}.ig-kadd{grid-template-columns:1fr}.ig-khead input[type=search]{max-width:none;flex:1 1 100%}}
 @media (max-width:520px){.who .igb span.ig-n0:not([hidden]){display:block}.who{gap:6px}.igb{width:36px;height:36px}.igb svg{width:18px;height:18px}.topin .brandmark h1{overflow:hidden;text-overflow:ellipsis}}
 </style>
 
@@ -2163,6 +2190,7 @@ SEED.asetsite=[];
 SEED.asetmut=[];
 SEED.asetserah=[];
 SEED.asetservis=[];
+SEED.wakontak=[];
 var COLS=Object.keys(SEED);
 var RK_DEF={tahun:2026,nomor:'T-2350.RKAB/MB.04/DJB.M/2026',tgl:'2026-11-09',berlaku:'2026-12-31',limit:0,satuan:'ton',komoditas:'bijih nikel',penerbit:'Direktorat Jenderal Mineral dan Batubara',sifat:'Segera',lampiran:'Satu berkas (pokok-pokok kegiatan)',perihal:'Persetujuan RKAB IUP Tahap Operasi Produksi PT Surya Saga Utama Tahun 2026',
  ketentuan:['Persetujuan diberikan berdasarkan evaluasi data dan dokumen pendukung yang disampaikan.','Dilarang disalahgunakan untuk kegiatan usaha pertambangan yang tidak sesuai peraturan perundang-undangan.','Akibat hukum atas ketidakbenaran data atau penyalahgunaan menjadi tanggung jawab perusahaan, dan persetujuan dapat dibatalkan.','Bila ada kekeliruan, persetujuan diperbaiki sesuai ketentuan peraturan perundang-undangan.']};
@@ -2582,7 +2610,7 @@ function openForm(key,row,pre){if(key==='ptw'&&row&&!PTW_RAW)return ptwDetail(ro
     if(key==='ptw'){var pe=ptwCheck(out);if(pe){err.textContent=pe;err.hidden=false;return}ptwAfterForm(out,row)}
     if(key==='distribusi'&&row){out.urut=row.urut;out.kelompok=row.kelompok;out.diterima=row.diterima}
     try{var rid=await save(key,row&&row.id,out);await BK.commit(row&&row.id?row.id:rid);closeModal();toast('Tersimpan');
-      if(IG&&IG.sendNow())igSendNow(Object.assign({id:row&&row.id?row.id:rid},out))}
+      if(IG&&IG.after)IG.after(out);if(IG&&IG.sendNow())igSendNow(Object.assign({id:row&&row.id?row.id:rid},out))}
     catch(x){err.textContent='Gagal menyimpan. '+(x&&x.message?x.message:'Periksa akses Anda.');err.hidden=false}
   });
   var acts=h('div',{class:'acts'});
@@ -8353,6 +8381,98 @@ function igStart(){
   setInterval(igTick,30000);
   document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')igTick()});
 }
+
+/* ---------- Kontak WhatsApp tersimpan: dipilih ulang tanpa mengetik nomor ---------- */
+function igKontak(){
+  return ((typeof SALL!=='undefined'&&SALL.wakontak)||[]).filter(function(k){return igNoOk(k.no)})
+    .slice().sort(function(a,b){return String(a.nama||'~').localeCompare(String(b.nama||'~'),'id')});
+}
+function igKontakNama(no){var n=igNo(no),k=igKontak().find(function(x){return igNo(x.no)===n});return k?k.nama||'':''}
+/* simpan atau perbarui kontak; id dari nomor agar tidak ganda */
+async function igKontakSave(nama,no,ket){
+  if(!canWrite||!igNoOk(no))return false;
+  var n=igNo(no),id='wa'+n,cur=((SALL.wakontak)||[]).find(function(x){return x.id===id});
+  nama=String(nama||'').trim();
+  var d={no:n,nama:nama||(cur&&cur.nama)||'',ket:ket!=null?String(ket).trim():(cur&&cur.ket)||'',dipakai:new Date().toISOString()};
+  if(cur&&cur.nama===d.nama&&(cur.ket||'')===d.ket&&cur.dipakai&&(Date.now()-new Date(cur.dipakai).getTime())<36e5)return true;
+  try{await save('wakontak',id,d);return true}catch(e){return false}
+}
+function igKontakSaveAll(list){(list||[]).forEach(function(p){igKontakSave(p.nama,p.no)})}
+/* penerima yang pernah dipakai untuk tujuan (pihak) yang sama */
+function igPenerimaPihak(pihak,kecuali){
+  pihak=String(pihak||'').trim().toLowerCase();if(!pihak)return [];
+  var rows=((SALL&&SALL.surat)||[]).filter(function(r){return r.id!==kecuali&&r.arah==='Keluar'&&String(r.pihak||'').trim().toLowerCase()===pihak&&Array.isArray(r.wa_to)&&r.wa_to.length})
+    .sort(function(a,b){return String(b.tanggal||'').localeCompare(String(a.tanggal||''))});
+  return rows.length?rows[0].wa_to.filter(function(p){return igNoOk(p.no)}).map(function(p){return {nama:p.nama||igKontakNama(p.no),no:igNo(p.no)}}):[];
+}
+/* baris chip kontak: klik untuk memilih atau melepas penerima */
+function igKontakChips(isOn,toggle,opt){
+  opt=opt||{};
+  var wrap=h('div',{class:'ig-kc'}),q=h('input',{type:'search',placeholder:'Cari kontak','aria-label':'Cari kontak tersimpan'}),box=h('div',{class:'ig-kchips'});
+  function draw(){
+    var all=igKontak(),qq=q.value.trim().toLowerCase();
+    q.hidden=all.length<7;
+    box.replaceChildren();
+    if(!all.length){box.append(h('small',{class:'ig-kempty',text:'Belum ada kontak tersimpan. Nomor yang Anda pakai akan tersimpan otomatis.'}));return}
+    all.filter(function(k){return !qq||(String(k.nama||'')+' '+(k.ket||'')+' '+k.no).toLowerCase().indexOf(qq)>=0}).slice(0,40).forEach(function(k){
+      var on=isOn(k.no);
+      box.append(h('button',{type:'button',class:'ig-chip'+(on?' on':''),'aria-pressed':on?'true':'false',disabled:opt.ro,title:igNoFmt(k.no)+(k.ket?' · '+k.ket:''),
+        onclick:function(){toggle({nama:k.nama||'',no:igNo(k.no)},!on);draw()}},
+        h('span',{class:'ig-chk',text:on?'✓':'+'}),h('b',{text:k.nama||igNoFmt(k.no)}),k.ket?h('small',{text:k.ket}):null));
+    });
+  }
+  q.addEventListener('input',draw);
+  wrap.append(h('div',{class:'ig-khead'},h('span',{text:'Kontak tersimpan'}),q,
+    opt.ro?null:h('button',{type:'button',class:'btn sm ghost',onclick:function(){igKontakKelola(draw)}},'Kelola kontak')),box);
+  draw();wrap.redraw=draw;
+  return wrap;
+}
+/* jendela kelola kontak */
+function igKontakKelola(onDone){
+  var prev=$('#ov');if(prev){prev.style.display='none'}
+  var ov=h('div',{class:'ov ig-ov2',onclick:function(e){if(e.target===ov)tutup()}}),box=h('div',{class:'ig-kl'});
+  function tutup(){ov.remove();if(prev)prev.style.display='';if(onDone)try{onDone()}catch(e){}}
+  var q=h('input',{type:'search',placeholder:'Cari nama, keterangan, atau nomor'}),list=h('div',{class:'ig-klist'});
+  var nm=h('input',{type:'text',maxlength:'60',placeholder:'Nama'}),no=h('input',{type:'tel',maxlength:'20',placeholder:'08xx-xxxx-xxxx'}),
+    kt=h('input',{type:'text',maxlength:'80',placeholder:'Keterangan (jabatan/instansi)'}),er=h('p',{class:'err',hidden:true});
+  function draw(){
+    var qq=q.value.trim().toLowerCase(),all=igKontak().filter(function(k){return !qq||(String(k.nama||'')+' '+(k.ket||'')+' '+k.no).toLowerCase().indexOf(qq)>=0});
+    list.replaceChildren();
+    if(!all.length)list.append(h('p',{class:'empty',style:'padding:8px 0',text:igKontak().length?'Tidak ada yang cocok.':'Belum ada kontak. Tambahkan di bawah, atau kirim WA sekali dan nomornya tersimpan otomatis.'}));
+    all.forEach(function(k){
+      var a=h('input',{type:'text',maxlength:'60',value:k.nama||'',disabled:!canWrite,'aria-label':'Nama'}),
+        b=h('input',{type:'text',maxlength:'80',value:k.ket||'',placeholder:'Keterangan',disabled:!canWrite,'aria-label':'Keterangan'}),
+        armed=false,del=h('button',{type:'button',class:'btn sm ghost',disabled:!canWrite},'Hapus');
+      async function simpan(){if(a.value.trim()===(k.nama||'')&&b.value.trim()===(k.ket||''))return;await igKontakSave(a.value,k.no,b.value);toast('Kontak diperbarui')}
+      a.addEventListener('change',simpan);b.addEventListener('change',simpan);
+      del.addEventListener('click',async function(){
+        if(!armed){armed=true;del.textContent='Yakin hapus?';setTimeout(function(){armed=false;del.textContent='Hapus'},3500);return}
+        try{await remove('wakontak',k.id);toast('Kontak dihapus');setTimeout(draw,150)}catch(x){toast('Gagal menghapus kontak')}
+      });
+      list.append(h('div',{class:'ig-krow'},a,b,h('span',{class:'ig-kno',text:igNoFmt(k.no)}),del));
+    });
+  }
+  q.addEventListener('input',draw);
+  var add=h('button',{type:'button',class:'btn sm',disabled:!canWrite,onclick:async function(){
+    er.hidden=true;
+    if(!igNoOk(no.value)){er.textContent='Nomor WhatsApp belum valid. Gunakan format 08xx atau +62.';er.hidden=false;return}
+    if(!nm.value.trim()){er.textContent='Isi nama kontak.';er.hidden=false;return}
+    var ok=await igKontakSave(nm.value,no.value,kt.value);
+    if(!ok){er.textContent='Kontak tidak dapat disimpan dengan akun ini.';er.hidden=false;return}
+    nm.value='';no.value='';kt.value='';toast('Kontak tersimpan');setTimeout(draw,150);
+  }},'+ Simpan kontak');
+  box.append(
+    h('div',{class:'dlg-h'},h('h2',{text:'Kontak WhatsApp'}),h('button',{class:'x',type:'button','aria-label':'Tutup',onclick:tutup},'×')),
+    h('p',{class:'sub',style:'margin:0 0 10px',text:'Kontak dipakai bersama oleh tim di perusahaan Anda. Ubah nama atau keterangan langsung di daftar; perubahan tersimpan saat kolom ditinggalkan.'}),
+    q,list,
+    h('p',{class:'fsec',text:'Tambah kontak'}),
+    h('div',{class:'ig-kadd'},nm,no,kt,add),er,
+    h('div',{style:'display:flex;justify-content:flex-end;margin-top:12px'},h('button',{type:'button',class:'btn primary',onclick:tutup},'Selesai')));
+  ov.append(h('div',{class:'dlg',role:'dialog','aria-modal':'true','aria-label':'Kontak WhatsApp'},box));
+  document.body.append(ov);
+  ov.addEventListener('keydown',function(e){if(e.key==='Escape'){e.stopPropagation();tutup()}});
+  draw();setTimeout(function(){try{q.focus()}catch(e){}},50);
+}
 /* ---- kirim WhatsApp sekarang: jendela dengan pesan yang bisa disunting dan tombol per penerima ---- */
 function igPesanKirim(r){
   var L=['*Pemberitahuan Surat Keluar*',''];
@@ -8367,7 +8487,8 @@ function igPesanKirim(r){
 }
 function igSendNow(r0){
   var r=Object.assign({},r0),box=h('div',{class:'ig-send'});
-  var ps=(Array.isArray(r.wa_to)?r.wa_to:[]).filter(function(p){return igNoOk(p.no)}).map(function(p){return {nama:p.nama||'',no:igNo(p.no),sent:false}});
+  var ps=(Array.isArray(r.wa_to)?r.wa_to:[]).filter(function(p){return igNoOk(p.no)}).map(function(p){return {nama:p.nama||igKontakNama(p.no),no:igNo(p.no),sent:false}}),dariPihak=false;
+  if(!ps.length){ps=igPenerimaPihak(r.pihak,r.id).map(function(p){return {nama:p.nama,no:p.no,sent:false}});dariPihak=ps.length>0}
   var txt=h('textarea',{rows:9,class:'ig-msg','aria-label':'Isi pesan WhatsApp'});txt.value=igPesanKirim(r);
   var list=h('div',{class:'ig-sendl'});
   function href(no){return 'https://wa.me/'+igNo(no)+'?text='+encodeURIComponent(txt.value)}
@@ -8375,11 +8496,14 @@ function igSendNow(r0){
     if(!canWrite||!r.id)return;
     var cur=(SALL.surat||[]).find(function(x){return x.id===r.id})||r;
     var lg=(Array.isArray(cur.wa_log)?cur.wa_log.slice(-19):[]).concat([{t:new Date().toISOString(),no:igNo(no),oleh:igMe(),jenis:'kirim'}]);
-    r.wa_log=lg;igPatch(cur,{wa_log:lg}).catch(function(){});
+    var to=(Array.isArray(cur.wa_to)?cur.wa_to:[]).slice();ps.forEach(function(p){if(!to.some(function(x){return igNo(x.no)===p.no}))to.push({nama:p.nama,no:p.no})});
+    r.wa_log=lg;r.wa_to=to;igPatch(cur,{wa_log:lg,wa_to:to,wa_on:true}).catch(function(){});
+    var pp=ps.find(function(p){return p.no===igNo(no)});if(pp)igKontakSave(pp.nama,pp.no);
   }
   function draw(){
     list.replaceChildren();
-    if(!ps.length)list.append(h('p',{class:'empty',style:'padding:6px 0',text:'Belum ada penerima. Tambahkan nomor di bawah.'}));
+    if(!ps.length)list.append(h('p',{class:'empty',style:'padding:6px 0',text:'Belum ada penerima. Pilih dari kontak tersimpan atau tambahkan nomor di bawah.'}));
+    if(dariPihak&&ps.length)list.append(h('p',{class:'ig-hint',text:'Penerima diambil dari surat sebelumnya ke tujuan yang sama. Klik kontak untuk menambah atau melepas.'}));
     ps.forEach(function(p){
       var a=h('a',{class:'btn sm ig-wa'+(p.sent?' done':''),href:href(p.no),target:'_blank',rel:'noopener',
         onclick:function(){a.href=href(p.no);p.sent=true;log(p.no);setTimeout(draw,50)}},igWaIcon(),p.sent?'Dibuka lagi':'Kirim');
@@ -8395,15 +8519,19 @@ function igSendNow(r0){
       er.hidden=true;
       if(!igNoOk(no.value)){er.textContent='Nomor WhatsApp belum valid. Gunakan format 08xx atau +62.';er.hidden=false;return}
       var n=igNo(no.value);if(ps.some(function(p){return p.no===n})){er.textContent='Nomor ini sudah ada di daftar.';er.hidden=false;return}
-      ps.push({nama:nm.value.trim(),no:n,sent:false});nm.value='';no.value='';draw();
+      ps.push({nama:nm.value.trim()||igKontakNama(n),no:n,sent:false});if(nm.value.trim())igKontakSave(nm.value,n);nm.value='';no.value='';draw();chips.redraw();
     }},'+ Tambah');
+  var chips=igKontakChips(function(n){return ps.some(function(p){return p.no===igNo(n)})},function(k,on){
+    if(on)ps.push({nama:k.nama,no:igNo(k.no),sent:false});else ps=ps.filter(function(p){return p.no!==igNo(k.no)});draw();
+  });
   txt.addEventListener('input',function(){[].forEach.call(list.querySelectorAll('a.ig-wa'),function(a,i){if(ps[i])a.href=href(ps[i].no)})});
   draw();
   box.append(
     h('p',{class:'sub',style:'margin:0',text:'Pesan langsung dikirim tanpa menunggu pengingat. Tombol Kirim membuka WhatsApp dengan pesan di bawah, lalu tekan kirim di WhatsApp. Ulangi untuk tiap penerima.'}),
     h('label',{class:'fld'},h('span',{text:'Isi pesan (boleh disunting)'}),txt),
-    h('p',{class:'fsec',text:'Penerima'}),list,
+    h('p',{class:'fsec',text:'Penerima'}),chips,list,
     h('div',{class:'ig-addr'},nm,no,addB),er,
+    h('p',{class:'ig-hint',text:'Nomor baru yang diberi nama otomatis tersimpan ke Kontak WhatsApp.'}),
     h('div',{class:'acts',style:'display:flex;justify-content:flex-end;gap:8px;margin-top:6px'},
       h('button',{type:'button',class:'btn',onclick:function(){try{navigator.clipboard.writeText(txt.value).then(function(){toast('Pesan disalin')},function(){toast('Gagal menyalin')})}catch(e){toast('Gagal menyalin')}}},'Salin pesan'),
       h('button',{type:'button',class:'btn primary',onclick:closeModal},'Selesai')));
@@ -8429,6 +8557,7 @@ function igField(row,ro,form,pre){
     h('label',{class:'fld wide'},h('span',{text:'Catatan pengingat'}),cat));
   /* penerima WhatsApp */
   var known={};
+  igKontak().forEach(function(k){known[igNo(k.no)]=k.nama||''});
   ((SALL&&SALL.surat)||[]).forEach(function(r){(r.wa_to||[]).forEach(function(p){var n=igNo(p.no);if(n&&!known[n])known[n]=p.nama||''})});
   var dlId='dl-igwa-'+Math.random().toString(36).slice(2,7);
   var dl=h('datalist',{id:dlId},Object.keys(known).map(function(n){return h('option',{value:'0'+n.slice(2),label:known[n]})}));
@@ -8450,9 +8579,20 @@ function igField(row,ro,form,pre){
   }
   if(!list.length)list.push({nama:'',no:''});
   drawRows();
+  function kosong(){return list.every(function(p){return !String(p.no||'').trim()&&!String(p.nama||'').trim()})}
+  var chips=igKontakChips(function(n){return list.some(function(p){return igNo(p.no)===igNo(n)})},function(k,on){
+    var lok='0'+igNo(k.no).slice(2);
+    if(on){if(kosong())list=[{nama:k.nama,no:lok}];else list.push({nama:k.nama,no:lok})}
+    else{list=list.filter(function(p){return igNo(p.no)!==igNo(k.no)});if(!list.length)list.push({nama:'',no:''})}
+    drawRows();
+  },{ro:ro});
+  function isiPihak(){
+    if(!kosong())return;var pe=form.querySelector('#m-pihak'),pv='';try{pv=pe&&pe.value}catch(e){}
+    var ps=igPenerimaPihak(pv,row&&row.id);if(ps.length){list=ps.map(function(p){return {nama:p.nama,no:'0'+igNo(p.no).slice(2)}});drawRows();chips.redraw();toast('Penerima diisi dari surat sebelumnya ke tujuan yang sama')}
+  }
   var swNow=h('label',{class:'ig-sw ig-sw2'},cNow,h('span',null,h('b',{text:'Kirim sekarang setelah disimpan'}),h('small',{text:'Jendela kirim WhatsApp langsung terbuka begitu surat disimpan, tanpa menunggu pengingat.'})));
-  var waBox=h('div',{class:'ig-wabox'},rows,dl,swNow,
-    h('p',{class:'sub',text:'Tombol Kirim membuka WhatsApp dengan pesan yang sudah terisi (perihal, nomor, tanggal, tujuan). Pesan terkirim setelah Anda menekan kirim di WhatsApp.'}));
+  var waBox=h('div',{class:'ig-wabox'},chips,rows,dl,swNow,
+    h('p',{class:'sub',text:'Tombol Kirim membuka WhatsApp dengan pesan yang sudah terisi (perihal, nomor, tanggal, tujuan). Pesan terkirim setelah Anda menekan kirim di WhatsApp. Penerima baru otomatis tersimpan ke Kontak WhatsApp.'}));
   var swWa=h('label',{class:'ig-sw'},cWa,h('span',null,h('b',{text:'Kirim notifikasi ke WhatsApp'}),h('small',{text:'Kirim langsung sekarang, dan dipakai juga saat pengingat jatuh tempo bila pengingat aktif.'})));
   var swOn=h('label',{class:'ig-sw'},cOn,h('span',null,h('b',{text:'Aktifkan pengingat'}),h('small',{text:'Opsional. Notifikasi muncul di lonceng dan sebagai notifikasi browser pada waktu yang ditentukan.'})));
   var waIn=h('div',{class:'ig-in'},waBox),onIn=h('div',{class:'ig-in'},detail);
@@ -8461,12 +8601,13 @@ function igField(row,ro,form,pre){
     var ar=form.querySelector('#m-arah'),kel=!ar||ar.value==='Keluar';
     wrap.hidden=!kel;onIn.hidden=!cOn.checked;waIn.hidden=!cWa.checked;fSampai.hidden=ul.value!==IG_ULANG[1];
   }
-  cOn.addEventListener('change',sync);cWa.addEventListener('change',sync);ul.addEventListener('change',sync);
+  cOn.addEventListener('change',sync);cWa.addEventListener('change',function(){if(cWa.checked)isiPihak();sync()});ul.addEventListener('change',sync);
   setTimeout(function(){var ar=form.querySelector('#m-arah');if(ar)ar.addEventListener('change',sync);sync()},0);
   sync();
   var wantNow=false;
   return {el:wrap,
     sendNow:function(){return wantNow},
+    after:function(out){if(out&&out.wa_on&&Array.isArray(out.wa_to))igKontakSaveAll(out.wa_to)},
     collect:function(out){
     var keep=row||{};wantNow=false;
     if(keep.wa_log)out.wa_log=keep.wa_log;
@@ -8496,11 +8637,11 @@ function igPanel(){
   var all=igItems(),body=h('div');
   if(!all.length)body.append(h('div',{class:'emptyst'},h('p',{class:'empty',text:'Belum ada pengingat aktif.'}),
     h('p',{class:'empty-h',text:'Saat mencatat atau mengubah surat keluar, nyalakan Aktifkan pengingat. Untuk memberi tahu penerima sekarang juga tanpa pengingat, pakai tombol Kirim WA di kolom Notifikasi pada Register surat.'}),
-    canWrite?h('div',{class:'emptyst-a'},h('button',{type:'button',class:'btn primary',onclick:function(){openForm('surat',null,{arah:'Keluar',ingat_on:true})}},'Surat keluar dengan pengingat')):null));
+    h('div',{class:'emptyst-a'},canWrite?h('button',{type:'button',class:'btn primary',onclick:function(){openForm('surat',null,{arah:'Keluar',ingat_on:true})}},'Surat keluar dengan pengingat'):null,h('button',{type:'button',class:'btn',onclick:function(){igKontakKelola(function(){schedule()})}},'Kontak WhatsApp ('+igKontak().length+')'))));
   else{
     body.append(h('div',{class:'ig-list'},all.slice(0,12).map(function(x){return igCard(x,function(){schedule()})})));
     if(all.length>12)body.append(h('p',{class:'sub',text:'Menampilkan 12 dari '+all.length+' pengingat terdekat.'}));
-    if(canWrite)body.append(h('div',{style:'display:flex;justify-content:flex-end;margin-top:10px'},h('button',{type:'button',class:'btn',onclick:function(){openForm('surat',null,{arah:'Keluar',ingat_on:true})}},'+ Surat keluar dengan pengingat')));
+    body.append(h('div',{style:'display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:10px'},h('button',{type:'button',class:'btn',onclick:function(){igKontakKelola(function(){schedule()})}},'Kontak WhatsApp ('+igKontak().length+')'),canWrite?h('button',{type:'button',class:'btn',onclick:function(){openForm('surat',null,{arah:'Keluar',ingat_on:true})}},'+ Surat keluar dengan pengingat'):null));
   }
   var due=all.filter(function(x){return x.due}).length;
   return panel('Pengingat surat keluar',(due?due+' jatuh tempo. ':'')+'Diurutkan dari yang paling dekat. Pengingat berhenti otomatis saat surat berstatus Selesai.',body);
