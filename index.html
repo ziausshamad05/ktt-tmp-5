@@ -9186,7 +9186,7 @@ function ksSign(row){
   var met=h('input',{type:'checkbox'}),jm=h('select',null,KS_METERAI.map(function(m){return h('option',{value:m},m)})),jmW=h('label',{class:'fld',hidden:true},h('span',{text:'Jenis dokumen e-Meterai'}),jm);
   met.addEventListener('change',function(){jmW.hidden=!met.checked});
   var nm=h('input',{type:'text',maxlength:'150'}),em=h('input',{type:'email',maxlength:'190'});
-  nm.value=(row.ktt_surat&&row.ktt_surat.nama)||ksNamaTtd(c);em.value=c.ttd_email||(ksHost()&&HOST.member.email)||'';
+  nm.value=(row.ktt_surat&&row.ktt_surat.nama)||ksNamaTtd(c);em.value=c.ttd_email||(ksIsSsu()?'ktt@ssuofficial.co.id':'')||(ksHost()&&HOST.member.email)||'';
   var rc=h('textarea',{rows:2,placeholder:'Opsional: email penerima salinan, satu per baris'});
   var er=h('p',{class:'err',hidden:true}),go=h('button',{type:'button',class:'btn primary'},'Kirim untuk tanda tangan');
   box.append(
