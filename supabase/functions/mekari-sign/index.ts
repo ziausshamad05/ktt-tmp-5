@@ -147,6 +147,7 @@ Deno.serve(async (req) => {
       if (pdf!.length > MAX_PDF) return err('input', 'PDF terlalu besar (maksimal 20 MB).', 422);
       const mode = body.mode === 'psre' ? 'psre' : 'global';
       const meterai = body.meterai === true;
+      const stamp = body.stamp === true && mode !== 'psre';
       const jm = METERAI.includes(body.jenis_meterai) ? body.jenis_meterai : 'Surat Lainnya';
       const pages = Math.max(1, Math.min(200, Number(body.halaman) || 1));
       const seen = new Set<string>();
@@ -160,8 +161,9 @@ Deno.serve(async (req) => {
         seen.add(email);
         const ann: any[] = [];
         for (const a of (Array.isArray(sg?.annotations) ? sg.annotations : []).slice(0, 10)) {
-          const type_of = ['signature', 'meterai'].includes(a?.type_of) ? a.type_of : 'signature';
+          const type_of = ['signature', 'meterai', 'stamp'].includes(a?.type_of) ? a.type_of : 'signature';
           if (type_of === 'meterai' && !meterai) continue;
+          if (type_of === 'stamp' && !stamp) continue;
           const n = (v: unknown) => Math.round(Number(v) * 100) / 100;
           const one: any = { type_of, page: Math.max(1, Math.min(pages, Math.floor(Number(a?.page) || 1))), position_x: n(a?.x), position_y: n(a?.y), element_width: n(a?.w), element_height: n(a?.h), canvas_width: n(a?.cw), canvas_height: n(a?.ch) };
           if ([one.position_x, one.position_y, one.element_width, one.element_height, one.canvas_width, one.canvas_height].some((v) => !isFinite(v) || v < 0)) continue;
@@ -174,6 +176,7 @@ Deno.serve(async (req) => {
       }
       if (!signers.length) return err('input', 'Isi minimal satu penanda tangan.', 422);
       if (meterai && !nMet) return err('input', 'Posisi e-Meterai tidak ditemukan.', 422);
+      if (stamp && !signers.some((s) => s.annotations.some((a: any) => a.type_of === 'stamp'))) return err('input', 'Posisi stempel perusahaan tidak ditemukan.', 422);
       const receivers = (Array.isArray(body.receivers) ? body.receivers : []).slice(0, 10)
         .map((x: any) => ({ name: clip(x?.name, 150) || clip(x?.email, 150), email: clip(x?.email, 190).toLowerCase() }))
         .filter((x: any) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x.email) && !seen.has(x.email));
@@ -189,11 +192,11 @@ Deno.serve(async (req) => {
       const ok = !r.error && !!docId;
       const nd: any = { ...d };
       if (cur && cur.doc_id) nd.esign_riwayat = (Array.isArray(d.esign_riwayat) ? d.esign_riwayat.slice(-9) : []).concat([cur]);
-      nd.esign = { env, mode, meterai, jenis_meterai: meterai ? jm : '', doc_id: docId, status: ok ? 'in_progress' : 'gagal', filename,
+      nd.esign = { env, mode, meterai, stamp, jenis_meterai: meterai ? jm : '', doc_id: docId, status: ok ? 'in_progress' : 'gagal', filename,
         signers: signers.map((s) => ({ name: s.name, email: s.email, order: s.order, status: '', signed_at: null })),
         receivers, halaman: pages, ukuran: pdf!.length, asli_ref: asli, dikirim_at: nowIso(), dikirim_oleh: oleh, galat: ok ? '' : (r.error || 'Jawaban Mekari Sign tidak dikenali.') };
       if (ok) nd.status = 'Proses TTD';
-      logAdd(nd, ok ? 'Dikirim ke Mekari Sign' : 'Gagal dikirim ke Mekari Sign', ok ? (mode === 'psre' ? 'PSrE' : 'Global') + (meterai ? ' + e-Meterai' : '') + ' · ' + signers.map((s) => s.name).join(', ') : nd.esign.galat);
+      logAdd(nd, ok ? 'Dikirim ke Mekari Sign' : 'Gagal dikirim ke Mekari Sign', ok ? (mode === 'psre' ? 'PSrE' : 'Global') + (stamp ? ' + stempel' : '') + (meterai ? ' + e-Meterai' : '') + ' · ' + signers.map((s) => s.name).join(', ') : nd.esign.galat);
       await save(nd);
       if (!ok) return err('mekari', r.error || 'Mekari Sign tidak mengembalikan ID dokumen.', 502);
       return json({ ok: true, esign: nd.esign, status: nd.status });
