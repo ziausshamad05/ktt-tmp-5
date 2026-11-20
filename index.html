@@ -1002,6 +1002,20 @@ html.fx-off .aurora,html.fx-off .cglow,html.fx-off .fxbar{display:none}
 .bl-n{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:600;background:var(--brand-soft);color:var(--brand)}
 .bk-tip{margin:0;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--warn,#b7791f) 10%,transparent);border:1px solid color-mix(in srgb,var(--warn,#b7791f) 28%,transparent);color:var(--muted);font-size:12px;line-height:1.5}
 .bk-tip b{color:var(--fg,inherit)}
+.lh-ov{position:fixed;inset:0;z-index:96;display:flex;flex-direction:column;background:var(--bg);opacity:0;transition:opacity .2s}
+.lh-ov.on{opacity:1}
+.lh-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:max(10px,env(safe-area-inset-top,0px)) 14px 10px;border-bottom:1px solid var(--line)}
+.lh-bar b{flex:1 1 160px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lh-bar small{color:var(--mute,inherit);opacity:.7}
+.lh-body{flex:1;min-height:0;overflow:auto;padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px;-webkit-overflow-scrolling:touch}
+.lh-info{margin:8px 0;opacity:.75;text-align:center}
+.lh-pg{background:#fff;border-radius:6px;box-shadow:0 6px 24px -10px rgba(0,0,0,.5);height:auto}
+.lh-doc{width:100%;max-width:820px;background:#fff;color:#111;padding:22px;border-radius:8px;line-height:1.55;overflow-wrap:anywhere}
+.lh-doc img{max-width:100%}.lh-doc table{border-collapse:collapse}.lh-doc td,.lh-doc th{border:1px solid #bbb;padding:4px 8px}
+.lh-tabs{display:flex;gap:6px;flex-wrap:wrap;width:100%}.lh-tabs .on{outline:2px solid currentColor}
+.lh-tbl{width:100%;overflow:auto}.lh-tbl table{border-collapse:collapse;font-size:.85em}
+.lh-tbl td,.lh-tbl th{border:1px solid var(--line);padding:4px 8px;white-space:nowrap}.lh-tbl th{position:sticky;top:0;background:var(--bg)}
+.lh-txt{width:100%;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
 .pc-ex{border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}
 .pc-ex>summary{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:12px 16px;cursor:pointer;list-style:none}
 .pc-ex>summary::-webkit-details-marker{display:none}
@@ -5776,7 +5790,7 @@ function bkField(key,row,ro){
       return h('div',{class:'bk-it'},view,
         h('div',{class:'bk-nm'},h('b',{text:it.nama}),h('small',{text:bkKb(it.ukuran||0)+(x.st?' · belum disimpan':'')})),
         h('div',{class:'bk-ac'},
-          bkIsImg(it)?h('button',{type:'button',class:'btn',onclick:function(){bkLight(it)}},'Lihat'):null,
+          h('button',{type:'button',class:'btn',onclick:function(){bkLihat(it)}},'Lihat'),
           h('button',{type:'button',class:'btn',onclick:function(){bkDownload(it)}},'Unduh'),
           ro?null:h('button',{type:'button',class:'btn',style:'color:var(--crit)',onclick:function(){
             var b=this;if(!b._a){b._a=true;b.textContent='Hapus?';setTimeout(function(){b._a=false;b.textContent='Hapus'},3000);return}
@@ -5807,6 +5821,86 @@ function bkField(key,row,ro){
     for(var k in gone)await bkDel(k);
     for(var i=0;i<staged.length;i++)await bkSave(Object.assign({id:'bk-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),kol:key,rid:rid},staged[i]));
   }};
+}
+/* Penampil lampiran terpadu: gambar, PDF, Word, Excel, teks. Tanpa perlu mengunduh. */
+var LH_LIB={
+  pdf:['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',function(){return window.pdfjsLib}],
+  docx:['https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',function(){return window.mammoth}],
+  xlsx:['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',function(){return window.XLSX}]
+};
+function lhLoad(k){
+  var d=LH_LIB[k];if(d[1]())return Promise.resolve(d[1]());
+  return new Promise(function(res,rej){
+    var s=document.createElement('script');s.src=d[0];s.onload=function(){d[1]()?res(d[1]()):rej(new Error('lib'))};s.onerror=function(){rej(new Error('Pustaka pratinjau tidak dapat dimuat. Periksa koneksi internet.'))};document.head.appendChild(s);
+  });
+}
+function lhJenis(it){
+  var t=(it.tipe||'').toLowerCase(),n=(it.nama||'').toLowerCase();
+  if(/^image\//.test(t))return 'gambar';
+  if(/pdf/.test(t)||/\.pdf$/.test(n))return 'pdf';
+  if(/wordprocessingml/.test(t)||/\.docx$/.test(n))return 'docx';
+  if(/spreadsheetml|ms-excel/.test(t)||/\.(xlsx|xls|csv)$/.test(n))return 'xlsx';
+  if(/^text\//.test(t)||/\.(txt|csv|md)$/.test(n))return 'teks';
+  return 'lain';
+}
+function lhBersih(html){
+  var d=new DOMParser().parseFromString(html,'text/html');
+  d.querySelectorAll('script,iframe,object,embed,link,style,form').forEach(function(e){e.remove()});
+  d.querySelectorAll('*').forEach(function(e){[].slice.call(e.attributes).forEach(function(a){if(/^on/i.test(a.name)||(/^(href|src)$/i.test(a.name)&&/^\s*javascript:/i.test(a.value)))e.removeAttribute(a.name)})});
+  return d.body.innerHTML;
+}
+async function lhIsiPdf(body,it){
+  var lib=await lhLoad('pdf');
+  lib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  var pdf=await lib.getDocument({data:bkBytes(it.b64)}).promise;
+  var info=h('p',{class:'lh-info',text:pdf.numPages+' halaman'});body.append(info);
+  var W=Math.min(body.clientWidth-24,980)||600,dpr=Math.min(window.devicePixelRatio||1,2);
+  for(var i=1;i<=pdf.numPages;i++){
+    if(!body.isConnected)return;
+    var pg=await pdf.getPage(i),v0=pg.getViewport({scale:1}),sc=W/v0.width,v=pg.getViewport({scale:sc*dpr});
+    var c=h('canvas',{class:'lh-pg','aria-label':'Halaman '+i});c.width=v.width;c.height=v.height;c.style.width=(v.width/dpr)+'px';c.style.maxWidth='100%';
+    body.append(c);await pg.render({canvasContext:c.getContext('2d'),viewport:v}).promise;
+  }
+}
+async function lhIsiDocx(body,it){
+  var m=await lhLoad('docx');
+  var r=await m.convertToHtml({arrayBuffer:bkBytes(it.b64).buffer});
+  var box=h('div',{class:'lh-doc'});box.innerHTML=lhBersih(r.value||'<p>(dokumen kosong)</p>');body.append(box);
+}
+async function lhIsiXlsx(body,it){
+  var X=await lhLoad('xlsx');
+  var wb=X.read(bkBytes(it.b64),{type:'array'}),tabs=h('div',{class:'lh-tabs'}),wrap=h('div',{class:'lh-tbl'});
+  function show(name){
+    var rows=X.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:''}),tb=h('table'),cut=rows.length>500;
+    rows.slice(0,500).forEach(function(r,i){var tr=h('tr');(r.slice(0,40)).forEach(function(c){tr.append(h(i===0?'th':'td',{text:String(c)}))});tb.append(tr)});
+    wrap.replaceChildren(tb);if(cut)wrap.append(h('p',{class:'lh-info',text:'Menampilkan 500 baris pertama dari '+rows.length+'. Unduh untuk melihat seluruhnya.'}));
+    [].forEach.call(tabs.children,function(b){b.classList.toggle('on',b.textContent===name)});
+  }
+  wb.SheetNames.forEach(function(n){tabs.append(h('button',{type:'button',class:'btn',onclick:function(){show(n)}},n))});
+  body.append(tabs,wrap);show(wb.SheetNames[0]);
+}
+function lhIsiTeks(body,it){
+  var t=new TextDecoder('utf-8').decode(bkBytes(it.b64));body.append(h('pre',{class:'lh-txt',text:t.slice(0,200000)}));
+}
+function bkLihat(it){
+  if(!it)return;
+  if(!it.b64&&it.b64ref&&typeof bkFull==='function'){toast('Memuat berkas…');bkFull(it).then(function(f){if(f.b64)bkLihat(f);else toast('Berkas tidak dapat dimuat')});return}
+  if(!it.b64){toast('Berkas tidak tersedia');return}
+  var j=lhJenis(it);
+  if(j==='gambar'){bkLight(it);return}
+  var body=h('div',{class:'lh-body'},h('p',{class:'lh-info',text:'Memuat pratinjau…'}));
+  var ov=h('div',{class:'lh-ov',role:'dialog','aria-modal':'true','aria-label':'Pratinjau '+(it.nama||'lampiran')},
+    h('div',{class:'lh-bar'},h('b',{text:it.nama||'Lampiran'}),h('small',{text:bkKb(it.ukuran||0)}),
+      h('button',{type:'button',class:'btn',onclick:function(){bkDownload(it)}},'Unduh'),
+      h('button',{type:'button',class:'btn lh-x','aria-label':'Tutup pratinjau',onclick:function(){close()}},'Tutup')),body);
+  function key(e){if(e.key==='Escape'){e.stopPropagation();close()}}
+  function close(){document.removeEventListener('keydown',key,true);ov.classList.remove('on');setTimeout(function(){ov.remove()},200)}
+  document.addEventListener('keydown',key,true);document.body.appendChild(ov);requestAnimationFrame(function(){ov.classList.add('on')});
+  var job={pdf:lhIsiPdf,docx:lhIsiDocx,xlsx:lhIsiXlsx,teks:lhIsiTeks}[j];
+  if(!job){body.replaceChildren(h('p',{class:'lh-info',text:'Jenis berkas ini tidak dapat ditinjau di dalam aplikasi. Silakan unduh untuk membukanya.'}));return}
+  Promise.resolve().then(function(){body.replaceChildren();return job(body,it)}).catch(function(e){
+    body.replaceChildren(h('p',{class:'lh-info',text:'Pratinjau gagal: '+((e&&e.message)||'berkas tidak dapat dibaca')+'. Silakan unduh berkas.'}));
+  });
 }
 
 /* ---------- Daftar Blok: nama blok yang dipakai pada baris tabel Matrik ---------- */
@@ -7450,7 +7544,7 @@ function subOrder(id){
     box.append(pay);
     var bukti=h('div',{class:'sb-pay'},h('p',{class:'grouph',text:'Bukti pembayaran'}));
     if(o.bukti&&o.bukti.b64){
-      bukti.append(/^image\//.test(o.bukti.tipe||'')?h('button',{type:'button',class:'btn',onclick:function(){bkLight(o.bukti)}},'Lihat bukti ('+(o.bukti.nama||'berkas')+')'):h('p',{class:'sub',style:'margin:0',text:'Berkas: '+(o.bukti.nama||'bukti')}));
+      bukti.append(h('button',{type:'button',class:'btn',onclick:function(){bkLihat(o.bukti)}},'Lihat bukti ('+(o.bukti.nama||'berkas')+')'));
     }
     var fi=h('input',{type:'file',accept:'image/*,application/pdf',hidden:true,onchange:async function(){
       var f=fi.files&&fi.files[0];fi.value='';if(!f)return;
@@ -8066,7 +8160,7 @@ function lpList(items,judul){
   var L=h('div',{class:'bk-list'});
   items.forEach(function(it){
     L.append(h('div',{class:'bk-it'},lpThumb(it),h('div',{class:'bk-nm'},h('b',{text:it.nama}),h('small',{text:bkKb(it.ukuran||0)})),
-      h('div',{class:'bk-ac'},bkIsImg(it)?h('button',{type:'button',class:'btn',onclick:function(){bkLight(it)}},'Lihat'):null,
+      h('div',{class:'bk-ac'},h('button',{type:'button',class:'btn',onclick:function(){bkLihat(it)}},'Lihat'),
         h('button',{type:'button',class:'btn',onclick:function(){bkDownload(it)}},'Unduh'))));
   });
   w.append(L);return w;
@@ -8077,7 +8171,7 @@ function lpInput(store,label,wajib){
   function draw(){
     list.replaceChildren.apply(list,store.map(function(it){
       return h('div',{class:'bk-it'},lpThumb(it),h('div',{class:'bk-nm'},h('b',{text:it.nama}),h('small',{text:bkKb(it.ukuran||0)})),
-        h('div',{class:'bk-ac'},bkIsImg(it)?h('button',{type:'button',class:'btn',onclick:function(){bkLight(it)}},'Lihat'):null,
+        h('div',{class:'bk-ac'},h('button',{type:'button',class:'btn',onclick:function(){bkLihat(it)}},'Lihat'),
           h('button',{type:'button',class:'btn',style:'color:var(--crit)',onclick:function(){
             var b=this;if(!b._a){b._a=true;b.textContent='Hapus?';setTimeout(function(){b._a=false;b.textContent='Hapus'},3000);return}
             var i=store.indexOf(it);if(i>=0)store.splice(i,1);draw()}},'Hapus')));
@@ -13625,7 +13719,7 @@ function ivDokRow(rid,kind,col,pdf){
     var ac=h('div',{class:'bk-ac',style:'flex-wrap:wrap'});
     ac.append(h('button',{type:'button',class:'btn',onclick:function(){pdf(kind,cur())}},'Unduh form PDF'));
     if(f){
-      if(bkIsImg(f))ac.append(h('button',{type:'button',class:'btn',onclick:function(){bkLight(f)}},'Lihat'));
+      ac.append(h('button',{type:'button',class:'btn',onclick:function(){bkLihat(f)}},'Lihat'));
       ac.append(h('button',{type:'button',class:'btn',onclick:function(){bkDownload(f)}},'Unduh berkas'));
     }
     if(canWrite){
