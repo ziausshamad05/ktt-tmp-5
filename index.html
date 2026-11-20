@@ -2109,17 +2109,13 @@ async function seed(){
   }catch(e){toast('Gagal memuat data contoh'+(e&&e.message?': '+e.message:''))}
 }
 async function removeDemo(){
-  try{
-    for(var i=0;i<COLS.length;i++){var c=COLS[i];
-      var del=SALL[c].filter(function(r){return r.demo});
-      if(MODE==='live')await Promise.all(del.map(function(r){return DB.collection(c).doc(r.id).delete()}));
-      else{SALL[c]=SALL[c].filter(function(r){return !r.demo});wyRe(c)}}
-    schedule();toast('Data contoh dihapus');
+  try{var r=await smpDelete(COLS.slice());
+    toast('Data contoh dihapus ('+r.n+' baris)'+(r.kept?', '+r.kept+' dipertahankan karena dipakai data asli':'')+(r.fail?', '+r.fail+' gagal':''));
   }catch(e){toast('Gagal menghapus'+(e&&e.message?': '+e.message:''))}
 }
 function allLoaded(){return COLS.every(function(c){return loaded[c]})}
 function totalRows(){return COLS.reduce(function(a,c){return a+S[c].length},0)}
-function anyDemo(){return COLS.some(function(c){return S[c].some(function(r){return r.demo})})}
+function anyDemo(){return COLS.some(function(c){return (S[c]||[]).some(function(r){return r.demo===true})})}
 
 async function init(){
   try{var cl=window.claude;
@@ -12306,8 +12302,12 @@ var SMP_MENU=[
  {k:'operasional',t:'Operasional tambang',c:['opmaster','opsm','opeto','opbarge','oplog','opplan','oprkab']},
  {k:'reklamasi',t:'Reklamasi dan pascatambang',c:['reklamasi','revegetasi','jaminan','rkgiat','pucuk','bibit','erosi','pasca','rkdok']},
  {k:'personel',t:'Personel',c:['personel']},
- {k:'rkab',t:'RKAB dan Produksi (realisasi bulanan)',c:['produksi']}
-];
+ {k:'rkab',t:'RKAB dan Produksi (realisasi bulanan)',c:['produksi']},
+ {k:'produktivitas',t:'Produktivitas alat, plant dan fuel',c:['opalat','opunit','opfuel','optank','opbd']},
+ {k:'gudang',t:'Gudang dan persediaan',c:['whitem','whin','whout']},
+ {k:'kolam',t:'Kolam pengendap',c:['spond','sppantau','spkeruk']},
+ {k:'kontraktor',t:'Kontraktor (contoh)',c:['kontraktor']}
+].filter(function(m){m.c=m.c.filter(function(c){return COLS.indexOf(c)>=0});return m.c.length>0});
 function smpDay(n){var d=new Date(TODAY.getTime());d.setDate(d.getDate()+n);return isoOf(d)}
 function smpOpDocs(){
   var kon=window.__KTT_DEMO?'Kontraktor Contoh A':(((S.kontraktor||[])[0]||{}).nama||'Kontraktor Contoh'),D='demo-op-';
@@ -12329,25 +12329,76 @@ function smpOpDocs(){
   out.oprkab=(S.oprkab||[]).some(function(r){return Number(r.tahun)===yr})?[]:[{id:D+'rk1',tahun:yr,kuota:100000,demo:true}];
   return out;
 }
-function smpRows(col){
-  if(col.indexOf('op')===0)return smpOpDocs()[col]||[];
-  if(col.indexOf('pg')===0)return pgSampleDocs()[col]||[];
-  if(col==='minepermit'||col==='simper'){var hv={};(S[col]||[]).forEach(function(r){hv[r.id]=1});return (permitSample()[col]||[]).filter(function(r){return !hv[r.id]})}
-  var have={};(S[col]||[]).forEach(function(r){have[r.id]=1});
-  return (SEED[col]||[]).filter(function(r){return !have[r.id]}).map(function(r){var x=Object.assign({},r);x.demo=true;return x});
+/* Pengaman data contoh:
+   - cek id dan periode ke SELURUH data (SALL), bukan hanya tahun kerja yang tampil;
+   - baris asli (tanpa tanda demo) tidak pernah ditimpa atau dihapus;
+   - baris contoh yang sudah dipakai data asli (id/nama direferensikan) tidak dihapus. */
+var SMP_KEY={produksi:'periode',jamkerja:'periode'};
+var SMP_MASTER={opmaster:1,opunit:1,pgcust:1,pgbarge:1,pgjetty:1,pgsurv:1,pgstock:1,pgkontrak:1,kontraktor:1,spond:1,whitem:1,personel:1,risiko:1};
+function smpAll(col){var a=(SALL&&SALL[col]&&SALL[col].length)?SALL[col]:(S[col]||[]);return a}
+function smpIsDemo(r){return !!r&&r.demo===true}
+var _smpRef=null,_smpRefT=0;
+function smpRefs(fresh){
+  var t=Date.now();if(!fresh&&_smpRef&&t-_smpRefT<1500)return _smpRef;
+  var ids=new Set(),names={};
+  function walk(v,c,d){if(v==null||d>5)return;
+    if(typeof v==='string'){if(v.length&&v.length<120){ids.add(v);(names[v]=names[v]||{})[c]=1;if(v.indexOf(',')>=0)v.split(',').forEach(function(x){x=x.trim();if(x)ids.add(x)})}return}
+    if(Array.isArray(v)){v.forEach(function(x){walk(x,c,d+1)});return}
+    if(typeof v==='object')Object.keys(v).forEach(function(k){if(k!=='id'&&k!=='b64'&&k!=='kopImg')walk(v[k],c,d+1)});}
+  COLS.forEach(function(c){smpAll(c).forEach(function(r){if(r&&!smpIsDemo(r))walk(r,c,0)})});
+  _smpRef={ids:ids,names:names};_smpRefT=t;return _smpRef;
 }
-function smpDemo(col){return (S[col]||[]).filter(function(r){return r.demo===true})}
+function smpUsed(col,r,refs){
+  refs=refs||smpRefs();
+  if(r.id&&refs.ids.has(r.id))return true;
+  if(SMP_MASTER[col]){var ks=['nama','kode','no'];for(var i=0;i<ks.length;i++){var v=r[ks[i]];if(v&&String(v).length>=4){var m=refs.names[String(v)];if(m&&Object.keys(m).some(function(c){return c!==col}))return true}}}
+  return false;
+}
+function smpRaw(col){
+  if(col.indexOf('op')===0&&!(SEED[col]&&SEED[col].length))return smpOpDocs()[col]||[];
+  if(col.indexOf('pg')===0)return pgSampleDocs()[col]||[];
+  if(col==='minepermit'||col==='simper')return permitSample()[col]||[];
+  return (SEED[col]||[]).filter(smpIsDemo);
+}
+function smpRows(col){
+  var all=smpAll(col),have={},key=SMP_KEY[col],taken={};
+  all.forEach(function(r){have[r.id]=1;if(key&&!smpIsDemo(r)&&r[key]!=null&&r[key]!=='')taken[String(r[key])]=1});
+  return smpRaw(col).filter(function(r){return r&&r.id&&!have[r.id]&&!(key&&taken[String(r[key])])})
+    .map(function(r){var x=Object.assign({},r);x.demo=true;return x});
+}
+function smpDemoAll(col){return smpAll(col).filter(smpIsDemo)}
+function smpDemo(col){var refs=smpRefs();return smpDemoAll(col).filter(function(r){return !smpUsed(col,r,refs)})}
+function smpKept(col){var refs=smpRefs();return smpDemoAll(col).filter(function(r){return smpUsed(col,r,refs)}).length}
 function smpCount(m,mode){return m.c.reduce(function(n,c){return n+(mode==='add'?smpRows(c).length:smpDemo(c).length)},0)}
+function smpKeptCount(m){return m.c.reduce(function(n,c){return n+smpKept(c)},0)}
+/* Hapus baris contoh pada koleksi tertentu. Tiap baris dicek ulang sebelum dihapus; kegagalan satu baris tidak menghentikan baris lain. */
+async function smpDelete(cols,prog){
+  smpRefs(true);
+  var jobs=[],kept=0,fail=0,done=0;
+  cols.forEach(function(c){var refs=smpRefs();smpDemoAll(c).forEach(function(r){if(smpUsed(c,r,refs))kept++;else jobs.push([c,r.id])})});
+  for(var i=0;i<jobs.length;i++){
+    var c=jobs[i][0],id=jobs[i][1],cur=smpAll(c).find(function(x){return x.id===id});
+    if(cur&&smpIsDemo(cur)){try{await remove(c,id);done++}catch(e){fail++}}
+    if(prog&&((i+1)%5===0||i+1===jobs.length))prog(i+1,jobs.length);
+  }
+  _smpRef=null;schedule();
+  return {n:done,kept:kept,fail:fail,total:jobs.length};
+}
 async function smpRun(mode,menus,prog){
-  var total=0,done=0,jobs=[];
-  menus.forEach(function(m){m.c.forEach(function(c){(mode==='add'?smpRows(c):smpDemo(c)).forEach(function(r){jobs.push([c,r])})})});
-  total=jobs.length;
+  var cols=[];menus.forEach(function(m){m.c.forEach(function(c){if(cols.indexOf(c)<0)cols.push(c)})});
+  if(mode!=='add'){var r=await smpDelete(cols,prog);smpRun.last=r;return r.n}
+  var jobs=[],fail=0,done=0;
+  cols.forEach(function(c){smpRows(c).forEach(function(r){jobs.push([c,r])})});
   for(var i=0;i<jobs.length;i++){
     var c=jobs[i][0],r=jobs[i][1];
-    if(mode==='add'){var d=Object.assign({},r);var id=d.id;delete d.id;await save(c,id,d)}else{await remove(c,r.id)}
-    done++;if(prog&&(done%5===0||done===total))prog(done,total);
+    /* cek ulang tepat sebelum menulis: jangan menimpa baris yang sudah ada */
+    if(smpAll(c).some(function(x){return x.id===r.id})){continue}
+    var d=Object.assign({},r),id=d.id;delete d.id;
+    try{await save(c,id,d);done++}catch(e){fail++}
+    if(prog&&((i+1)%5===0||i+1===jobs.length))prog(i+1,jobs.length);
   }
-  return total;
+  _smpRef=null;smpRun.last={n:done,kept:0,fail:fail,total:jobs.length};
+  return done;
 }
 function smpWizard(mode){
   var add=mode==='add',box=h('div',{class:'smp'}),sel={};
@@ -12361,7 +12412,8 @@ function smpWizard(mode){
     SMP_MENU.forEach(function(m){
       var n=smpCount(m,mode),cb=h('input',{type:'checkbox','data-k':m.k,disabled:n===0?true:null});
       cb.addEventListener('change',function(){sel[m.k]=cb.checked;sync()});
-      list.append(h('label',{class:'smp-row'+(n===0?' off':'')},cb,h('span',{class:'t',text:m.t}),h('small',{text:n===0?(add?'Sudah terisi atau tidak ada contoh':'Tidak ada data contoh'):n+(add?' baris contoh akan ditambahkan':' baris contoh akan dihapus')})));
+      var kp=add?0:smpKeptCount(m),kt=kp?' · '+kp+' dipertahankan karena dipakai data asli':'';
+      list.append(h('label',{class:'smp-row'+(n===0?' off':'')},cb,h('span',{class:'t',text:m.t}),h('small',{text:(n===0?(add?'Sudah terisi atau tidak ada contoh':'Tidak ada data contoh yang bisa dihapus'):n+(add?' baris contoh akan ditambahkan':' baris contoh akan dihapus'))+kt})));
     });
     box.replaceChildren(
       h('p',{class:'sub',style:'margin:0 0 8px',text:add?'Centang menu yang ingin diisi data contoh. Data contoh diberi tanda khusus sehingga dapat dihapus kapan saja tanpa menyentuh data asli Anda.':'Centang menu yang data contohnya ingin dihapus. Hanya baris bertanda contoh yang dihapus; data asli Anda tidak disentuh.'}),
@@ -12385,8 +12437,9 @@ function smpWizard(mode){
   async function stepRun(){
     var ms=picked(),pr=h('p',{class:'smp-q',text:'Memproses…'});
     box.replaceChildren(pr,h('p',{class:'sub',text:'Jangan tutup halaman ini sampai selesai.'}));
-    try{var n=await smpRun(mode,ms,function(d,t){pr.textContent='Memproses '+d+' dari '+t+'…'});
-      box.replaceChildren(h('p',{class:'smp-q',text:(add?'Selesai. ':'Selesai. ')+n+' baris data contoh '+(add?'ditambahkan.':'dihapus.')}),h('div',{class:'acts'},h('span',{class:'grow'}),h('button',{type:'button',class:'btn primary',onclick:closeModal},'Tutup')));
+    try{var n=await smpRun(mode,ms,function(d,t){pr.textContent='Memproses '+d+' dari '+t+'…'}),L=smpRun.last||{};
+      var extra=(L.kept?' '+L.kept+' baris contoh dipertahankan karena sudah dipakai data asli Anda.':'')+(L.fail?' '+L.fail+' baris gagal diproses, coba ulangi.':'');
+      box.replaceChildren(h('p',{class:'smp-q',text:'Selesai. '+n+' baris data contoh '+(add?'ditambahkan.':'dihapus.')+extra}),h('p',{class:'sub',text:'Data yang Anda input sendiri tidak diubah.'}),h('div',{class:'acts'},h('span',{class:'grow'}),h('button',{type:'button',class:'btn primary',onclick:closeModal},'Tutup')));
       toast(add?'Data contoh ditambahkan':'Data contoh dihapus');
     }catch(e){box.replaceChildren(h('p',{class:'err',text:'Proses terhenti: '+(e&&e.message?e.message:'periksa akses Anda')+'. Sebagian data mungkin sudah diproses.'}),h('div',{class:'acts'},h('span',{class:'grow'}),h('button',{type:'button',class:'btn',onclick:closeModal},'Tutup')))}
   }
@@ -14453,15 +14506,14 @@ function prdDemoPanel(){
   var load=h('button',{type:'button',class:'btn primary',onclick:async function(){
     var D=prdDemo();
     try{
-      if(MODE==='live'){for(var j=0;j<cols.length;j++){var cc=cols[j],ids=D[cc].map(function(d){return d.id});await Promise.all((S[cc]||[]).filter(function(r){return prdDemoRow(r)&&ids.indexOf(r.id)<0}).map(function(r){return DB.collection(cc).doc(r.id).delete()}))}for(var i=0;i<cols.length;i++){var c=cols[i];await Promise.all(D[c].map(function(d){var x=Object.assign({},d);delete x.id;return DB.collection(c).doc(d.id).set(clean(x))}))}}
-      else{cols.forEach(function(c){S[c]=(S[c]||[]).filter(function(r){return !r.demo}).concat(D[c])});schedule()}
+      if(MODE==='live'){for(var j=0;j<cols.length;j++){var cc=cols[j],ids=D[cc].map(function(d){return d.id});await Promise.all((S[cc]||[]).filter(function(r){return prdDemoRow(r)&&ids.indexOf(r.id)<0}).map(function(r){return DB.collection(cc).doc(r.id).delete()}))}for(var i=0;i<cols.length;i++){var c=cols[i],own={};(SALL[c]||[]).forEach(function(r){if(!smpIsDemo(r))own[r.id]=1});await Promise.all(D[c].filter(function(d){return !own[d.id]}).map(function(d){var x=Object.assign({},d,{demo:true});delete x.id;return DB.collection(c).doc(d.id).set(clean(x))}))}}
+      else{cols.forEach(function(c){var hv={};(SALL[c]||[]).forEach(function(r){hv[r.id]=1});SALL[c]=(SALL[c]||[]).concat((D[c]||[]).filter(function(d){return !hv[d.id]}).map(function(d){return Object.assign({},d,{demo:true})}));wyRe(c)});schedule()}
       toast('Data contoh dimuat');paint();
     }catch(e){toast('Gagal memuat data contoh'+(e&&e.message?': '+e.message:''))}}},'Muat data contoh');
   var del=h('button',{type:'button',class:'btn',onclick:async function(){
     try{
-      for(var i=0;i<cols.length;i++){var c=cols[i],rm=(S[c]||[]).filter(prdDemoRow);
-        if(MODE==='live')await Promise.all(rm.map(function(r){return DB.collection(c).doc(r.id).delete()}));else S[c]=(S[c]||[]).filter(function(r){return !r.demo})}
-      if(MODE!=='live')schedule();toast('Data contoh dihapus');paint();
+      var r=await smpDelete(cols);
+      toast('Data contoh dihapus ('+r.n+' baris)'+(r.kept?', '+r.kept+' dipertahankan karena dipakai data asli':'')+(r.fail?', '+r.fail+' gagal':''));paint();
     }catch(e){toast('Gagal menghapus data contoh')}}},'Hapus data contoh');
   return panel('Data contoh','13 unit alat, 12 hari laporan harian per shift, dan stok fuel. Mengisi Overview Produktivitas, Plant, dan Fuel supaya grafiknya terlihat. Hanya baris bertanda “contoh” yang dihapus; data asli Anda tidak tersentuh.',
     h('p',{class:'prd-note',text:has?'Data contoh sedang aktif.':(real?'Sudah ada data asli. Data contoh akan ditambahkan di samping data Anda.':'Belum ada data. Dashboard menampilkan grafik kosong.')}),
@@ -15549,15 +15601,14 @@ function wdDemoPanel(){
   var load=h('button',{type:'button',class:'btn primary',onclick:async function(){
     var D=wdDemo();
     try{
-      if(MODE==='live'){for(var j=0;j<cols.length;j++){var cc=cols[j],ids=D[cc].map(function(d){return d.id});await Promise.all((S[cc]||[]).filter(function(r){return prdDemoRow(r)&&ids.indexOf(r.id)<0}).map(function(r){return DB.collection(cc).doc(r.id).delete()}))}for(var i=0;i<cols.length;i++){var c=cols[i];await Promise.all(D[c].map(function(d){var x=Object.assign({},d);delete x.id;return DB.collection(c).doc(d.id).set(clean(x))}))}}
-      else{cols.forEach(function(c){S[c]=(S[c]||[]).filter(function(r){return !r.demo}).concat(D[c])});schedule()}
+      if(MODE==='live'){for(var j=0;j<cols.length;j++){var cc=cols[j],ids=D[cc].map(function(d){return d.id});await Promise.all((S[cc]||[]).filter(function(r){return prdDemoRow(r)&&ids.indexOf(r.id)<0}).map(function(r){return DB.collection(cc).doc(r.id).delete()}))}for(var i=0;i<cols.length;i++){var c=cols[i],own={};(SALL[c]||[]).forEach(function(r){if(!smpIsDemo(r))own[r.id]=1});await Promise.all(D[c].filter(function(d){return !own[d.id]}).map(function(d){var x=Object.assign({},d,{demo:true});delete x.id;return DB.collection(c).doc(d.id).set(clean(x))}))}}
+      else{cols.forEach(function(c){var hv={};(SALL[c]||[]).forEach(function(r){hv[r.id]=1});SALL[c]=(SALL[c]||[]).concat((D[c]||[]).filter(function(d){return !hv[d.id]}).map(function(d){return Object.assign({},d,{demo:true})}));wyRe(c)});schedule()}
       toast('Data contoh dimuat');paint();
     }catch(e){toast('Gagal memuat data contoh'+(e&&e.message?': '+e.message:''))}}},'Muat data contoh');
   var del=h('button',{type:'button',class:'btn',onclick:async function(){
     try{
-      for(var i=0;i<cols.length;i++){var c=cols[i],rm=(S[c]||[]).filter(prdDemoRow);
-        if(MODE==='live')await Promise.all(rm.map(function(r){return DB.collection(c).doc(r.id).delete()}));else S[c]=(S[c]||[]).filter(function(r){return !r.demo})}
-      if(MODE!=='live')schedule();toast('Data contoh dihapus');paint();
+      var r=await smpDelete(cols);
+      toast('Data contoh dihapus ('+r.n+' baris)'+(r.kept?', '+r.kept+' dipertahankan karena dipakai data asli':'')+(r.fail?', '+r.fail+' gagal':''));paint();
     }catch(e){toast('Gagal menghapus data contoh')}}},'Hapus data contoh');
   return panel('Data contoh','28 barang gudang, barang masuk, dan store slip 12 bulan terakhir agar dashboard dan Min-Max terlihat. Hanya baris bertanda “contoh” yang dihapus.',
     h('p',{class:'prd-note',text:has?'Data contoh sedang aktif.':(real?'Sudah ada data asli. Data contoh ditambahkan di sampingnya.':'Belum ada data. Dashboard menampilkan grafik kosong.')}),
