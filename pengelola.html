@@ -617,6 +617,7 @@ setInterval(async function(){
 function idle(){setInterval(function(){if($('#body')&&Date.now()-S.last>60*60*1000){keluar();toast('Sesi berakhir karena tidak ada aktivitas')}},30000);
   ['click','keydown','pointerdown'].forEach(function(ev){document.addEventListener(ev,function(){S.last=Date.now()},true)})}
 function start(){
+  if(CFG&&(!window.supabase||!window.supabase.createClient)&&(start._n=(start._n||0)+1)<=150){setTimeout(start,100);return}
   if(!CFG||!window.supabase||!window.supabase.createClient){$('#app').append(el('p',{class:'empty',text:'Pustaka masuk gagal dimuat. Muat ulang halaman.'}));return}
   var store;try{store=window.sessionStorage;store.getItem('x')}catch(e){store=undefined}
   S.sb=window.supabase.createClient(CFG.url,CFG.key,{auth:{persistSession:!!store,autoRefreshToken:true,detectSessionInUrl:false,storage:store,storageKey:'ktt-pengelola-auth'}});
