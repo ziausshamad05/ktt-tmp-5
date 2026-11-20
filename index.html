@@ -9087,7 +9087,7 @@ function ksOpen(row,pre){
   function collect(){
     var j=jen(),kp=kep.value.split('\n').map(function(x){return x.trim()}).filter(Boolean),tb=tem.value.split('\n').map(function(x){return x.trim()}).filter(Boolean);
     return {row:{arah:'Keluar',asal:'ktt',nomor:no.value.trim(),tanggal:tgl.value,perihal:per.value.trim(),pihak:kp.join(' ').replace(/[;.]\s*$/,'').slice(0,300),
-      isi:isi.value.replace(/\*\*|(^|\s)\*|_/g,'$1').slice(0,4000)},
+      isi:isi.value.replace(/\*+/g,'').slice(0,4000)},
       k:{kode:j.kode,jenis:j.nama,judul:j.judul,target:tWrap.hidden?'':target.value,sifat:sifat.value,lampiran_ket:lamp.value.trim()||'-',kepada:kp,di:di.value.trim(),salam:salam.value.trim(),
       isi:isi.value.replace(/\r/g,''),tembusan:tb,kota:kota.value.trim(),jabatan:jab.value.trim(),nama:nama.value.trim(),perusahaan:ksPerusahaan()}};
   }
@@ -9131,8 +9131,8 @@ function ksOpen(row,pre){
     h('span',{class:'grow'}),
     h('button',{type:'button',class:'btn',onclick:closeModal},lock?'Tutup':'Batal'));
   if(!lock){
-    acts.append(h('button',{type:'button',class:'btn',onclick:async function(e){e.currentTarget.disabled=true;var r=await simpan();e.currentTarget.disabled=false;if(r){closeModal()}}},'Simpan draf'));
-    acts.append(h('button',{type:'button',class:'btn primary',onclick:async function(e){e.currentTarget.disabled=true;var r=await simpan();e.currentTarget.disabled=false;if(r){closeModal();setTimeout(function(){ksSign(r)},60)}}},'Simpan dan tanda tangani'));
+    acts.append(h('button',{type:'button',class:'btn',onclick:async function(e){var bt=e.currentTarget;bt.disabled=true;var r=null;try{r=await simpan()}finally{bt.disabled=false}if(r){closeModal()}}},'Simpan draf'));
+    acts.append(h('button',{type:'button',class:'btn primary',onclick:async function(e){var bt=e.currentTarget;bt.disabled=true;var r=null;try{r=await simpan()}finally{bt.disabled=false}if(r){closeModal();setTimeout(function(){ksSign(r)},300)}}},'Simpan dan tanda tangani'));
   }else if(!view&&es&&es.status==='completed'&&row.status!=='Terkirim'){
     acts.append(h('button',{type:'button',class:'btn primary',onclick:async function(){try{await quickSet('surat',row.id,{status:'Terkirim',dikirim_at:new Date().toISOString()});toast('Surat ditandai terkirim');closeModal()}catch(e){}}},'Tandai sudah dikirim'));
   }
