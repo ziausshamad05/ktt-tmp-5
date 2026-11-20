@@ -9239,6 +9239,7 @@ function ksSetelan(){
   var kota=h('input',{type:'text',maxlength:'60'});kota.value=c.kota;
   var jab=h('input',{type:'text',maxlength:'80',placeholder:ksJabatan({jabatan:''})});jab.value=c.jabatan;
   var tn=h('input',{type:'text',maxlength:'80',placeholder:String(PROF.ktt_nama||'').toUpperCase()});tn.value=c.ttd_nama;
+  var tem2=h('input',{type:'email',maxlength:'190',placeholder:ksIsSsu()?'ktt@ssuofficial.co.id':'email@perusahaan.co.id'});tem2.value=c.ttd_email;
   var dept=h('textarea',{rows:5});dept.value=c.dept.join('\n');
   var tem=h('textarea',{rows:3});tem.value=c.tembusan.join('\n');
   var prev=h('code',{class:'ks-code'});function pv(){var cc=Object.assign({},c,{format:fmtI.value||KS_FMT_DEF,inisial:ini.value||c.inisial});prev.textContent=ksNomor('SE',isoOf(new Date()),4,cc)}
@@ -9270,7 +9271,8 @@ function ksSetelan(){
     var dup=ok.map(function(j){return j.kode}).filter(function(x,i,a){return a.indexOf(x)!==i});if(dup.length){er.textContent='Kode '+dup[0]+' dipakai lebih dari sekali.';er.hidden=false;return}
     if(!/\{no\}/.test(fmtI.value)){er.textContent='Format nomor harus memuat {no}.';er.hidden=false;return}
     simpan.disabled=true;
-    try{await ksCfgSave({inisial:ini.value.trim().toUpperCase(),format:fmtI.value.trim(),kota:kota.value.trim(),jabatan:jab.value.trim(),ttd_nama:tn.value.trim(),
+    if(tem2.value.trim()&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(tem2.value.trim())){er.textContent='Email penanda tangan tidak valid.';er.hidden=false;simpan.disabled=false;return}
+    try{await ksCfgSave({ttd_email:tem2.value.trim()||null,inisial:ini.value.trim().toUpperCase(),format:fmtI.value.trim(),kota:kota.value.trim(),jabatan:jab.value.trim(),ttd_nama:tn.value.trim(),
       dept:dept.value.split('\n').map(function(x){return x.trim()}).filter(Boolean),tembusan:tem.value.split('\n').map(function(x){return x.trim()}).filter(Boolean),
       jenis:ok,kopImg:kop.b64||null,kop_w:kop.b64?kop.w:null,kop_h:kop.b64?kop.h:null,kop_teks:kop.teks||null});toast('Pengaturan surat tersimpan')}
     catch(e){er.textContent='Gagal menyimpan: '+((e&&e.message)||'');er.hidden=false}
@@ -9283,7 +9285,8 @@ function ksSetelan(){
     h('p',{class:'fsec',text:'Jenis surat dan kode'}),h('div',{class:'ks-jh'},h('span',{text:'Kode'}),h('span',{text:'Nama jenis'}),h('span',{text:'Judul di surat'}),h('span',{text:'Tujuan'})),jl,
     h('p',{class:'fsec',text:'Penanda tangan dan tujuan'}),
     h('div',{class:'form'},h('label',{class:'fld'},h('span',{text:'Tempat penandatanganan'}),kota),h('label',{class:'fld'},h('span',{text:'Jabatan (kosong = otomatis)'}),jab),
-      h('label',{class:'fld'},h('span',{text:'Nama penanda tangan (kosong = nama KTT di profil)'}),tn),h('label',{class:'fld'},h('span',{text:'Tembusan bawaan'}),tem),
+      h('label',{class:'fld'},h('span',{text:'Nama penanda tangan (kosong = nama KTT di profil)'}),tn),
+      h('label',{class:'fld'},h('span',{text:'Email akun Mekari Sign penanda tangan'}),tem2),h('label',{class:'fld'},h('span',{text:'Tembusan bawaan'}),tem),
       h('label',{class:'fld wide'},h('span',{text:'Daftar departemen (satu per baris)'}),dept)),
     h('p',{class:'fsec',text:'Kop surat'}),kv,
     h('div',{class:'ks-row'},kfi,h('button',{type:'button',class:'btn sm',onclick:function(){kfi.click()}},'Unggah gambar kop'),
