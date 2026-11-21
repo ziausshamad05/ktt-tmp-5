@@ -171,7 +171,8 @@ Deno.serve(async (req) => {
           if (type_of === 'meterai') nMet++;
           ann.push(one);
         }
-        if (!ann.some((a) => a.type_of === 'signature')) return err('input', 'Posisi tanda tangan untuk ' + name + ' tidak ditemukan.', 422);
+        if (stamp) { if (ann.some((a) => a.type_of === 'signature')) return err('input', 'Pilih salah satu: tanda tangan atau stempel.', 422); if (!ann.some((a) => a.type_of === 'stamp')) return err('input', 'Posisi stempel perusahaan untuk ' + name + ' tidak ditemukan.', 422); }
+        else if (!ann.some((a) => a.type_of === 'signature')) return err('input', 'Posisi tanda tangan untuk ' + name + ' tidak ditemukan.', 422);
         signers.push({ name, email, order: signers.length + 1, annotations: ann });
       }
       if (!signers.length) return err('input', 'Isi minimal satu penanda tangan.', 422);
@@ -196,7 +197,7 @@ Deno.serve(async (req) => {
         signers: signers.map((s) => ({ name: s.name, email: s.email, order: s.order, status: '', signed_at: null })),
         receivers, halaman: pages, ukuran: pdf!.length, asli_ref: asli, dikirim_at: nowIso(), dikirim_oleh: oleh, galat: ok ? '' : (r.error || 'Jawaban Mekari Sign tidak dikenali.') };
       if (ok) nd.status = 'Proses TTD';
-      logAdd(nd, ok ? 'Dikirim ke Mekari Sign' : 'Gagal dikirim ke Mekari Sign', ok ? (mode === 'psre' ? 'PSrE' : 'Global') + (stamp ? ' + stempel' : '') + (meterai ? ' + e-Meterai' : '') + ' · ' + signers.map((s) => s.name).join(', ') : nd.esign.galat);
+      logAdd(nd, ok ? 'Dikirim ke Mekari Sign' : 'Gagal dikirim ke Mekari Sign', ok ? (mode === 'psre' ? 'PSrE' : 'Global') + (stamp ? ' · stempel (tanpa tanda tangan)' : '') + (meterai ? ' + e-Meterai' : '') + ' · ' + signers.map((s) => s.name).join(', ') : nd.esign.galat);
       await save(nd);
       if (!ok) return err('mekari', r.error || 'Mekari Sign tidak mengembalikan ID dokumen.', 502);
       return json({ ok: true, esign: nd.esign, status: nd.status });

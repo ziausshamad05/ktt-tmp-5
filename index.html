@@ -8930,11 +8930,13 @@ function ksBuild(D){
   yt+=LH;tx(ML,yt-3,(D.kota||'')+(D.kota?', ':'')+ksTglPanjang(D.tanggal));
   yt+=LH*2;tx(ML,yt-3,String(D.jabatan||'').toUpperCase().replace(/^PJS\./,'Pjs.'),true);
   yt+=LH;tx(ML,yt-3,D.perusahaan||'');
-  yt+=4;sig={page:pages.length,x:ML,y:yt,w:150,h:74};var nx=ML+162;
-  if(D.stamp){stp={page:pages.length,x:nx,y:yt,w:84,h:74};nx+=96}
+  yt+=4;var nx;
+  if(D.stamp){stp={page:pages.length,x:ML,y:yt,w:110,h:74};nx=ML+122}
+  else{sig={page:pages.length,x:ML,y:yt,w:150,h:74};nx=ML+162}
   if(D.meterai)met={page:pages.length,x:nx,y:yt,w:76,h:74};
-  if(D.contoh){ops.push('0.75 0.78 0.76 RG 0.5 w [3 2] 0 d '+ML.toFixed(2)+' '+(PH-yt-74).toFixed(2)+' 150 74 re S [] 0 d');tx(ML+30,yt+40,'(tanda tangan elektronik)',false,true,7.5,'0.55 0.58 0.56');
-    if(stp){ops.push('0.75 0.78 0.76 RG 0.5 w [3 2] 0 d '+stp.x.toFixed(2)+' '+(PH-yt-74).toFixed(2)+' 84 74 re S [] 0 d');tx(stp.x+17,yt+40,'(stempel)',false,true,7.5,'0.55 0.58 0.56')}
+  if(D.contoh){
+    if(sig){ops.push('0.75 0.78 0.76 RG 0.5 w [3 2] 0 d '+ML.toFixed(2)+' '+(PH-yt-74).toFixed(2)+' 150 74 re S [] 0 d');tx(ML+30,yt+40,'(tanda tangan elektronik)',false,true,7.5,'0.55 0.58 0.56')}
+    if(stp){ops.push('0.75 0.78 0.76 RG 0.5 w [3 2] 0 d '+stp.x.toFixed(2)+' '+(PH-yt-74).toFixed(2)+' 110 74 re S [] 0 d');tx(stp.x+34,yt+40,'(stempel)',false,true,7.5,'0.55 0.58 0.56')}
     if(met){ops.push('0.75 0.78 0.76 RG 0.5 w [3 2] 0 d '+met.x.toFixed(2)+' '+(PH-yt-74).toFixed(2)+' 76 74 re S [] 0 d');tx(met.x+14,yt+40,'(e-Meterai)',false,true,7.5,'0.55 0.58 0.56')}}
   yt+=74+LH;tx(ML,yt-3,D.nama||'',true);
   var tb=(D.tembusan||[]).map(function(x){return String(x).trim()}).filter(Boolean);
@@ -8966,7 +8968,7 @@ function ksPreview(D,name){
   var url=null;try{url=URL.createObjectURL(new Blob([b.bytes],{type:'application/pdf'}))}catch(e){}
   var box=h('div',{class:'ks-prev'});
   if(url)box.append(h('iframe',{src:url,title:'Pratinjau surat',class:'ks-frame'}));
-  box.append(h('p',{class:'sub',style:'margin:0',text:b.pages+' halaman. Kotak putus-putus menandai posisi tanda tangan'+(D.stamp?', stempel':'')+(D.meterai?', e-Meterai':'')+'; kotak itu tidak ikut pada PDF yang dikirim ke Mekari Sign.'}),
+  box.append(h('p',{class:'sub',style:'margin:0',text:b.pages+' halaman. Kotak putus-putus menandai posisi '+(D.stamp?'stempel':'tanda tangan')+(D.meterai?', e-Meterai':'')+'; kotak itu tidak ikut pada PDF yang dikirim ke Mekari Sign.'}),
     h('div',{class:'acts',style:'display:flex;gap:8px;justify-content:flex-end'},
       h('button',{type:'button',class:'btn',onclick:function(){var bb=ksBuild(Object.assign({},D,{contoh:false}));opSave(name||'surat-ktt.pdf',bb.bytes)}},'Unduh PDF'),
       h('button',{type:'button',class:'btn primary',onclick:ksBack},'Kembali')));
@@ -9184,7 +9186,7 @@ function ksEsPanel(row){
   if(can&&['voided','declined','denied','gagal'].indexOf(e.status)>=0)acts.append(h('button',{type:'button',class:'btn sm',onclick:function(){closeModal();ksSign(row)}},'Kirim ulang untuk tanda tangan'));
   return h('section',{class:'ks-es ks-es-'+(x[1]||'mute')},
     h('div',{class:'ks-esh'},h('b',{text:'Tanda tangan elektronik Mekari Sign'}),badge(x[0],x[1]),
-      h('small',{text:(e.mode==='psre'?'PSrE (tersertifikasi)':'Global')+(e.stamp?' + stempel':'')+(e.meterai?' + e-Meterai':'')+(e.env==='production'?'':' · Sandbox')})),
+      h('small',{text:(e.mode==='psre'?'PSrE (tersertifikasi)':'Global')+(e.stamp?' · stempel (tanpa tanda tangan)':'')+(e.meterai?' + e-Meterai':'')+(e.env==='production'?'':' · Sandbox')})),
     sg.length?h('ul',{class:'ks-sg'},sg):null,
     e.alasan?h('p',{class:'ks-hint',text:'Keterangan: '+e.alasan}):null,
     e.galat?h('p',{class:'err',text:e.galat}):null,
@@ -9208,8 +9210,11 @@ function ksSign(row){
   var c=ksCfg(),box=h('div',{class:'ks-box ks-sign'}),info=h('p',{class:'ks-hint',text:'Memeriksa koneksi Mekari Sign…'});
   var mode='global';
   function rb(v,t,d){var i=h('input',{type:'radio',name:'ks-mode',value:v});if(v===mode)i.checked=true;i.addEventListener('change',function(){mode=v;syncStp()});return h('label',{class:'ks-opt'},i,h('span',null,h('b',{text:t}),h('small',{text:d})))}
-  var stpC=h('input',{type:'checkbox'}),stpL=h('label',{class:'ks-opt'},stpC,h('span',null,h('b',{text:'Bubuhkan stempel (cap) perusahaan'}),h('small',{text:'Kolom stempel di samping tanda tangan; penanda tangan memilih atau mengunggah cap perusahaan saat menandatangani di Mekari Sign. Hanya untuk tanda tangan Global.'})));
-  function syncStp(){stpC.disabled=mode==='psre';if(stpC.disabled)stpC.checked=false;stpL.classList.toggle('ks-off',stpC.disabled)}
+  function bentuk(v,t,d){var i=h('input',{type:'radio',name:'ks-bentuk',value:v});if(v==='ttd')i.checked=true;return [i,h('label',{class:'ks-opt'},i,h('span',null,h('b',{text:t}),h('small',{text:d})))]}
+  var bT=bentuk('ttd','Tanda tangan','Surat disahkan dengan tanda tangan elektronik penanda tangan.'),
+    bS=bentuk('stp','Stempel (cap) perusahaan','Surat disahkan dengan cap perusahaan saja, tanpa tanda tangan. Penanda tangan memilih atau mengunggah cap saat di Mekari Sign. Hanya untuk jenis Global.'),
+    ttdC=bT[0],stpC=bS[0],stpL=bS[1];
+  function syncStp(){stpC.disabled=mode==='psre';if(stpC.disabled)ttdC.checked=true;stpL.classList.toggle('ks-off',stpC.disabled)}
   var met=h('input',{type:'checkbox'}),jm=h('select',null,KS_METERAI.map(function(m){return h('option',{value:m},m)})),jmW=h('label',{class:'fld',hidden:true},h('span',{text:'Jenis dokumen e-Meterai'}),jm);
   met.addEventListener('change',function(){jmW.hidden=!met.checked});
   var nm=h('input',{type:'text',maxlength:'150'}),em=h('input',{type:'email',maxlength:'190'});
@@ -9221,7 +9226,8 @@ function ksSign(row){
     h('p',{class:'fsec',text:'Jenis tanda tangan'}),
     h('div',{class:'ks-opts'},rb('global','Global','Tanda tangan elektronik dengan QR dan jejak audit Mekari Sign. Memakai kuota tanda tangan global.'),
       rb('psre','PSrE (tersertifikasi)','Tanda tangan bersertifikat elektronik dari Penyelenggara Sertifikasi Elektronik. Penanda tangan perlu verifikasi identitas.')),
-    stpL,h('label',{class:'ks-opt'},met,h('span',null,h('b',{text:'Bubuhkan e-Meterai'}),h('small',{text:'Meterai elektronik ditempel di samping tanda tangan. Memakai saldo e-Meterai.'}))),jmW,
+    h('p',{class:'fsec',text:'Yang dibubuhkan (pilih satu)'}),h('div',{class:'ks-opts'},bT[1],stpL),
+    h('label',{class:'ks-opt'},met,h('span',null,h('b',{text:'Bubuhkan e-Meterai'}),h('small',{text:'Meterai elektronik ditempel di samping tanda tangan atau stempel. Memakai saldo e-Meterai.'}))),jmW,
     h('p',{class:'fsec',text:'Penanda tangan'}),
     h('div',{class:'form'},h('label',{class:'fld'},h('span',{text:'Nama'}),nm),h('label',{class:'fld'},h('span',{text:'Email akun Mekari Sign'}),em),
       h('label',{class:'fld wide'},h('span',{text:'Penerima salinan setelah selesai'}),rc)),
@@ -9232,7 +9238,8 @@ function ksSign(row){
     er.hidden=true;
     if(!nm.value.trim()||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim())){er.textContent='Isi nama dan email penanda tangan yang valid.';er.hidden=false;return}
     var b;try{b=ksBuild(ksData(row,{meterai:met.checked,stamp:stpC.checked&&mode!=='psre',nama:nm.value.trim().toUpperCase()}))}catch(x){er.textContent='Gagal menyusun PDF.';er.hidden=false;return}
-    var ann=[{type_of:'signature',page:b.sig.page,x:b.sig.x,y:b.sig.y,w:b.sig.w,h:b.sig.h,cw:b.W,ch:b.H}];
+    var ann=[];
+    if(b.sig)ann.push({type_of:'signature',page:b.sig.page,x:b.sig.x,y:b.sig.y,w:b.sig.w,h:b.sig.h,cw:b.W,ch:b.H});
     if(stpC.checked&&mode!=='psre'&&b.stp)ann.push({type_of:'stamp',page:b.stp.page,x:b.stp.x,y:b.stp.y,w:b.stp.w,h:b.stp.h,cw:b.W,ch:b.H});
     if(met.checked&&b.met)ann.push({type_of:'meterai',page:b.met.page,x:b.met.x,y:b.met.y,w:b.met.w,h:b.met.h,cw:b.W,ch:b.H});
     var rcv=rc.value.split(/[\n,;]+/).map(function(x){return x.trim()}).filter(function(x){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x)}).map(function(x){return {email:x}});
