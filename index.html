@@ -8814,8 +8814,7 @@ function ksKontraktor(){return ((SALL&&SALL.kontraktor)||[]).map(function(k){ret
 /* Hapus surat dari register (dua klik). Surat yang menunggu tanda tangan tidak bisa dihapus sebelum permintaannya dibatalkan. */
 function srBolehHapus(r){
   if(!canWrite||!r||r.asal==='pjo'||r.pjo_id)return false;
-  if(r.ktt_surat&&!ksCan())return false;
-  return true;
+  return prDirut();/* aturan database: hanya akun Direktur yang boleh menghapus surat */
 }
 function srHapusBtn(r,done,cls){
   var armed=false,timer=null,bt=h('button',{type:'button',class:cls||'btn sm danger','aria-label':'Hapus surat '+(r.nomor||r.perihal||'')},'Hapus');
