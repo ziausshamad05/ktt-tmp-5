@@ -2514,7 +2514,8 @@ var CFG={
    {l:'Perihal',r:function(r){return h('span',{class:'clip',text:r.perihal||''})}},
    {l:'Pihak',r:function(r){return r.pihak||'—'}},
    {l:'Notifikasi',r:function(r){return igCol(r)}},
-   {l:'Status',r:function(r){var b=badge(r.status||'—',r.arah==='Keluar'&&r.status==='Terkirim'?'info':srTone(r.status)),e=ksBadge(r);return e?h('span',{class:'ig-cell'},b,e):b}}]},
+   {l:'Status',r:function(r){var b=badge(r.status||'—',r.arah==='Keluar'&&r.status==='Terkirim'?'info':srTone(r.status)),e=ksBadge(r);return e?h('span',{class:'ig-cell'},b,e):b}},
+   {l:'Aksi',r:function(r){return srAksi(r)}}]},
  personel:{key:'personel',add:'Tambah personel',empty:'Belum ada personel.',title:'Personel',
   fields:[
    {k:'nama',l:'Nama',t:'text',req:1},
@@ -8810,6 +8811,27 @@ function ksNomor(kode,tgl,no,c){
 function ksNomorBaru(kode,tgl,kecuali){var u=ksUrut(String(tgl||isoOf(new Date())).slice(0,4),kecuali);return ksNomor(kode,tgl,u.max+1)}
 function ksDupe(nomor,kecuali){var n=String(nomor||'').trim().toLowerCase();if(!n)return null;return ((SALL&&SALL.surat)||[]).find(function(r){return r.id!==kecuali&&r.arah==='Keluar'&&String(r.nomor||'').trim().toLowerCase()===n})||null}
 function ksKontraktor(){return ((SALL&&SALL.kontraktor)||[]).map(function(k){return k.nama}).filter(Boolean).sort()}
+/* Hapus surat dari register (dua klik). Surat yang menunggu tanda tangan tidak bisa dihapus sebelum permintaannya dibatalkan. */
+function srBolehHapus(r){
+  if(!canWrite||!r||r.asal==='pjo'||r.pjo_id)return false;
+  if(r.ktt_surat&&!ksCan())return false;
+  return true;
+}
+function srHapusBtn(r,done,cls){
+  var armed=false,timer=null,bt=h('button',{type:'button',class:cls||'btn sm danger','aria-label':'Hapus surat '+(r.nomor||r.perihal||'')},'Hapus');
+  function reset(){armed=false;bt.textContent='Hapus'}
+  bt.addEventListener('click',async function(e){
+    e.stopPropagation();
+    var es=r.esign;
+    if(es&&es.status==='in_progress'){toast('Surat sedang menunggu tanda tangan. Batalkan permintaan tanda tangan dulu, lalu hapus.');return}
+    if(!armed){armed=true;bt.textContent=es&&es.status==='completed'?'Yakin? Sudah ditandatangani':'Klik lagi untuk hapus';clearTimeout(timer);timer=setTimeout(reset,4000);return}
+    clearTimeout(timer);bt.disabled=true;
+    try{await remove('surat',r.id);toast('Surat '+(r.nomor||'')+' dihapus');if(done)done()}
+    catch(x){bt.disabled=false;reset();toast('Gagal menghapus'+(x&&x.message?': '+x.message:''))}
+  });
+  return bt;
+}
+function srAksi(r){return srBolehHapus(r)?srHapusBtn(r):h('span',{class:'sub',text:'—'})}
 function ksBadge(r){var e=r&&r.esign;if(!e||!e.status)return null;var x=KS_ES[e.status]||[e.status,'mute'];return badge('TTD: '+x[0],x[1])}
 
 /* ---------------- panggilan fungsi server mekari-sign ---------------- */
@@ -9139,6 +9161,7 @@ function ksOpen(row,pre){
   }else if(!view&&es&&es.status==='completed'&&row.status!=='Terkirim'){
     acts.append(h('button',{type:'button',class:'btn primary',onclick:async function(){try{await quickSet('surat',row.id,{status:'Terkirim',dikirim_at:new Date().toISOString()});toast('Surat ditandai terkirim');closeModal()}catch(e){}}},'Tandai sudah dikirim'));
   }
+  if(row&&srBolehHapus(row))acts.insertBefore(srHapusBtn(row,closeModal,'btn danger'),acts.children[1]);
   box.append(acts);
   openModal(row?(view?'Surat KTT':'Ubah surat KTT'):'Buat surat KTT',box);
   var o=$('#ov .dlg');if(o)o.classList.add('ks-wide');
