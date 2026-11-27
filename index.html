@@ -2698,9 +2698,11 @@ function openForm(key,row,pre){if(key==='surat'&&row&&row.ktt_surat)return ksOpe
   openModal((row?'Ubah ':'Tambah ')+C.title.toLowerCase(),form);
   if(ro)toast('Anda hanya bisa melihat data ini');
 }
+/* isian berawalan = + - @ diberi tanda petik agar tidak dijalankan sebagai rumus oleh aplikasi lembar kerja; angka dibiarkan */
+function csvAman(v){v=v==null?'':String(v);return /^[=+\-@\t\r][\s\S]/.test(v)&&!/^[+-]?\d+([.,]\d+)*([eE][+-]?\d+)?$/.test(v)?"'"+v:v}
 function csv(key){
   var C=CFG[key],cols=C.fields.map(function(f){return f.k});
-  var q=function(v){v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  var q=function(v){v=csvAman(v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
   return [C.fields.map(function(f){return q(f.l)}).join(',')].concat(S[key].slice().sort(C.sort).map(function(r){return cols.map(function(k){return q(r[k])}).join(',')})).join('\n');
 }
 function exportBtn(key){
@@ -2905,7 +2907,7 @@ function loadScript(src){return new Promise(function(res,rej){var s=document.cre
 var PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 async function readPdf(file,maxImg){
   if(!window.pdfjsLib){await loadScript(PDFJS+'pdf.min.js');await loadScript(PDFJS+'pdf.worker.min.js');window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS+'pdf.worker.min.js'}
-  var pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise,n=Math.min(pdf.numPages,8),text='',pages=[];
+  var pdf=await window.pdfjsLib.getDocument({isEvalSupported:false,data:await file.arrayBuffer()}).promise,n=Math.min(pdf.numPages,8),text='',pages=[];
   for(var i=1;i<=n;i++){var p=await pdf.getPage(i);pages.push(p);var tc=await p.getTextContent();text+=tc.items.map(function(x){return x.str}).join(' ')+'\n'}
   var imgs=[];
   if(text.replace(/\s/g,'').length<200&&maxImg){
@@ -3062,7 +3064,7 @@ function openPlanForm(){
   openModal('Rencana RKAB '+RKPL.tahun,form);
 }
 function lapCsv(Y){
-  var q=function(v){v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  var q=function(v){v=csvAman(v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
   var rows=[['Triwulan','Tenggat','Status','Produksi (ton)','Insiden','Agenda selesai','Bab terisi (dari 13)'].concat(LNUM.map(function(x){return x[1]}))];
   for(var t=1;t<=4;t++){var d=twDoc(Y,t)||{},a=twAuto(Y,t);rows.push(['TW '+TWL[t-1]+' '+Y,twDue(Y,t),twStatus(Y,t)[0],a.prod,a.ins,a.agn,twBab(twDoc(Y,t))].concat(LNUM.map(function(x){return d[x[0]]==null?'':d[x[0]]})))}
   return rows.map(function(r){return r.map(q).join(',')}).join('\n');
@@ -5658,7 +5660,7 @@ async function lampPrep(file){
   var name=(file.name||'lampiran').replace(/\.[^.]+$/,''),out=[];
   if(file.type==='application/pdf'||/\.pdf$/i.test(file.name||'')){
     if(!window.pdfjsLib){await loadScript(PDFJS+'pdf.min.js');await loadScript(PDFJS+'pdf.worker.min.js');window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS+'pdf.worker.min.js'}
-    var pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise,n=Math.min(pdf.numPages,6);
+    var pdf=await window.pdfjsLib.getDocument({isEvalSupported:false,data:await file.arrayBuffer()}).promise,n=Math.min(pdf.numPages,6);
     for(var i=1;i<=n;i++){
       var pg=await pdf.getPage(i),vp=pg.getViewport({scale:1.5}),cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
       await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
@@ -6005,12 +6007,12 @@ function bkField(key,row,ro){
 var LH_LIB={
   pdf:['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',function(){return window.pdfjsLib}],
   docx:['https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',function(){return window.mammoth}],
-  xlsx:['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',function(){return window.XLSX}]
+  xlsx:['https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',function(){return window.XLSX}]
 };
 function lhLoad(k){
   var d=LH_LIB[k];if(d[1]())return Promise.resolve(d[1]());
   return new Promise(function(res,rej){
-    var s=document.createElement('script');s.src=d[0];s.onload=function(){d[1]()?res(d[1]()):rej(new Error('lib'))};s.onerror=function(){rej(new Error('Pustaka pratinjau tidak dapat dimuat. Periksa koneksi internet.'))};document.head.appendChild(s);
+    var s=document.createElement('script');if(/cdn\.sheetjs\.com/.test(d[0])){s.integrity='sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT';s.crossOrigin='anonymous'}s.src=d[0];s.onload=function(){d[1]()?res(d[1]()):rej(new Error('lib'))};s.onerror=function(){rej(new Error('Pustaka pratinjau tidak dapat dimuat. Periksa koneksi internet.'))};document.head.appendChild(s);
   });
 }
 function lhJenis(it){
@@ -6024,14 +6026,20 @@ function lhJenis(it){
 }
 function lhBersih(html){
   var d=new DOMParser().parseFromString(html,'text/html');
-  d.querySelectorAll('script,iframe,object,embed,link,style,form').forEach(function(e){e.remove()});
-  d.querySelectorAll('*').forEach(function(e){[].slice.call(e.attributes).forEach(function(a){if(/^on/i.test(a.name)||(/^(href|src)$/i.test(a.name)&&/^\s*javascript:/i.test(a.value)))e.removeAttribute(a.name)})});
+  d.querySelectorAll('script,iframe,frame,frameset,object,embed,link,style,form,input,button,textarea,select,meta,base,template,svg,math').forEach(function(e){e.remove()});
+  d.querySelectorAll('*').forEach(function(e){[].slice.call(e.attributes).forEach(function(a){
+    var n=a.name.toLowerCase(),ok=/^(alt|title|id|class|colspan|rowspan|start|type)$/.test(n);
+    if(n==='href')ok=/^(https?:|mailto:|tel:|#)/i.test(a.value.trim());
+    if(n==='src')ok=/^data:image\//i.test(a.value);
+    if(!ok)e.removeAttribute(a.name);
+  })});
+  d.querySelectorAll('a[href]').forEach(function(a){if(a.getAttribute('href').trim().charAt(0)!=='#'){a.setAttribute('target','_blank');a.setAttribute('rel','noopener noreferrer')}});
   return d.body.innerHTML;
 }
 async function lhIsiPdf(body,it){
   var lib=await lhLoad('pdf');
   lib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  var pdf=await lib.getDocument({data:bkBytes(it.b64)}).promise;
+  var pdf=await lib.getDocument({isEvalSupported:false,data:bkBytes(it.b64)}).promise;
   var info=h('p',{class:'lh-info',text:pdf.numPages+' halaman'});body.append(info);
   var W=Math.min(body.clientWidth-24,980)||600,dpr=Math.min(window.devicePixelRatio||1,2);
   for(var i=1;i<=pdf.numPages;i++){
@@ -17331,12 +17339,12 @@ function gisJenis(feats){
 /* ---------- pembaca berkas ---------- */
 function gisMuatLib(url){
   return new Promise(function(res,rej){
-    var s=document.createElement('script');s.src=url;s.onload=function(){res()};s.onerror=function(){rej(new Error('Pustaka pendukung gagal dimuat. Periksa koneksi internet.'))};document.head.appendChild(s);
+    var s=document.createElement('script');if(/cdn\.sheetjs\.com/.test(url)){s.integrity='sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT';s.crossOrigin='anonymous'}s.src=url;s.onload=function(){res()};s.onerror=function(){rej(new Error('Pustaka pendukung gagal dimuat. Periksa koneksi internet.'))};document.head.appendChild(s);
   });
 }
 var GIS_LIB={};
 function gisLib(k){
-  var U={xlsx:['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',function(){return window.XLSX}],
+  var U={xlsx:['https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',function(){return window.XLSX}],
     jszip:['https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',function(){return window.JSZip}],
     shp:['https://cdnjs.cloudflare.com/ajax/libs/shpjs/3.6.3/shp.min.js',function(){return window.shp}]}[k];
   if(U[1]())return Promise.resolve(U[1]());
@@ -17444,8 +17452,8 @@ function gisGeojson(L){return {type:'FeatureCollection',name:L.name,features:L.f
 function gisCsvOut(L){
   var keys={};L.features.forEach(function(f){Object.keys(f.p||{}).forEach(function(k){keys[k]=1})});
   var kk=['wkt_tipe','lon','lat'].concat(Object.keys(keys));
-  function q(v){v=v==null?'':String(v);return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
-  var out=[kk.join(',')];
+  function q(v){v=csvAman(v);return /[",\n\r;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+  var out=[kk.map(q).join(',')];
   L.features.forEach(function(f){gisFlat(f.g,[]).forEach(function(c,i){
     if(i>=20000)return;
     out.push([f.g.type,c[0].toFixed(7),c[1].toFixed(7)].concat(Object.keys(keys).map(function(k){return (f.p||{})[k]})).map(q).join(','))})});
